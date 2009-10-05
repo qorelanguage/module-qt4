@@ -6,7 +6,7 @@
 # Note that Qore's "qt-opengl" module requires QT 4.3 or above with OpenGL support
 
 # use the "qt-opengl" module (automatically loads the "qt-gui" and "opengl" modules)
-%requires qoreqt4
+%requires qt4
 # use the "qt-svg" module
 %requires opengl
 
@@ -23,7 +23,7 @@ class GLWidget inherits QGLWidget {
     private $.anchor, $.scale, $.rot_x, $.rot_y, $.rot_z,
     $.tile_list, $.wave, $.logo, $.anim, $.svg_renderer;
     
-    constructor($parent) : QGLWidget(new QGLFormat(QGL::SampleBuffers|QGL::AlphaChannel), $parent) {
+    constructor() : QGLWidget(new QGLFormat(QGL::SampleBuffers|QGL::AlphaChannel)) {
         $.anchor = new QPoint();
 
         $.setWindowTitle($.tr("OpenGL framebuffer objects"));
@@ -159,7 +159,7 @@ class GLWidget inherits QGLWidget {
                 #printf("line=%N (%d), x=%n word=%n\n", $line, elements $line, $x, $word);
                 glColor4ub(QGlobalSpace::qRed($word), QGlobalSpace::qGreen($word), QGlobalSpace::qBlue($word), QGlobalSpace::qAlpha($word)* 0.9);
                 glTranslatef(0.0, 0.0, $.wave[$y*$w+$x]);
-                if (qAlpha($word) > 128)
+                if (QGlobalSpace::qAlpha($word) > 128)
                     glCallList($.tile_list);
                 glTranslatef(0.0, 0.0, -$.wave[$y*$w+$x]);
                 glTranslatef(2.0, 0.0, 0.0);

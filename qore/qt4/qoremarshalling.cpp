@@ -564,6 +564,9 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
     case Smoke::t_voidp: {
         QByteArray tname(t.name);
 
+        if (tname == "uchar*")
+            return new QoreStringNode(*(uchar*)i.s_voidp);
+
         if (tname == "QString")
             return new QoreStringNode(reinterpret_cast<QString*>(i.s_voidp)->toUtf8().data(), QCS_UTF8);
 
@@ -581,8 +584,8 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
             return new QoreBigIntNode( (unsigned long)*reinterpret_cast<WId*>(i.s_voidp));
         }
 
-//         printd(0, "Marshalling::stackToQore() unhandled voidp type: %s\n", t.name);
-        assert(false);
+        printd(0, "Marshalling::stackToQore() unhandled voidp type: '%s'\n", t.name);
+        Q_ASSERT_X(0, "unhandled voidp", "Smoke::t_voidp marshalling");
         // TODO/FIXME: more classes
         return 0;
     }
