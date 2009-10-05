@@ -40,7 +40,7 @@ class GLWidget inherits QGLWidget
 
     destructor()
     {
-        $.makeCurrent();
+#         $.makeCurrent();
         glDeleteLists($.object, 1);
     }
 
@@ -229,13 +229,13 @@ class Window inherits QWidget
 
     constructor()
     {
-        $.glWidget = new GLWidget();
+        $.glWidget = new GLWidget($self);
 
         $.xSlider = $.createSlider();
         $.ySlider = $.createSlider();
         $.zSlider = $.createSlider();
 
-        $.glWidget.connect($.xSlider, SIGNAL("valueChanged(int)"), SLOT("setXRotation(int)"));
+        $.connect($.xSlider, SIGNAL("valueChanged(int)"), $.glWidget, SLOT("setXRotation(int)"));
         $.xSlider.connect($.glWidget, SIGNAL("xRotationChanged(int)"), SLOT("setValue(int)"));
         $.glWidget.connect($.ySlider, SIGNAL("valueChanged(int)"), SLOT("setYRotation(int)"));
         $.ySlider.connect($.glWidget, SIGNAL("yRotationChanged(int)"), SLOT("setValue(int)"));

@@ -306,6 +306,10 @@ AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const QoreListNode
 }
 
 AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink) {
+	// HACK: workaround for $.connect(o, sig, o, slot) call type
+    if (num_params(params) == 4)
+        return f_QOBJECT_connect(method, params, xsink);
+
     QoreObject *p = test_object_param(params, 0);
     ReferenceHolder<QoreSmokePrivateQObjectData> sender(p ? (QoreSmokePrivateQObjectData *)p->getReferencedPrivateData(CID_QOBJECT, xsink) : 0, xsink);
 
@@ -581,7 +585,7 @@ void common_destructor(const QoreClass &thisclass, QoreObject *self, AbstractPri
         }
 
         if (qtObj->parent()) {
-// 	   printd(0, "common_destructor() object %p not deleted; has parent\n", qtObj);
+//        printd(0, "common_destructor() object %p not deleted; has parent\n", qtObj);
             // clear the private data
             p->clear();
             return;
