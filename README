@@ -1,0 +1,47 @@
+Work in progress.
+
+* DIRECTORY STRUCTURE *
+CMakeLists.txt - setup and build config for cmake. It's contained in every subdir too.
+README - build instructions etc.
+cmake - additional cmake modules
+kalyptus - set of PERL scripts used to create Smoke C++ code
+qore - Qore Qt4 bindings module source
+  qt4 - module sources
+  tools - UI compiler etc.
+smoke - Set of script templates for Smoke C++ code
+test - Qore Qt4 test scripts, examples and tutorial
+
+
+* BUILD INSTRUCTIONS *
+
+Requirements:
+ - Qt4 with development stuff (includes, qmake...)
+ - PERL available in $PATH
+ - Cmake
+
+Module is built with debugging symbols only for now. Smoke lib too.
+
+Use so called "out of source" build
+
+ - mkdir build   (in module directory)
+ - cd build
+ - cmake -DCMAKE_INSTALL_PREFIX=/path/to/install ..   (if there is not -DCMAKE_INSTALL_PREFIX specified, /usr/local is used)
+ - make
+ - cross fingers
+ - make install
+
+Some tests are located in "test" directory.
+
+
+
+My build example (mac):
+cmake -DCMAKE_INSTALL_PREFIX=/opt/qore/ ..
+output:
+Install the project...
+-- Install configuration: "Debug"
+-- Up-to-date: /opt/qore/include/smoke.h
+-- Installing: /opt/qore/lib/libsmokeqt.2.0.0.dylib
+-- Up-to-date: /opt/qore/lib/libsmokeqt.2.dylib
+-- Up-to-date: /opt/qore/lib/libsmokeqt.dylib
+-- Up-to-date: /opt/qore/include/smoke/qt_smoke.h
+-- Up-to-date: /opt/qore/lib/qore-modules/qoreqt4-api-0.8.qmod

@@ -1,0 +1,6 @@
+SET(qorercc_SRCS rcc.cpp main.cpp )
+
+ADD_EXECUTABLE(rcc-qore ${qorercc_SRCS})
+TARGET_LINK_LIBRARIES (qorercc ${QT_QTCORE_LIBRARY} ${QT_QTXML_LIBRARY})
+
+INSTALL(TARGETS rcc-qore DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

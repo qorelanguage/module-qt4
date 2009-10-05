@@ -1,0 +1,37 @@
+This directory contains support tools for Qore Qt4 module
+
+
+USAGE
+
+uic-qore is a qore code from designer's ui files generator.
+It follows the uic (Qt4 C++) workflow and the output code is very
+similar to uic output (Ui namespace, setupUi() in inherited classes etc.).
+Consult Qt4 documentation for more info.
+
+uic-qore inputfile.ui > outputfile.qc
+
+useful option -x creates an "unittest" - executable script.
+See uic-qore -h
+
+
+BUILDING
+
+Cmake is mandatory to build tools in this directory.
+
+1) mkdir build
+2) cd build
+3) cmake ..
+4) make
+5) make install
+
+Optional: you can specify a cmake -DCMAKE_INSTALL_PREFIX=path/to/install .. in the (3).
+
+Binaries are installed into CMAKE_INSTALL_PREFIX/bin or /usr/local/bin if it's not
+specified.
+
+
+KUDOS
+
+This code is based on Qt4's stuff from Qt Software and work from KDE's kdebindings
+people.
+
