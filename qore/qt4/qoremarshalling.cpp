@@ -486,6 +486,7 @@ QoreQVariant * qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * no
     QoreQVariant * ret = new QoreQVariant();
 
     if (node == 0) { // NOTHING
+        ret->qvariant = QVariant();
         return ret;
     }
 
@@ -515,6 +516,7 @@ QoreQVariant * qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * no
         QoreSmokePrivateData * p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(qc->getID(), xsink));
         ret->qvariant = p && p->object() ? QVariant( *(QVariant*)(p->object()) ) : QVariant();
         ret->status = QoreQVariant::RealQVariant;
+        break;
     }
     default:
         xsink->raiseException("QVARIANT-MARSHALL", "Cannot convert type %s (Qore Type %d)", t.name, node->getType());
@@ -583,6 +585,11 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
         if (tname == "WId") {
             return new QoreBigIntNode( (unsigned long)*reinterpret_cast<WId*>(i.s_voidp));
         }
+
+// 		if (tname == "void*") {
+// 			printd(0, "Marshalling::stackToQore() handling of void* = %p\n", i.s_voidp);
+// 			return 0;
+// 		}
 
         printd(0, "Marshalling::stackToQore() unhandled voidp type: '%s'\n", t.name);
         Q_ASSERT_X(0, "unhandled voidp", "Smoke::t_voidp marshalling");
