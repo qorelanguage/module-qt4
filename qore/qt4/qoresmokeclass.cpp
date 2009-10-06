@@ -226,7 +226,7 @@ QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) {
 
     m_class = m_classId.smoke->classes[m_classId.index];
 
-    m_qoreClass = new QoreClass(m_class.className);
+    m_qoreClass = new QoreClass(m_class.className, QDOM_GUI);
 
     if (!CID_QOBJECT && !strcmp(className, "QObject")) {
         CID_QOBJECT = m_qoreClass->getID();
@@ -365,6 +365,7 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
             continue;
 
         const char * methodName = qt_Smoke->methodNames[method.name];
+        bool isPrivate = method.flags & Smoke::mf_protected;
 
         //printd(0, "QoreSmokeClass::addClassMethods() %s::%s() enum=%d static=%d\n", m_qoreClass->getName(), methodName, method.flags & Smoke::mf_enum, method.flags & Smoke::mf_static);
 
@@ -407,7 +408,7 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
                 if (!strcmp(methodName, "connect")) {
 //                     printd(0, "found static QObject::connect()\n");
                     if (!m_qoreClass->findStaticMethod("connect")) {
-                        m_qoreClass->addStaticMethod2("connect", f_QOBJECT_connect);
+                        m_qoreClass->addStaticMethod2("connect", f_QOBJECT_connect, isPrivate);
                     }
                     continue;
                 }
@@ -426,15 +427,15 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
         if (!strcmp(methodName, "copy")) {
             if (m_qoreClass->findMethod("qt_copy"))
                 continue;
-            m_qoreClass->addMethod2("qt_copy", (q_method2_t)common_method);
+            m_qoreClass->addMethod2("qt_copy", (q_method2_t)common_method, isPrivate);
         } else if (!strcmp(methodName, "constructor")) {
             if (m_qoreClass->findMethod("qt_constructor"))
                 continue;
-            m_qoreClass->addMethod2("qt_constructor", (q_method2_t)common_method);
+            m_qoreClass->addMethod2("qt_constructor", (q_method2_t)common_method, isPrivate);
         } else if (!strcmp(methodName, "inherits")) {
             if (m_qoreClass->findMethod("qt_inherits"))
                 continue;
-            m_qoreClass->addMethod2("qt_inherits", (q_method2_t)common_method);
+            m_qoreClass->addMethod2("qt_inherits", (q_method2_t)common_method, isPrivate);
         } else {
             if (m_qoreClass->findMethod(methodName))
                 continue;
@@ -444,13 +445,13 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
                 if (!strcmp(methodName, "connect")) {
 //                     printd(0, "found regular QObject::connect()\n");
                     if (!m_qoreClass->findMethod("connect")) {
-                        m_qoreClass->addMethod2("connect", (q_method2_t)QOBJECT_connect);
+                        m_qoreClass->addMethod2("connect", (q_method2_t)QOBJECT_connect, isPrivate);
                     }
                     continue;
                 }
             }
 
-            m_qoreClass->addMethod2(methodName, (q_method2_t)common_method);
+            m_qoreClass->addMethod2(methodName, (q_method2_t)common_method, isPrivate);
         }
     }
 }
