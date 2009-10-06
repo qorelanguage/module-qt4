@@ -216,6 +216,13 @@ static AbstractQoreNode *rv_handler_internalPointer(QoreObject *self, Smoke::Typ
    return c->isQoreData(qmi->row(), qmi->column(), Stack.s_voidp);
 }
 
+static AbstractQoreNode *rv_handler_QAbstractItemView_reset(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+   QoreSmokePrivateQAbstractItemModelData *smc = reinterpret_cast<QoreSmokePrivateQAbstractItemModelData *>(cqm.getPrivateData());
+   assert(smc);
+   smc->purgeMap(xsink);
+   return 0;
+}
+
 static int addItem_handler(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     // Create a Smoke stack from params
     stack = new Smoke::StackItem[types.size() + 1];
@@ -392,6 +399,12 @@ static QoreStringNode *qt_module_init() {
     // QModelIndex and QPersistentModelIndex return value handlers
     cm.setRVHandler("QModelIndex", "internalPointer", rv_handler_internalPointer<QModelIndex>);
     cm.setRVHandler("QPersistentModelIndex", "internalPointer", rv_handler_internalPointer<QModelIndex>);
+
+    // QAbstractItemView return value handlers
+    cm.setRVHandler("QAbstractItemView", "reset", rv_handler_QAbstractItemView_reset);
+    cm.setRVHandler("QListView", "reset", rv_handler_QAbstractItemView_reset);
+    cm.setRVHandler("QHeaderView", "reset", rv_handler_QAbstractItemView_reset);
+    cm.setRVHandler("QTreeView", "reset", rv_handler_QAbstractItemView_reset);
 
     // add return value handlers
     cm.setRVHandler("QLayoutItem", "spacerItem", "spacerItem", rv_handler_spacer_item);
