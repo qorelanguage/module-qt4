@@ -628,14 +628,16 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
     case Smoke::t_enum:
 	si.s_enum = node ? node->getAsBigInt() : 0;
 	return 0;
-    case Smoke::t_voidp:
-        xsink->raiseException("QT-ARGUMENT-ERROR", "DEBUG: need special handler for void* argument to %s::%s()", className, methodName);
-	assert(false);
-	return 0;
     }
 
     if (!t.name)
         return 0;
+
+    if (tid == Smoke::t_voidp) {
+        xsink->raiseException("QT-ARGUMENT-ERROR", "DEBUG: need special handler for void* argument to %s::%s()", className, methodName);
+	assert(false);
+	return 0;
+    }
 
     if (!strcmp(t.name, "QVariant")) {
        std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(t, node, xsink));
