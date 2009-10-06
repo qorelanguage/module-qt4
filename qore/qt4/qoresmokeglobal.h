@@ -31,6 +31,13 @@
 
 #include <QtDebug>
 
+#define QORESMOKEPROPERTY "qoreptr"
+
+extern qore_classid_t CID_QOBJECT;
+extern qore_classid_t CID_QWIDGET;
+extern qore_classid_t CID_QABSTRACTITEMMODEL;
+
+DLLLOCAL QoreObject *getQoreObject(const QObject *obj);
 DLLLOCAL QoreObject *getQoreObject(Smoke::Index classId, void *obj, QoreClass *&qc);
 DLLLOCAL bool isptrtype(const char *var, const char *type);
 
@@ -44,7 +51,6 @@ static inline void qore_smoke_set_virtual() {
 }
 
 static inline void qore_smoke_clear_virtual() {
-    assert(qore_qt_virtual_flag.get());
     qore_qt_virtual_flag.set(0);
 }
 

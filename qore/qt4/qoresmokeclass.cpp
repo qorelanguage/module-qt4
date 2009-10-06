@@ -31,9 +31,13 @@
 #include <iostream>
 #include <QtDebug>
 #include <QVariant>
+#include <QAbstractItemModel>
 
 qore_classid_t CID_QOBJECT = 0;
 qore_classid_t CID_QWIDGET = 0;
+qore_classid_t CID_QABSTRACTITEMMODEL = 0;
+
+static QoreClass *QC_QObject;
 
 extern Smoke* qt_Smoke;
 
@@ -112,6 +116,11 @@ ClassMap::TypeHandler ClassMap::typeList(Smoke::Method m, Smoke::Index methodInd
 
 // add an argument handler to all versions of a specific munged method
 void ClassMap::addArgHandler(const char *cls, const char *meth, const char *munged, arg_handler_t arg_handler) {
+   /*
+     for (MungledToTypes::iterator i = m_map[cls][meth].begin(), e = m_map[cls][meth].end(); i != e; ++i)
+       printf("%s\n", i.key().data());
+   */
+
     assert(m_map[cls][meth].values(munged).count());
 
     for (MungledToTypes::iterator i = m_map[cls][meth].find(munged), e = m_map[cls][meth].end(); i != e && i.key() == munged; ++i)
@@ -217,6 +226,10 @@ static AbstractQoreNode *QOBJECT_emit(QoreObject *self, QoreSmokePrivateQObjectD
     return 0;
 }
 
+static bool qobject_delete_blocker(QoreObject *self, QoreSmokePrivateQObjectData *data) {
+   return data->deleteBlocker(self);
+}
+
 QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) {
     m_classId = qt_Smoke->findClass(className);
     // if the class is already registered, skip
@@ -230,11 +243,15 @@ QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) {
 
     if (!CID_QOBJECT && !strcmp(className, "QObject")) {
         CID_QOBJECT = m_qoreClass->getID();
+	QC_QObject = m_qoreClass;
         m_qoreClass->addMethod("createSignal", (q_method_t)QOBJECT_createSignal);
         m_qoreClass->addMethod("emit",         (q_method_t)QOBJECT_emit);
     }
-    if (!CID_QWIDGET && !strcmp(className, "QWidget")) {
+    else if (!CID_QWIDGET && !strcmp(className, "QWidget")) {
         CID_QWIDGET = m_qoreClass->getID();
+    }
+    else if (!CID_QABSTRACTITEMMODEL && !strcmp(className, "QAbstractItemModel")) {
+        CID_QABSTRACTITEMMODEL = m_qoreClass->getID();
     }
 
     ClassNamesMap::Instance()->addItem(m_classId.index, m_qoreClass);
@@ -349,9 +366,11 @@ void QoreSmokeClass::addSuperClasses(Smoke::Index ix, QoreNamespace &qt_ns) {
             QoreSmokeClass qsc(qt_Smoke->classes[(*i)].className, qt_ns);
             parent = qsc.m_qoreClass;
         }
+	if (QC_QObject && parent == QC_QObject) {
+	   m_qoreClass->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
+	}
         m_qoreClass->addBuiltinVirtualBaseClass(parent);
 
-        //addClassMethods(*i, false);
         addSuperClasses(*i, qt_ns);
     }
 }
@@ -460,7 +479,7 @@ void common_constructor(const QoreClass &myclass, QoreObject *self,
                         const QoreListNode *params, ExceptionSink *xsink) {
     const char * className = myclass.getName();
 //     printd(0, className);
-    CommonQoreMethod cqm(className, className, params, xsink);
+    CommonQoreMethod cqm(self, 0, className, className, params, xsink);
 
     if (!cqm.isValid()) {
 //         printd(0, "common_constructor() %s failed to set up constructor call\n", className);
@@ -476,7 +495,7 @@ void common_constructor(const QoreClass &myclass, QoreObject *self,
 
     // 0 argument in args is always the return value. So it's
     // the newly created object for now.
-    void * qtObj = cqm.Stack[0].s_voidp;
+    void * qtObj = cqm.Stack[0].s_class;
     assert(qtObj);
 
 //     printd(0, "common_constructor() %s installing qt bindings, qtObj=%p\n", className, qtObj);
@@ -492,7 +511,13 @@ void common_constructor(const QoreClass &myclass, QoreObject *self,
     QoreSmokePrivate * obj;
     // TODO/FIXME: setQtObject(false) for inherited objects
 
-    if (myclass.getClass(CID_QOBJECT)) {
+    if (myclass.getClass(CID_QABSTRACTITEMMODEL)) {
+        obj = new QoreSmokePrivateQAbstractItemModelData(cqm.method().classId, (QObject *)qtObj);
+        QoreQtVirtualFlagHelper vfh;
+        QAbstractItemModel *qtBaseObj = static_cast<QAbstractItemModel*>(qtObj);
+        qtBaseObj->setProperty(QORESMOKEPROPERTY, reinterpret_cast<qulonglong>(self));
+    }
+    else if (myclass.getClass(CID_QOBJECT)) {
         obj = new QoreSmokePrivateQObjectData(cqm.method().classId, (QObject *)qtObj);
         QoreQtVirtualFlagHelper vfh;
         QObject * qtBaseObj = static_cast<QObject*>(qtObj);
@@ -506,7 +531,7 @@ void common_constructor(const QoreClass &myclass, QoreObject *self,
 //     printd(0, "common_constructor() %s setting private data %p for classid %d objclassid %d self:%p\n",
 //            className, obj, myclass.getID(), self->getClass()->getID(), self);
     self->setPrivate(myclass.getID(), obj);
-    cqm.postProcessConstructor(self, a[0]);
+    cqm.postProcessConstructor(obj, a[0]);
 }
 
 // a helper function to handle conflicting names
@@ -525,11 +550,11 @@ AbstractQoreNode * common_method(const QoreMethod &method,
                                  ExceptionSink *xsink) {
     const char * methodName = qoreMethodName2Qt(method.getName());
     const char * className = method.getClass()->getName();
-    CommonQoreMethod cqm(className, methodName, params, xsink);
+    QoreSmokePrivate * smc = reinterpret_cast<QoreSmokePrivate*>(apd);
+    CommonQoreMethod cqm(self, smc, className, methodName, params, xsink);
     if (!cqm.isValid())
         return 0;
 
-    QoreSmokePrivate * smc = reinterpret_cast<QoreSmokePrivate*>(apd);
     Q_ASSERT_X(smc!=0, "cast", "cannot get QoreSmokeClass from QoreObject");
     Q_ASSERT_X(smc->object()!=0, "cast", "cannot get an object from QoreSmokeClass");
 // if (QByteArray(methodName) == "setColumnWidths") assert(0);
@@ -541,7 +566,7 @@ AbstractQoreNode * common_method(const QoreMethod &method,
     //if (!strcmp(methodName, "addItem")) assert(false);
     if (!strcmp(methodName, "spacerItem")) assert(false);
 
-    return cqm.returnValue(self);
+    return cqm.returnValue();
     //Smoke::Type t = qt_Smoke->types[cqm.method().ret];
     //return Marshalling::stackToQore(t, cqm.Stack[0]/*args[0]*/, xsink);
 }
@@ -552,12 +577,12 @@ AbstractQoreNode * common_static_method(const QoreMethod &method,
                                         ExceptionSink *xsink) {
     const char * methodName = qoreMethodName2Qt(method.getName());
     const char * className = method.getClass()->getName();
-    CommonQoreMethod cqm(className, methodName, params, xsink);
+    CommonQoreMethod cqm(0, 0, className, methodName, params, xsink);
     if (!cqm.isValid())
         return 0;
 
     (* cqm.smokeClass().classFn)(cqm.method().method, 0, cqm.Stack);
-    return cqm.returnValue(0);
+    return cqm.returnValue();
 
     //Smoke::Type t = qt_Smoke->types[cqm.method().ret];
     //return Marshalling::stackToQore(t, cqm.Stack[0], xsink);
@@ -570,7 +595,7 @@ void common_destructor(const QoreClass &thisclass, QoreObject *self, AbstractPri
     assert(dynamic_cast<QoreSmokePrivate*>(private_data));
 
     QoreSmokePrivate *p = reinterpret_cast<QoreSmokePrivate*>(private_data);
-//     printd(0, "common_destructor class=%p, self=%p, private_data=%p, object=%p\n", &thisclass, self, private_data, p->object());
+    //printd(0, "common_destructor class=%p (%s), self=%p, private_data=%p, object=%p\n", &thisclass, thisclass.getName(), self, private_data, p->object());
 
     if (!p->object()) {
 //         printd(0, "common_destructor (WW) QoreSmokePrivate's Qt object does not exist anymore\n");
@@ -603,7 +628,7 @@ void common_destructor(const QoreClass &thisclass, QoreObject *self, AbstractPri
     QByteArray methodName("~");
     methodName += className;
 
-    CommonQoreMethod cqm(className, methodName.constData(), 0, xsink);
+    CommonQoreMethod cqm(self, p, className, methodName.constData(), 0, xsink);
 
 //     printd(0, "common_destructor Qt: %p\n", p->object());
     assert(cqm.isValid());

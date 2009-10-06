@@ -292,12 +292,20 @@ struct ref_store_s {
 // It's used as a "library" for common_foo funtions
 class CommonQoreMethod {
 public:
-    CommonQoreMethod(const char* className,
+    CommonQoreMethod(QoreObject *n_self,
+		     QoreSmokePrivate *n_smc,
+                     const char* className,
                      const char* methodName,
                      const QoreListNode* params,
                      ExceptionSink *xsink);
     ~CommonQoreMethod();
 
+    DLLLOCAL QoreObject *getQoreObject() {
+       return self;
+    }
+    DLLLOCAL QoreSmokePrivate *getPrivateData() {
+       return smc;
+    }
     DLLLOCAL Smoke::Class smokeClass() {
         return qt_Smoke->classes[m_method.classId];
     }
@@ -324,8 +332,8 @@ public:
 
     DLLLOCAL int getObject(Smoke::Index classId, const AbstractQoreNode *v, ReferenceHolder<QoreSmokePrivate> &c, int index, bool nullOk = false);
 
-    DLLLOCAL AbstractQoreNode *returnValue(QoreObject *self) const;
-    DLLLOCAL void postProcessConstructor(QoreObject *self, Smoke::StackItem rv) const;
+    DLLLOCAL AbstractQoreNode *returnValue();
+    DLLLOCAL void postProcessConstructor(QoreSmokePrivate *n_smc, Smoke::StackItem rv);
     DLLLOCAL int getArgCount() const {
         return qoreArgCnt;
     }
@@ -372,6 +380,8 @@ private:
     AutoVLock vl;
     ClassMap::TypeHandler type_handler;
     QoreHashNode *tparams;
+    QoreObject *self;
+    QoreSmokePrivate *smc;
 
     DLLLOCAL void checkRefStore() {
         if (!ref_store)

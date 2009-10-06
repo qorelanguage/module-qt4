@@ -38,31 +38,33 @@ using namespace std;
 
 QoreSmokeBinding* QoreSmokeBinding::m_instance = NULL;
 
-QoreObject *getQoreObject(Smoke::Index classId, void *obj, QoreClass *&qc) {
-    assert(obj);
-
-    qc = ClassNamesMap::Instance()->value(classId);
-    assert(qc);
-    if (!qc->getClass(CID_QOBJECT)) {
-//         printd(0, "getQoreObject(%p) class '%s' is not derived from QObject\n", obj, qc->getName());
-        return 0;
-    }
-
-    QObject * qtObj = reinterpret_cast<QObject*>(obj);
+QoreObject *getQoreObject(const QObject *qtObj) {
     QVariant ptr;
     {
         QoreQtVirtualFlagHelper vfh;
         ptr = qtObj->property(QORESMOKEPROPERTY);
     }
     if (!ptr.isValid()) {
-//         printd(0, "getQoreObject(%p) has no QoreObject!\n", obj);
+       //printd(0, "getQoreObject(%p) property %s not set\n", qtObj, QORESMOKEPROPERTY);
         return 0;
     }
 
-    QoreObject * o = reinterpret_cast<QoreObject*>(ptr.toULongLong());
-//     QoreQtVirtualFlagHelper vfh;
-//     printd(0, "getQoreObject(%p) returning QoreObject * %p; meta=%s 0x%0x\n", obj, o, qtObj->metaObject()->className(), ptr.toULongLong());
+    QoreObject *o = reinterpret_cast<QoreObject*>(ptr.toULongLong());
+    //printd(0, "getQoreObject(%p) returning QoreObject %p\n", qtObj, o);
     return o;
+}
+
+QoreObject *getQoreObject(Smoke::Index classId, void *obj, QoreClass *&qc) {
+    assert(obj);
+
+    qc = ClassNamesMap::Instance()->value(classId);
+    assert(qc);
+    if (!qc->getClass(CID_QOBJECT)) {
+       //printd(0, "getQoreObject(%p) class '%s' is not derived from QObject\n", obj, qc->getName());
+        return 0;
+    }
+
+    return getQoreObject(reinterpret_cast<QObject*>(obj));
 }
 
 void QoreSmokeBinding::deleted(Smoke::Index classId, void *obj) {
@@ -79,10 +81,10 @@ void QoreSmokeBinding::deleted(Smoke::Index classId, void *obj) {
 //         printd(0, "QoreSmokeBinding::deleted() external delete Qore class %s (Qt class %s) (qsd=%p)\n", o->getClassName(), className(classId), *qsd);
 
         if (qsd)
-            qsd->clear();
-
-        // mark qore object as externally deleted
-        o->externalDelete(qc->getID(), &xsink);
+	   qsd->externalDelete(o, &xsink);
+	else 
+	   // mark qore object as externally deleted
+	   o->externalDelete(qc->getID(), &xsink);
     }
 }
 
@@ -102,7 +104,7 @@ static bool do_metacall(ExceptionSink *xsink, Smoke::Method &meth, QoreObject *o
         (*fn)(m.method, qsp.qobject(), i);
     }
 
-    printd(0, "%s::qt_metacall() call=%s, id=%d, new id=%d\n", qt_Smoke->classes[m.classId].className, call == QMetaObject::InvokeMetaMethod ? "InvokeMetaMethod" : "unknown?", id, i[0].s_int);
+    //printd(0, "%s::qt_metacall() call=%s, id=%d, new id=%d\n", qt_Smoke->classes[m.classId].className, call == QMetaObject::InvokeMetaMethod ? "InvokeMetaMethod" : "unknown?", id, i[0].s_int);
     id = i[0].s_int;
 
     // check return value: if handled by parent, or there is no more object, or it was the wrong call type, then return the id immediately
@@ -118,9 +120,10 @@ static bool do_metacall(ExceptionSink *xsink, Smoke::Method &meth, QoreObject *o
 }
 
 bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack args, bool isAbstract) {
-//     printd(0, "QoreSmokeBinding::callMethod() %s::%s() method=%d obj=%p isAbstract=%s\n", smoke->classes[smoke->methods[method].classId].className, smoke->methodNames[smoke->methods[method].name], method, obj, isAbstract ? "true" : "false");
+   //printd(0, "QoreSmokeBinding::callMethod() %s::%s() method=%d obj=%p isAbstract=%s (virt=%s)\n", smoke->classes[smoke->methods[method].classId].className, smoke->methodNames[smoke->methods[method].name], method, obj, isAbstract ? "true" : "false", qore_smoke_is_virtual() ? "true" : "false");
 
     if (qore_smoke_is_virtual()) {
+        qore_smoke_clear_virtual();
         //printd(0, "QoreSmokeBinding::callMethod() qore_smoke_is_virtual, returning to Smoke\n");
         return false;
     }
@@ -132,6 +135,8 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
 
     QoreClass *qc;
     QoreObject *o = getQoreObject(meth.classId, obj, qc);
+    
+    //printd(0, "QoreSmokeBinding::callMethod() %s::%s() qore object=%p\n", cname, mname, o);
 
     if (!o)
         return false;
@@ -157,6 +162,7 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
     }
 
     const QoreMethod * qoreMethod = o->getClass()->findMethod(mname);
+    //printd(0, "QoreSmokeBinding::callMethod() virtual method %s::%s() user method=%p\n", o->getClassName(), mname, qoreMethod);
     if (!qoreMethod || !qoreMethod->isUser()) {
         //printd(0, "QoreSmokeBinding::callMethod() virtual method %s::%s() not found\n", o->getClassName(), mname);
         if (isAbstract) {
@@ -181,7 +187,7 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
     for (int i = 0; i < typeList.size(); ++i)
         qoreArgs->push(Marshalling::stackToQore(typeList.at(i), args[i + 1], &xsink));
 
-//     printd(0, "QoreSmokeBinding::callMethod() calling method smoke=%s::%s(), qore=%s::%s()\n", cname, mname, o->getClassName(), mname);
+    //printd(0, "QoreSmokeBinding::callMethod() calling method smoke=%s::%s(), qore=%s::%s()\n", cname, mname, o->getClassName(), mname);
     ReferenceHolder<AbstractQoreNode> aNode(o->evalMethod(mname, *qoreArgs, &xsink), &xsink);
 
     Smoke::Type &rt = smoke->types[meth.ret];

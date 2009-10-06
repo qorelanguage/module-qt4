@@ -31,15 +31,9 @@
 #include <QHash>
 #include <QMetaMethod>
 
-
+#include <map>
 
 #include "qoreqtdynamicmethod.h"
-
-#define QORESMOKEPROPERTY "qoreptr"
-
-extern qore_classid_t CID_QOBJECT;
-extern qore_classid_t CID_QWIDGET;
-
 
 // Custom AbstractPrivateData for any Qt object to be used as
 // a Qore object private member. See Qore object/classes implementation.
@@ -92,7 +86,7 @@ private:
 
 class QoreSmokePrivateQObjectData : public QoreSmokePrivate {
 public:
-    DLLLOCAL QoreSmokePrivateQObjectData(Smoke::Index classID, QObject *p) : QoreSmokePrivate(classID), m_qobject(p), m_meta(0) {
+   DLLLOCAL QoreSmokePrivateQObjectData(Smoke::Index classID, QObject *p) : QoreSmokePrivate(classID), m_qobject(p), m_meta(0), obj_ref(false) {
         qt_metaobject_method_count = getParentMetaObject()->methodCount();
         Smoke::ModuleIndex mi = qt_Smoke->findMethod(qt_Smoke->classes[classID].className, "qt_metacall$$?");
         assert(mi.smoke);
@@ -111,8 +105,29 @@ public:
 
             delete m_qobject;
         }
-
-        //delete m_meta;
+    }
+    DLLLOCAL bool deleteBlocker(QoreObject *self) {
+       //printd(0, "QoreSmokePrivateQObjectData::deleteBlocker(%p) %s obj=%p parent=%p eo=%s\n", self, self->getClassName(), m_qobject.data(), m_qobject.data() ? m_qobject->parent() : 0, externallyOwned() ? "true" : "false");
+       if (m_qobject.data() && (m_qobject->parent() || externallyOwned())) {
+	  if (!obj_ref) {
+	     obj_ref = true;
+	     // note that if we call QoreObject::ref() here, it will cause an immediate deadlock!
+	     self->deleteBlockerRef();
+	  }
+	  return true;
+       }
+       return false;
+    }
+   DLLLOCAL void externalDelete(QoreObject *obj, ExceptionSink *xsink) {
+       if (obj_ref) {
+            //printd(5, "QoreSmokePrivateQObjectData::externalDelete() deleting object of class %s\n", obj->getClassName());
+            obj_ref = false;
+            // delete the object if necessary (if not already in the destructor)
+            if (obj->isValid()) 
+               obj->doDelete(xsink);
+            obj->deref(xsink);
+         }
+       clear();
     }
     DLLLOCAL virtual void *object() {
         return m_qobject.data();
@@ -237,7 +252,7 @@ public:
         }
     }
 
-private:
+protected:
     DLLLOCAL int getSignalIndex(const QByteArray &theSignal) const {
         const QMetaObject *pmo = getParentMetaObject();
         int signalId = pmo->indexOfSignal(theSignal);
@@ -303,6 +318,73 @@ private:
     QHash<QByteArray, int> signalIndices;  // map signal signatures to signal IDs in the methodList
     DynamicMethodList methodList;          // list of dynamic signals and slots
     QMetaObject *m_meta;                   // custom metadata for this object
+    bool obj_ref;
+};
+
+class QoreSmokePrivateQAbstractItemModelData : public QoreSmokePrivateQObjectData {
+protected:
+   typedef std::map<int, AbstractQoreNode *> int_node_map_t;
+   typedef std::map<int, int_node_map_t> node_map_t;
+   node_map_t node_map;
+   QoreRWLock rwl;
+
+   // unlocked
+   DLLLOCAL AbstractQoreNode *getData(int row, int column) {
+      node_map_t::iterator ni = node_map.find(row);
+      if (ni == node_map.end())
+	 return 0;
+
+      int_node_map_t::iterator i = ni->second.find(column);
+      return (i == ni->second.end() ? 0 : i->second);
+   }
+
+   // unlocked
+   DLLLOCAL void purgeMapIntern(ExceptionSink *xsink) {
+      // dereference all stored ptrs
+      for (node_map_t::iterator i = node_map.begin(), e = node_map.end(); i != e; ++i) {
+	 for (int_node_map_t::iterator ii = i->second.begin(), ie = i->second.end(); ii != ie; ++ii) {
+	    assert(ii->second);
+	    ii->second->deref(xsink);
+	 }
+      }
+      node_map.clear();
+   }
+
+public:
+   DLLLOCAL QoreSmokePrivateQAbstractItemModelData(Smoke::Index classID, QObject *p) : QoreSmokePrivateQObjectData(classID, p) {
+   }
+   DLLLOCAL virtual ~QoreSmokePrivateQAbstractItemModelData() {
+      // dereference all stored data ptrs
+   }
+   DLLLOCAL AbstractQoreNode *isQoreData(int row, int column, void *data) {
+      assert(data);
+      QoreAutoRWReadLocker al(rwl);
+      AbstractQoreNode *d = reinterpret_cast<AbstractQoreNode *>(data);
+      d = getData(row, column) == d ? d : 0;
+      return d ? d->refSelf() : 0;
+   }
+   DLLLOCAL void storeIndex(int row, int column, const AbstractQoreNode *data, ExceptionSink *xsink) {
+      QoreAutoRWWriteLocker al(rwl);
+      node_map_t::iterator ni = node_map.find(row);
+      if (ni != node_map.end()) {
+	 int_node_map_t::iterator i = ni->second.find(column);
+	 if (i != ni->second.end()) {
+	    if (i->second)
+	       i->second->deref(xsink);
+	    if (data)
+	       i->second == data->refSelf();
+	    else
+	       ni->second.erase(i);
+	    return;
+	 }
+      }
+      if (data)
+	 node_map[row][column] = data->refSelf(); 
+   }
+   DLLLOCAL void purgeMap(ExceptionSink *xsink) {
+      QoreAutoRWWriteLocker al(rwl);
+      purgeMapIntern(xsink);
+   }
 };
 
 class CommonQoreMethod;
@@ -316,7 +398,7 @@ class ClassMap {
 public:
     typedef QList<Smoke::Type> TypeList;
     typedef int (*arg_handler_t)(Smoke::Stack &stack, TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink);
-    typedef AbstractQoreNode *(*return_value_handler_t)(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, const CommonQoreMethod &cqm, ExceptionSink *xsink);
+    typedef AbstractQoreNode *(*return_value_handler_t)(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink);
     typedef struct type_handler_s {
         TypeList types;
         arg_handler_t arg_handler;

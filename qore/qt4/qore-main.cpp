@@ -29,6 +29,8 @@
 #include <QObject>
 #include <QDebug>
 #include <iostream>
+#include <QModelIndex>
+#include <QAbstractItemModel>
 
 static QoreStringNode *qt_module_init();
 static void qt_module_ns_init(QoreNamespace *rns, QoreNamespace *qns);
@@ -161,6 +163,59 @@ static int argv_handler_charpp(Smoke::Stack &stack, ClassMap::TypeList &types, c
     return argv_handler_intern(0, stack, types, reinterpret_cast<const QoreListNode *>(p), cqm, xsink);
 }
 
+static int createIndex_handler(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+    // Create a Smoke stack from params
+    stack = new Smoke::StackItem[types.size() + 1];
+
+    const AbstractQoreNode *n = get_param(args, 0);
+    cqm.qoreToStack(types[0], n, 1);
+    int row = n ? n->getAsInt() : 0;
+
+    n = get_param(args, 1);
+    cqm.qoreToStack(types[1], n, 2);
+    int column = n ? n->getAsInt() : 0;
+
+    n = get_param(args, 2);
+    Smoke::Type &t = types[2];
+    if ((t.flags & Smoke::tf_elem) != Smoke::t_voidp) {
+       cqm.qoreToStack(t, n, 3);
+       return 0;
+    }
+
+    stack[3].s_voidp = const_cast<AbstractQoreNode *>(n);
+
+    QoreObject *self = cqm.getQoreObject();
+    assert(self);
+    // get QoreSmokePrivateQAbstractItemModelData ptr
+    ReferenceHolder<QoreSmokePrivateQAbstractItemModelData> data(reinterpret_cast<QoreSmokePrivateQAbstractItemModelData *>(self->getReferencedPrivateData(CID_QABSTRACTITEMMODEL, xsink)), xsink);
+    if (*xsink)
+       return -1;
+    data->storeIndex(row, column, n, xsink);
+
+    return (*xsink) ? -1 : 0;
+}
+
+template <typename T>
+static AbstractQoreNode *rv_handler_internalPointer(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+   QoreSmokePrivate *smc = cqm.getPrivateData();
+   assert(smc);
+   assert(smc->object());
+   T *qmi = reinterpret_cast<T *>(smc->object());
+   const QAbstractItemModel *aim = qmi->model();
+   if (!aim)
+      return 0;
+   
+   QoreObject *o = getQoreObject(aim);
+   if (!o)
+      return 0;
+
+   PrivateDataRefHolder<QoreSmokePrivateQAbstractItemModelData> c(o, CID_QABSTRACTITEMMODEL, xsink);
+   if (!c)
+      return 0;
+
+   return c->isQoreData(qmi->row(), qmi->column(), Stack.s_voidp);
+}
+
 static int addItem_handler(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     // Create a Smoke stack from params
     stack = new Smoke::StackItem[types.size() + 1];
@@ -223,8 +278,7 @@ static int arg_handler_QShortcut(Smoke::Stack &stack, ClassMap::TypeList &types,
     return 0;
 }
 
-static AbstractQoreNode *rv_handler_QShortcut(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, const CommonQoreMethod &cqm, ExceptionSink *xsink) {
-
+static AbstractQoreNode *rv_handler_QShortcut(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     ReferenceHolder<QoreSmokePrivateQObjectData> shortcut(reinterpret_cast<QoreSmokePrivateQObjectData *>(self->getReferencedPrivateData(CID_QOBJECT, xsink)), xsink);
     if (*xsink)
         return 0;
@@ -258,7 +312,7 @@ static AbstractQoreNode *rv_handler_QShortcut(QoreObject *self, Smoke::Type t, S
     return 0;
 }
 
-static AbstractQoreNode *rv_handler_spacer_item(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, const CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static AbstractQoreNode *rv_handler_spacer_item(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     return self ? self->refSelf() : 0;
 }
 
@@ -331,6 +385,13 @@ static QoreStringNode *qt_module_init() {
     // QShortcut handlers
     cm.addArgHandler("QShortcut", "QShortcut", arg_handler_QShortcut);
     cm.setRVHandler("QShortcut", "QShortcut", rv_handler_QShortcut);
+
+    // QAbstractItemModel handlers
+    cm.addArgHandler("QAbstractItemModel", "createIndex", "createIndex$$$", createIndex_handler);
+
+    // QModelIndex and QPersistentModelIndex return value handlers
+    cm.setRVHandler("QModelIndex", "internalPointer", rv_handler_internalPointer<QModelIndex>);
+    cm.setRVHandler("QPersistentModelIndex", "internalPointer", rv_handler_internalPointer<QModelIndex>);
 
     // add return value handlers
     cm.setRVHandler("QLayoutItem", "spacerItem", "spacerItem", rv_handler_spacer_item);
