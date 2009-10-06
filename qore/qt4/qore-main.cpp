@@ -25,12 +25,14 @@
 #include "commonqoremethod.h"
 #include "qoreqtenumnode.h"
 #include "qtfunctions.h"
+#include "qoremarshalling.h"
 
 #include <QObject>
 #include <QDebug>
 #include <iostream>
 #include <QModelIndex>
 #include <QAbstractItemModel>
+#include <QDesktopWidget>
 
 static QoreStringNode *qt_module_init();
 static void qt_module_ns_init(QoreNamespace *rns, QoreNamespace *qns);
@@ -193,6 +195,21 @@ static int createIndex_handler(Smoke::Stack &stack, ClassMap::TypeList &types, c
     data->storeIndex(row, column, n, xsink);
 
     return (*xsink) ? -1 : 0;
+}
+
+static AbstractQoreNode *rv_handler_QApplication_desktop(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+   QDesktopWidget *qdw = reinterpret_cast<QDesktopWidget *>(Stack.s_class);
+   if (!qdw)
+      return 0;
+
+   QoreSmokePrivateQObjectData *p;
+   AbstractQoreNode *rv = Marshalling::doQObject<QoreSmokePrivateQObjectData>(Stack.s_class, xsink, &p);
+   if (rv) {
+      assert(p);
+      p->setExternallyOwned();
+   }
+
+   return rv;
 }
 
 template <typename T>
@@ -408,6 +425,7 @@ static QoreStringNode *qt_module_init() {
 
     // add return value handlers
     cm.setRVHandler("QLayoutItem", "spacerItem", "spacerItem", rv_handler_spacer_item);
+    cm.setRVHandler("QApplication", "desktop", rv_handler_QApplication_desktop);
 
     // initialize global constants
     QT_METACALL_ID = qt_Smoke->idMethodName("qt_metacall$$?");

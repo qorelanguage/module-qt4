@@ -56,7 +56,6 @@
 #include "qoresmokebinding.h"
 #include "qoreqtenumnode.h"
 
-
 namespace Marshalling {
 
 QtContainerToQore * QtContainerToQore::m_instance = 0;
@@ -526,6 +525,36 @@ QoreQVariant * qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * no
     return ret;
 }
 
+template <typename T>
+AbstractQoreNode *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0) {
+   QObject* qtObj = reinterpret_cast<QObject *>(origObj);
+   // get real object's class depending on QObject::metaObject
+   // it's a must for e.g. sender() call or for objects that
+   // are deleted in Qore, but kept in Qt (parenting etc.)
+   const char * cname;
+   {
+      QoreQtVirtualFlagHelper vfh;
+      cname = qtObj->metaObject()->className();
+   }
+   const QoreClass *qc = ClassNamesMap::Instance()->value(cname);
+   Q_ASSERT_X(qc, "Unknown QoreClass", "Qt to Qore");
+   // New qoreobject for really required Qt class/object
+   ReferenceHolder<QoreObject> qto(new QoreObject(qc, getProgram()), xsink);
+   Smoke::ModuleIndex cid = qt_Smoke->findClass(cname);
+   assert(cid.smoke);
+
+   T *data = new T(cid.index, qtObj);
+   // QObject based obj
+   {
+      QoreQtVirtualFlagHelper vfh;
+      qtObj->setProperty(QORESMOKEPROPERTY, reinterpret_cast<qulonglong>(*qto));
+   }
+   qto->setPrivate(qc->getID(), data);
+   if (p)
+      *p = data;
+   return qto.release();
+}
+
 AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, ExceptionSink *xsink) {
 //     printd(0, "Marshalling::stackToQore() type: %s, %d\n", t.name, t.flags & Smoke::tf_elem);
 
@@ -627,51 +656,30 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
             o->ref();
         } else {
             // now it should be real object
-            QoreSmokePrivate *p;
             // o is still required to decide if is it QObject based or not
-            o = new QoreObject(c, getProgram());
-            if (o->getClass(CID_QOBJECT)) {
-                QObject * qtObj = reinterpret_cast<QObject*>(origObj);
-                // get real object's class depending on QObject::metaObject
-                // it's a must for e.g. sender() call or for objects that
-                // are deleted in Qore, but kept in Qt (parenting etc.)
-                const char * cname;
-                {
-                    QoreQtVirtualFlagHelper vfh;
-                    cname = qtObj->metaObject()->className();
-                }
-                qc = ClassNamesMap::Instance()->value(cname);
-                Q_ASSERT_X(qc, "Unknown QoreClass", "Qt to Qore");
-                // New qoreobject for really required Qt class/object
-                ReferenceHolder<QoreObject> qto(new QoreObject(qc, getProgram()), xsink);
-                Smoke::ModuleIndex cid = qt_Smoke->findClass(cname);
-                assert(cid.smoke);
-                p = new QoreSmokePrivateQObjectData(/*t.classId*/cid.index, qtObj);
-                // QObject based obj
-                {
-                    QoreQtVirtualFlagHelper vfh;
-                    qtObj->setProperty(QORESMOKEPROPERTY, reinterpret_cast<qulonglong>(*qto));
-                }
-                qto->setPrivate(qc->getID(), p);
-                o.release(); // remove original object from memory. Really required?
-                return qto.release();
-            } else {
-                // it's not QObject based, just use copy constructor
-                const char * className = qt_Smoke->classes[t.classId].className;
+	    if (c->getClass(CID_QABSTRACTITEMMODEL)) {	       
+	       return doQObject<QoreSmokePrivateQAbstractItemModelData>(origObj, xsink);
+	    }
+            else if (c->getClass(CID_QOBJECT)) {
+	       return doQObject<QoreSmokePrivateQObjectData>(origObj, xsink);
+            } 
 
-                //printd(0, "Marshalling::stackToQore() %s: origObj=%p qcid=%d (%s) scid=%d ref=%d ptr=%d stack=%d\n", t.name, origObj, c->getID(), c->getName(), t.classId, flags == Smoke::tf_ref, flags == Smoke::tf_ptr, flags == Smoke::tf_stack);
-
-                if (iconst && flags == Smoke::tf_ref) {
-                    origObj = Marshalling::constructCopy(origObj, className, xsink);
-                    if (*xsink)
-                        return 0;
-                }
-
-                p = new QoreSmokePrivateData(t.classId, origObj);
-                if (flags = Smoke::tf_ptr)
-                    p->setExternallyOwned();
-                o->setPrivate(c->getID(), p);
-            }
+	    o = new QoreObject(c, getProgram());
+	    // it's not QObject based, just use copy constructor
+	    const char * className = qt_Smoke->classes[t.classId].className;
+	    
+	    //printd(0, "Marshalling::stackToQore() %s: origObj=%p qcid=%d (%s) scid=%d ref=%d ptr=%d stack=%d\n", t.name, origObj, c->getID(), c->getName(), t.classId, flags == Smoke::tf_ref, flags == Smoke::tf_ptr, flags == Smoke::tf_stack);
+	    
+	    if (iconst && flags == Smoke::tf_ref) {
+	       origObj = Marshalling::constructCopy(origObj, className, xsink);
+	       if (*xsink)
+		  return 0;
+	    }
+	    
+	    QoreSmokePrivate *p = new QoreSmokePrivateData(t.classId, origObj);
+	    if (flags = Smoke::tf_ptr)
+	       p->setExternallyOwned();
+	    o->setPrivate(c->getID(), p);
         }
         // it can return already existing object or non-qobject based one
         // qobject based objs are handled in o->getClass(CID_QOBJECT) part

@@ -595,7 +595,9 @@ void common_destructor(const QoreClass &thisclass, QoreObject *self, AbstractPri
     assert(dynamic_cast<QoreSmokePrivate*>(private_data));
 
     QoreSmokePrivate *p = reinterpret_cast<QoreSmokePrivate*>(private_data);
-    //printd(0, "common_destructor class=%p (%s), self=%p, private_data=%p, object=%p\n", &thisclass, thisclass.getName(), self, private_data, p->object());
+
+    if (!strcmp(thisclass.getName(), "QDesktopWidget"))
+       printd(0, "common_destructor class=%p (%s), self=%p, private_data=%p, object=%p\n", &thisclass, thisclass.getName(), self, private_data, p->object());
 
     if (!p->object()) {
 //         printd(0, "common_destructor (WW) QoreSmokePrivate's Qt object does not exist anymore\n");

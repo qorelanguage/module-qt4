@@ -30,6 +30,8 @@ class QByteArray;
 
 namespace Marshalling {
 
+   template <typename T>
+   AbstractQoreNode *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0); 
 
 class QtContainerToQore {
 public:

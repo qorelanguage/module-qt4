@@ -577,6 +577,12 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                     assert(!*xsink);
                 }
 
+		if (!p && flags == Smoke::tf_stack) {
+		   CommonQoreMethod cqm(0, 0, t.name, t.name, 0, xsink);
+		   (* cqm.smokeClass().classFn)(cqm.method().method, 0, cqm.Stack);
+		   p = cqm.Stack[0].s_class;
+		}
+
                 si.s_class = p;
                 return 0;
             }
@@ -609,6 +615,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
         return 0;
     case Smoke::t_int:
         si.s_int = node ? node->getAsInt() : 0;
+	//printd(0, "qoreToStackStatic() setting arg %d to int %d\n", index, si.s_int);
         return 0;
     case Smoke::t_uint:
         si.s_uint = node ? node->getAsBigInt() : 0;
@@ -633,8 +640,18 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
     if (!t.name)
         return 0;
 
+    if (!strcmp(t.name, "WId")) {
+        if (cqm) {
+            ref_store_s *re = cqm->getRefEntry(index - 1);
+            re->assign(node->getAsInt());
+            si.s_voidp = re->getPtr();
+            return 0;
+        }
+    }
+
     if (tid == Smoke::t_voidp) {
         xsink->raiseException("QT-ARGUMENT-ERROR", "DEBUG: need special handler for void* argument to %s::%s()", className, methodName);
+	printd(0, "void * in %s::%s()\n", className, methodName);
 	assert(false);
 	return 0;
     }
@@ -672,17 +689,17 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
             // and the node is unique, then we must take the value and clear the QoreSmokePrivate
             // data structure, otherwise we need to make a copy, because otherwise the data would
             // be destroyed before QT has a chance to use it and QT would be using an invalid pointer
-            if (flags == Smoke::tf_stack && temp) {
-                if (node->is_unique())
-                    c->clear();
-                else {
-                    p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
-                    assert(!*xsink);
-                }
-            } else if (flags == Smoke::tf_ref) {
-                p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
-                assert(!*xsink);
-            }
+	   if (flags == Smoke::tf_stack && temp) {
+	      if (node->is_unique())
+		 c->clear();
+	      else {
+		 p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
+		 assert(!*xsink);
+	      }
+	   } else if (flags == Smoke::tf_ref) {
+	      p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
+	      assert(!*xsink);
+	   }
         }
 
 	if (!p && flags == Smoke::tf_stack) {
@@ -696,14 +713,6 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
         return 0;
     }
 
-    if (!strcmp(t.name, "WId")) {
-        if (cqm) {
-            ref_store_s *re = cqm->getRefEntry(index - 1);
-            re->assign(node->getAsInt());
-            si.s_voidp = re->getPtr();
-            return 0;
-        }
-    }
     xsink->raiseException("QT-ARGUMENT-ERROR", "don't know how to handle arguments ot type '%s'", t.name);
     return -1;
 }

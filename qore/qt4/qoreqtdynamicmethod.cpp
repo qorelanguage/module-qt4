@@ -163,7 +163,7 @@ void QoreQtDynamicMethod::qtToQore(const Smoke::Type &t, void *arg, QoreListNode
 void QoreQtDynamicMethod::qoreToQt(const Smoke::Type &qtType, Smoke::StackItem &si, void *&ptr, void *&save, const AbstractQoreNode *val) {
     save = 0;
     ptr = 0;
-    printd(0, "qoreToQt() ptr=%p save=%p, val=%p (%s)\n", ptr, save, val, val ? val->getTypeName() : "n/a");
+    //printd(0, "qoreToQt() ptr=%p save=%p, val=%p (%s)\n", ptr, save, val, val ? val->getTypeName() : "n/a");
 
     ExceptionSink xsink;
     const char * cname = qt_Smoke->classes[qtType.classId].className;
@@ -219,11 +219,11 @@ void QoreQtDynamicMethod::qoreToQt(const Smoke::Type &qtType, Smoke::StackItem &
     default:
         Q_ASSERT_X(false, "sig/slot", "missing qore to qt handling");
     }
-    ptr = &save;
+    ptr = save;
 }
 
 void QoreQtDynamicMethod::qoreToQtDirect(const Smoke::Type &qtType, void *&ptr, const AbstractQoreNode *val) {
-    printd(0, "qoreToQtDirect() ptr=%p val=%p (%s)\n", ptr, val, val ? val->getTypeName() : "n/a");
+    //printd(0, "qoreToQtDirect() ptr=%p val=%p (%s)\n", ptr, val, val ? val->getTypeName() : "n/a");
     void * save;
     Smoke::StackItem si;
     qoreToQt(qtType, si, ptr, save, val);
@@ -321,8 +321,6 @@ const QoreMethod * QoreQtDynamicSlot::resolveMethod(const char *name, ExceptionS
     //printd(5, "DynamicSlot::resolveMethod(%08p, '%s') search: %s::%s() resolved to %08p\n", qore_obj, name, qc->getName(), tmp.getBuffer(), meth);
     return meth;
 }
-
-
 
 QoreQtDynamicSignal::QoreQtDynamicSignal(const char *sig, ExceptionSink *xsink) {
     const char *p = strchr(sig, '(');

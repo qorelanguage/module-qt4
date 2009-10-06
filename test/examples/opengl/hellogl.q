@@ -1,11 +1,9 @@
 #!/usr/bin/env qore
 
 # This is basically a direct port of a QT example program to Qore
-# using Qore's "qt-opengl" module.
+# using Qore's "qt4" and "opengl" modules.
 
-# Note that Qore's "qt-opengl" module requires QT 4.3 or above with OpenGL support
-
-# use the "qt-opengl" module (automatically loads the "qt-gui" and "opengl" modules)
+# use the "qt4" module
 %requires qt4
 %requires opengl
 
@@ -54,8 +52,7 @@ class GLWidget inherits QGLWidget
         return new QSize(400, 400);
     }
 
-    setXRotation($angle)
-    {
+    setXRotation($angle) {
         $.normalizeAngle(\$angle);
         if ($angle != $.xRot) {
             $.xRot = $angle;
@@ -64,8 +61,7 @@ class GLWidget inherits QGLWidget
         }
     }
     
-    setYRotation($angle)
-    {
+    setYRotation($angle) {
         $.normalizeAngle(\$angle);
         if ($angle != $.yRot) {
             $.yRot = $angle;
@@ -74,8 +70,7 @@ class GLWidget inherits QGLWidget
         }
     }
 
-    setZRotation($angle)
-    {
+    setZRotation($angle) {
         $.normalizeAngle(\$angle);
         if ($angle != $.zRot) {
             $.zRot = $angle;
@@ -84,8 +79,7 @@ class GLWidget inherits QGLWidget
         }
     }
 
-    initializeGL()
-    {
+    initializeGL() {
         $.qglClearColor($.trolltechPurple.dark());
         $.object = $.makeObject();
         glShadeModel(GL_FLAT);

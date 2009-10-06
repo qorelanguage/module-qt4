@@ -187,7 +187,7 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
     for (int i = 0; i < typeList.size(); ++i)
         qoreArgs->push(Marshalling::stackToQore(typeList.at(i), args[i + 1], &xsink));
 
-    //printd(0, "QoreSmokeBinding::callMethod() calling method smoke=%s::%s(), qore=%s::%s()\n", cname, mname, o->getClassName(), mname);
+    //printd(0, "QoreSmokeBinding::callMethod() calling method smoke=%s::%s(), qore=%s::%s() args=%d\n", cname, mname, o->getClassName(), mname, typeList.size());
     ReferenceHolder<AbstractQoreNode> aNode(o->evalMethod(mname, *qoreArgs, &xsink), &xsink);
 
     Smoke::Type &rt = smoke->types[meth.ret];
