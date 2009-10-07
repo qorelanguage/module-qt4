@@ -36,8 +36,8 @@
 qore_classid_t CID_QOBJECT = 0;
 qore_classid_t CID_QWIDGET = 0;
 qore_classid_t CID_QABSTRACTITEMMODEL = 0;
-
-static QoreClass *QC_QObject;
+const QoreClass *QC_QObject = 0;
+Smoke::ModuleIndex SMI_QObject;
 
 extern Smoke* qt_Smoke;
 
@@ -246,6 +246,7 @@ QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) {
 	QC_QObject = m_qoreClass;
         m_qoreClass->addMethod("createSignal", (q_method_t)QOBJECT_createSignal);
         m_qoreClass->addMethod("emit",         (q_method_t)QOBJECT_emit);
+	SMI_QObject = m_classId;
     }
     else if (!CID_QWIDGET && !strcmp(className, "QWidget")) {
         CID_QWIDGET = m_qoreClass->getID();

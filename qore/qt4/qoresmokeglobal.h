@@ -36,6 +36,8 @@
 extern qore_classid_t CID_QOBJECT;
 extern qore_classid_t CID_QWIDGET;
 extern qore_classid_t CID_QABSTRACTITEMMODEL;
+extern const QoreClass *QC_QObject;
+extern Smoke::ModuleIndex SMI_QObject;
 
 DLLLOCAL QoreObject *getQoreObject(const QObject *obj);
 DLLLOCAL QoreObject *getQoreObject(Smoke::Index classId, void *obj, QoreClass *&qc);

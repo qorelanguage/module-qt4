@@ -531,16 +531,25 @@ AbstractQoreNode *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0) {
    // get real object's class depending on QObject::metaObject
    // it's a must for e.g. sender() call or for objects that
    // are deleted in Qore, but kept in Qt (parenting etc.)
-   const char * cname;
+   const QMetaObject *meta;
    {
       QoreQtVirtualFlagHelper vfh;
-      cname = qtObj->metaObject()->className();
+      meta = qtObj->metaObject();
    }
-   const QoreClass *qc = ClassNamesMap::Instance()->value(cname);
-   Q_ASSERT_X(qc, "Unknown QoreClass", "Qt to Qore");
+
+   const char * cname;
+   const QoreClass *qc;
+   while (true) {
+      cname = meta->className();
+      qc = ClassNamesMap::Instance()->value(cname);
+      if (qc)
+	 break;
+      meta = meta->superClass();
+      assert(meta);
+   }
+   Smoke::ModuleIndex cid = qt_Smoke->findClass(cname);
    // New qoreobject for really required Qt class/object
    ReferenceHolder<QoreObject> qto(new QoreObject(qc, getProgram()), xsink);
-   Smoke::ModuleIndex cid = qt_Smoke->findClass(cname);
    assert(cid.smoke);
 
    T *data = new T(cid.index, qtObj);
