@@ -120,6 +120,7 @@ struct ref_store_s {
         r_none,          // no value
         r_int,           // for integers (q_int)
         r_str,           // for strings (q_str)
+        r_bool,          // for bool*
         r_sl,            // for a list of strings (q_sl)
         r_qstr,          // for a QString*
         r_qkeysequence,  // for a QKeySequence
@@ -138,6 +139,7 @@ struct ref_store_s {
     union data_store_u {
         int q_int;
         char *q_str;
+        bool q_bool;
         QString *q_qstr;
         ArgStringList *q_sl;
         qreal q_qreal;
@@ -155,28 +157,28 @@ struct ref_store_s {
         switch (type) {
         case r_str:
             if (data.q_str) {
-// 		 printd(0, "ref_store_s::~ref_store_s() this=%p freeing string ptr %p\n", this, data.q_str);
+//          printd(0, "ref_store_s::~ref_store_s() this=%p freeing string ptr %p\n", this, data.q_str);
                 free(data.q_str);
             }
             break;
         case r_qstr:
-// 	      printd(0, "ref_store_s::~ref_store_s() this=%p deleting QString ptr %p\n", this, data.q_qstr);
+//           printd(0, "ref_store_s::~ref_store_s() this=%p deleting QString ptr %p\n", this, data.q_qstr);
             delete data.q_qstr;
             break;
         case r_qkeysequence:
-// 	      printd(0, "ref_store_s::~ref_store_s() this=%p deleting QKeySequence ptr %p\n", this, data.q_qkeysequence);
+//           printd(0, "ref_store_s::~ref_store_s() this=%p deleting QKeySequence ptr %p\n", this, data.q_qkeysequence);
             delete data.q_qkeysequence;
             break;
         case r_qbrush:
-// 	      printd(0, "ref_store_s::~ref_store_s() this=%p deleting QBrush ptr %p\n", this, data.q_qbrush);
+//           printd(0, "ref_store_s::~ref_store_s() this=%p deleting QBrush ptr %p\n", this, data.q_qbrush);
             delete data.q_qbrush;
             break;
         case r_qpen:
-// 	      printd(0, "ref_store_s::~ref_store_s() this=%p deleting QPen ptr %p\n", this, data.q_qpen);
+//           printd(0, "ref_store_s::~ref_store_s() this=%p deleting QPen ptr %p\n", this, data.q_qpen);
             delete data.q_qpen;
             break;
         case r_qcolor:
-// 	      printd(0, "ref_store_s::~ref_store_s() this=%p deleting QColor ptr %p\n", this, data.q_qcolor);
+//           printd(0, "ref_store_s::~ref_store_s() this=%p deleting QColor ptr %p\n", this, data.q_qcolor);
             delete data.q_qcolor;
             break;
         case r_container:
@@ -206,6 +208,10 @@ struct ref_store_s {
         //printd(0, "ref_store_s::assign('%s' (%p)) this=%p\n", v, v, this);
         type = r_str;
         data.q_str = v;
+    }
+    DLLLOCAL void assign(bool v) {
+        type = r_bool;
+        data.q_bool = v;
     }
     DLLLOCAL void assign(ArgStringList *v) {
         //printd(0, "ref_store_s() this=%p assigning string list %p (size %d)\n", this, v, v->getSize());
@@ -250,6 +256,9 @@ struct ref_store_s {
         case r_str:
             ptr = data.q_str;
             break;
+        case r_bool:
+            ptr = &data.q_bool;
+            break;
         case r_sl:
             ptr = data.q_sl->getPtr();
             break;
@@ -293,7 +302,7 @@ struct ref_store_s {
 class CommonQoreMethod {
 public:
     CommonQoreMethod(QoreObject *n_self,
-		     QoreSmokePrivate *n_smc,
+             QoreSmokePrivate *n_smc,
                      const char* className,
                      const char* methodName,
                      const QoreListNode* params,
