@@ -254,6 +254,7 @@ CommonQoreMethod::~CommonQoreMethod() {
 }
 
 static int get_qstring(Smoke::Type &t, QString &qstring, const AbstractQoreNode *n, ExceptionSink *xsink) {
+// 	printd(0, "get_qstring() %s NT=%d\n", t.name, n->getType());
     if (n && n->getType() == NT_STRING) {
         const QoreStringNode *str = reinterpret_cast<const QoreStringNode *>(n);
         if (str->getEncoding() == QCS_ISO_8859_1) {
@@ -267,10 +268,14 @@ static int get_qstring(Smoke::Type &t, QString &qstring, const AbstractQoreNode 
             qstring = QString::fromUtf8(str->getBuffer());
         }
     } else if (n && n->getType() == NT_OBJECT) {
-        const QoreClass *qc = ClassNamesMap::Instance()->value(t.classId);
-        const QoreObject *obj = reinterpret_cast<const QoreObject *>(n);
-        QoreSmokePrivateData * p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(qc->getID(), xsink));
-	qstring = p && p->object() ? QString( *(QString*)(p->object()) ) : QString();
+		if (t.classId == 0)
+			qstring = QString();
+		else {
+	        const QoreClass *qc = ClassNamesMap::Instance()->value(t.classId);
+	        const QoreObject *obj = reinterpret_cast<const QoreObject *>(n);
+	        QoreSmokePrivateData * p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(qc->getID(), xsink));
+			qstring = p && p->object() ? QString( *(QString*)(p->object()) ) : QString();
+		}
     }
     else {
         QoreStringValueHelper str(n, QCS_UTF8, xsink);
@@ -650,13 +655,6 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
         }
     }
 
-    if (tid == Smoke::t_voidp) {
-        xsink->raiseException("QT-ARGUMENT-ERROR", "DEBUG: need special handler for void* argument to %s::%s()", className, methodName);
-	printd(0, "void * in %s::%s()\n", className, methodName);
-	assert(false);
-	return 0;
-    }
-
     if (!strcmp(t.name, "QVariant")) {
        std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(t, node, xsink));
        if (variant->status == Marshalling::QoreQVariant::Invalid)
@@ -675,6 +673,13 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
 	  return -1;
        si.s_voidp = qstr.release();
        return 0;
+    }
+	
+    if (tid == Smoke::t_voidp) {
+        xsink->raiseException("QT-ARGUMENT-ERROR", "DEBUG: need special handler for void* argument to %s::%s()", className, methodName);
+		printd(0, "void * (%s) in %s::%s()\n", t.name, className, methodName);
+		assert(false);
+		return 0;
     }
 
     if (t.name[0] == 'Q') {

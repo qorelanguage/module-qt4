@@ -607,6 +607,9 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
         if (tname == "uchar*")
             return new QoreStringNode(*(uchar*)i.s_voidp);
 
+        if (tname == "const char*" || tname == "char*")
+            return new QoreStringNode(*(char*)i.s_voidp);
+
         if (tname == "QString")
             return new QoreStringNode(reinterpret_cast<QString*>(i.s_voidp)->toUtf8().data(), QCS_UTF8);
 

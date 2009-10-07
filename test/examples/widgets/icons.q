@@ -117,7 +117,7 @@ class IconSizeSpinBox inherits QSpinBox
 
     valueFromText($text)
     {
-        return int($text =~ x/(\\d+)(\\s*[xx]\\s*\\d+)?/)[0]; #x/
+        return int($text =~ x/(\\d+)(\\s*[xx]\\s*\\d+)?/)[0];
     }
 
     textFromValue($value)
@@ -213,7 +213,7 @@ class MainWindow inherits QMainWindow
             return;
 
         my $action = $.sender();
-        my $style = QStyleFactory::create($action.data());
+        my $style = QStyleFactory::create($action.data().toString());
         #Q_ASSERT(style);
 
         QApplication::setStyle($style);
@@ -499,7 +499,7 @@ class MainWindow inherits QMainWindow
     checkCurrentStyle()
     {
         foreach my $action in ($.styleActionGroup.actions()) {
-            my $styleName = $action.data();
+            my $styleName = $action.data().toString();
             my $candidate = QStyleFactory::create($styleName);
             #Q_ASSERT(candidate);
             if ($candidate.metaObject().className()
