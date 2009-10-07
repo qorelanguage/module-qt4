@@ -58,7 +58,8 @@ class WigglyWidget inherits QWidget
 
     setText($newText) { $.text = $newText; }
 
-    private paintEvent($event)
+#     private paintEvent($event)
+    paintEvent($event)
     {
         my $metrics = new QFontMetrics($.font());
         my $x = ($.width() - $metrics.width($.text)) / 2;
@@ -75,7 +76,8 @@ class WigglyWidget inherits QWidget
         }
     }
 
-    private timerEvent($event)
+#     private timerEvent($event)
+    timerEvent($event)
     {
         if ($event.timerId() == $.timer.timerId()) {
             ++$.step;

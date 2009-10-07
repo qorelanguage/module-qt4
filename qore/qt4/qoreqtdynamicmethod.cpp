@@ -136,7 +136,10 @@ void QoreQtDynamicMethod::qtToQore(const Smoke::Type &t, void *arg, QoreListNode
         si.s_enum = * reinterpret_cast<int*>(arg);
     else if (t.flags & Smoke::t_class)
         si.s_class = arg;
+    else if (!strcmp(t.name, "QString&"))
+        si.s_voidp = arg;
     else {
+        printd(0, "QoreQtDynamicMethod::qtToQore type=%s flags=%d\n", t.name, t.flags);
         Q_ASSERT_X(false, "sig/slot", "missing qt to qore handling");
     }
 
