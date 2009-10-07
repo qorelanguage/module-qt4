@@ -553,23 +553,10 @@ AbstractQoreNode * common_method(const QoreMethod &method,
     const char * className = method.getClass()->getName();
     QoreSmokePrivate * smc = reinterpret_cast<QoreSmokePrivate*>(apd);
     CommonQoreMethod cqm(self, smc, className, methodName, params, xsink);
-    if (!cqm.isValid())
-        return 0;
-
     Q_ASSERT_X(smc!=0, "cast", "cannot get QoreSmokeClass from QoreObject");
     Q_ASSERT_X(smc->object()!=0, "cast", "cannot get an object from QoreSmokeClass");
 // if (QByteArray(methodName) == "setColumnWidths") assert(0);
-    (* cqm.smokeClass().classFn)(cqm.method().method,
-                                 smc->object(),
-                                 cqm.Stack);//args);
-
-
-    //if (!strcmp(methodName, "addItem")) assert(false);
-    if (!strcmp(methodName, "spacerItem")) assert(false);
-
-    return cqm.returnValue();
-    //Smoke::Type t = qt_Smoke->types[cqm.method().ret];
-    //return Marshalling::stackToQore(t, cqm.Stack[0]/*args[0]*/, xsink);
+    return cqm.callMethod();
 }
 
 
@@ -579,14 +566,7 @@ AbstractQoreNode * common_static_method(const QoreMethod &method,
     const char * methodName = qoreMethodName2Qt(method.getName());
     const char * className = method.getClass()->getName();
     CommonQoreMethod cqm(0, 0, className, methodName, params, xsink);
-    if (!cqm.isValid())
-        return 0;
-
-    (* cqm.smokeClass().classFn)(cqm.method().method, 0, cqm.Stack);
-    return cqm.returnValue();
-
-    //Smoke::Type t = qt_Smoke->types[cqm.method().ret];
-    //return Marshalling::stackToQore(t, cqm.Stack[0], xsink);
+    return cqm.callMethod();
 }
 
 void common_destructor(const QoreClass &thisclass, QoreObject *self, AbstractPrivateData *private_data, ExceptionSink *xsink) {

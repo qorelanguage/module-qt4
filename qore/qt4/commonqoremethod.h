@@ -359,6 +359,13 @@ public:
         return tparams;
     }
 
+    DLLLOCAL AbstractQoreNode *callMethod();
+
+    DLLLOCAL void suppressMethod() {
+       assert(!suppress_method);
+       suppress_method = true;
+    }
+
     // static functions
     DLLLOCAL static int qoreToStackStatic(ExceptionSink *xsink, Smoke::StackItem &si, const char *className, const char *methodName, Smoke::Type t, const AbstractQoreNode *node, int index = -1, CommonQoreMethod *cqm = 0, bool temp = false);
 
@@ -382,6 +389,7 @@ private:
     QoreHashNode *tparams;
     QoreObject *self;
     QoreSmokePrivate *smc;
+    bool suppress_method;
 
     DLLLOCAL void checkRefStore() {
         if (!ref_store)

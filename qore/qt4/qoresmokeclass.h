@@ -83,7 +83,6 @@ private:
     void * m_object;
 };
 
-
 class QoreSmokePrivateQObjectData : public QoreSmokePrivate {
 public:
    DLLLOCAL QoreSmokePrivateQObjectData(Smoke::Index classID, QObject *p) : QoreSmokePrivate(classID), m_qobject(p), m_meta(0), obj_ref(false) {

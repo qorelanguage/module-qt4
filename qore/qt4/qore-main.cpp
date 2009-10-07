@@ -33,6 +33,7 @@
 #include <QModelIndex>
 #include <QAbstractItemModel>
 #include <QDesktopWidget>
+#include <QTimer>
 
 static QoreStringNode *qt_module_init();
 static void qt_module_ns_init(QoreNamespace *rns, QoreNamespace *qns);
@@ -267,6 +268,88 @@ static int addItem_handler(Smoke::Stack &stack, ClassMap::TypeList &types, const
     return 0;
 }
 
+class mySingleShotTimer : public QObject {
+private:
+   int timerId;
+   QoreSmokePrivateQObjectData *my_data;
+   QoreObject *obj;
+
+public:   
+   DLLLOCAL mySingleShotTimer() : my_data(0), obj(0) {}
+   DLLLOCAL int timerInit(QoreSmokePrivateQObjectData *data, int msec, QoreSmokePrivateQObjectData *receiver_data, const QoreObject *receiver, const char *member, ExceptionSink *xsink) {
+      my_data = data;
+      data->createSignal("timeout()", xsink);
+      assert(!*xsink);
+
+      receiver_data->connectDynamic(data, "2timeout()", receiver, member, xsink);
+      if (*xsink)
+	 return -1;
+
+      timerId = startTimer(msec);
+      printd(0, "mySingleShotTimer::timerInit() msec: %d timerId: %d data: %p (QT=%p)\n", msec, timerId, my_data, my_data->object());
+      return 0;
+   }
+
+   DLLLOCAL void setObject(QoreObject *n_obj) {
+      obj = n_obj;
+   }
+
+protected:
+   DLLLOCAL virtual void timerEvent(QTimerEvent *) {
+      printd(0, "mySingleShotTimer::timerEvent() timerId: %d data: %p (QT=%p)\n", timerId, my_data, my_data->object());
+
+      // need to kill the timer _before_ we emit timeout() in case the
+      // slot connected to timeout calls processEvents()
+      if (timerId > 0)
+	 killTimer(timerId);
+      timerId = -1;
+      my_data->emitSignal("timeout()", 0, 0);
+
+      ExceptionSink xsink;
+      QoreObject *t = obj;
+      t->doDelete(&xsink);
+      t->deref(&xsink);
+   }
+};
+
+static int arg_handler_QTimer_singleShot(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+   const AbstractQoreNode *p = get_param(args, 0);
+   int msec = p ? p->getAsInt() : 0;
+   const QoreObject *o = test_object_param(args, 1);
+   if (!o) {
+      xsink->raiseException("QTIMER-SINGLESHOT-PARAM-ERROR", "expecting a QObject object as second argument to QTimer::singleShot()");
+      return -1;
+   }
+
+   PrivateDataRefHolder<QoreSmokePrivateQObjectData> receiver(o, CID_QOBJECT, xsink);
+   if (!receiver) {
+      if (!*xsink)
+         xsink->raiseException("QTIMER-SINGLESHOT-PARAM-ERROR", "expecting a QObject object as second argument to QTimer::singleShot()");
+      return -1;
+   }
+
+   const QoreStringNode *pstr = test_string_param(args, 2);
+   if (!pstr) {
+      xsink->raiseException("QTIMER-SINGLESHOT-PARAM-ERROR", "expecting a string as third argument to QTimer::singleShot()");
+      return -1;
+   }
+   const char *member = pstr->getBuffer();
+
+   mySingleShotTimer *sst = new mySingleShotTimer();
+   printd(0, "arg_handler_QTimer_singleShot() sst=%p\n", sst);
+   QoreSmokePrivateQObjectData *data;
+   ReferenceHolder<QoreObject> obj(Marshalling::doQObject<QoreSmokePrivateQObjectData>(sst, xsink, &data), xsink);
+   if (*xsink)
+      return -1;
+
+   if (sst->timerInit(data, msec, *receiver, o, member, xsink))
+      return -1;
+
+   sst->setObject(obj.release());
+   cqm.suppressMethod();
+   return 0;
+}
+
 static int arg_handler_QShortcut(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     // Create a Smoke stack from params
     stack = new Smoke::StackItem[types.size() + 1];
@@ -426,6 +509,8 @@ static QoreStringNode *qt_module_init() {
     // add return value handlers
     cm.setRVHandler("QLayoutItem", "spacerItem", "spacerItem", rv_handler_spacer_item);
     cm.setRVHandler("QApplication", "desktop", rv_handler_QApplication_desktop);
+
+    cm.addArgHandler("QTimer", "singleShot", arg_handler_QTimer_singleShot);
 
     // initialize global constants
     QT_METACALL_ID = qt_Smoke->idMethodName("qt_metacall$$?");

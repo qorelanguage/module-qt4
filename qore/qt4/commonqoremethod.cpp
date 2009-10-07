@@ -68,7 +68,8 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
         ref_store(0),
 	tparams(0),
 	self(n_self),
-	smc(n_smc) {
+	smc(n_smc),
+	suppress_method(false) {
     /*
     // find last position with a value
     if (qoreArgCnt) {
@@ -944,3 +945,13 @@ void CommonQoreMethod::postProcessConstructor(QoreSmokePrivate *n_smc, Smoke::St
     assert(!tparams);
 }
 
+AbstractQoreNode *CommonQoreMethod::callMethod() {
+   if (!isValid())
+      return 0;
+   if (!suppress_method) {
+      // call smoke-qt method if not suppressed by arg handler
+      (* smokeClass().classFn)(method().method, smc ? smc->object() : 0, Stack);
+   }
+   // return return value
+   return returnValue();
+}

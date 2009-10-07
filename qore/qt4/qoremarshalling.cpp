@@ -526,7 +526,7 @@ QoreQVariant * qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * no
 }
 
 template <typename T>
-AbstractQoreNode *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0) {
+QoreObject *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0) {
    QObject* qtObj = reinterpret_cast<QObject *>(origObj);
    // get real object's class depending on QObject::metaObject
    // it's a must for e.g. sender() call or for objects that
