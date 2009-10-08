@@ -118,7 +118,7 @@ void QoreQtDynamicMethod::qtToQore(const Smoke::Type &t, void *arg, QoreListNode
 
     int typ = t.flags & Smoke::tf_ref;
 
-    if (type == Smoke::tf_ref && !strcmp(t.name, "QString&"))
+    if (typ == Smoke::tf_ref && !strcmp(t.name, "QString&"))
        si.s_voidp = arg;
     else 
        switch (t.flags & Smoke::tf_elem) {

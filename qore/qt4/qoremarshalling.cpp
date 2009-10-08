@@ -667,31 +667,39 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
 //             printd(0, "Marshalling::stackToQore() got QoreObject %p\n", o);
             o->ref();
         } else {
+
+	    QoreSmokePrivate *p;
+
             // now it should be real object
             // o is still required to decide if is it QObject based or not
 	    if (c->getClass(CID_QABSTRACTITEMMODEL)) {	       
-	       return doQObject<QoreSmokePrivateQAbstractItemModelData>(origObj, xsink);
+	       QoreSmokePrivateQAbstractItemModelData *p1;
+	       o = doQObject<QoreSmokePrivateQAbstractItemModelData>(origObj, xsink, &p1);
+	       p = p1;
 	    }
             else if (c->getClass(CID_QOBJECT)) {
-	       return doQObject<QoreSmokePrivateQObjectData>(origObj, xsink);
+	       QoreSmokePrivateQObjectData *p1;
+	       o = doQObject<QoreSmokePrivateQObjectData>(origObj, xsink, &p1);
+	       p = p1;
             } 
-
-	    o = new QoreObject(c, getProgram());
-	    // it's not QObject based, just use copy constructor
-	    const char * className = qt_Smoke->classes[t.classId].className;
+	    else {
+	       o = new QoreObject(c, getProgram());
+	       // it's not QObject based, just use copy constructor
+	       const char * className = qt_Smoke->classes[t.classId].className;
+	       
+	       //printd(0, "Marshalling::stackToQore() %s: origObj=%p qcid=%d (%s) scid=%d ref=%d ptr=%d stack=%d\n", t.name, origObj, c->getID(), c->getName(), t.classId, flags == Smoke::tf_ref, flags == Smoke::tf_ptr, flags == Smoke::tf_stack);
+	     
+	       if (iconst && flags == Smoke::tf_ref) {
+		  origObj = Marshalling::constructCopy(origObj, className, xsink);
+		  if (*xsink)
+		     return 0;
+	       }
 	    
-	    //printd(0, "Marshalling::stackToQore() %s: origObj=%p qcid=%d (%s) scid=%d ref=%d ptr=%d stack=%d\n", t.name, origObj, c->getID(), c->getName(), t.classId, flags == Smoke::tf_ref, flags == Smoke::tf_ptr, flags == Smoke::tf_stack);
-	    
-	    if (iconst && flags == Smoke::tf_ref) {
-	       origObj = Marshalling::constructCopy(origObj, className, xsink);
-	       if (*xsink)
-		  return 0;
+	       p = new QoreSmokePrivateData(t.classId, origObj);
+	       o->setPrivate(c->getID(), p);
 	    }
-	    
-	    QoreSmokePrivate *p = new QoreSmokePrivateData(t.classId, origObj);
-	    if (flags = Smoke::tf_ptr)
+	    if (flags == Smoke::tf_ptr)
 	       p->setExternallyOwned();
-	    o->setPrivate(c->getID(), p);
         }
         // it can return already existing object or non-qobject based one
         // qobject based objs are handled in o->getClass(CID_QOBJECT) part
