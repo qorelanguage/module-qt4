@@ -168,7 +168,7 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
         if (isAbstract) {
             xsink.raiseException("QT-ABSTRACT-METHOD-ERROR", "The Qt library tried to execute pure virtual %s::%s(), but this method is not implemented in the %s class", o->getClassName(), mname, o->getClassName());
             xsink.handleExceptions();
-            exit(1); // TODO/FIXME: propably won't crash here...
+            assert(0); // TODO/FIXME: propably won't crash here...
         }
         return false;
     }
@@ -193,7 +193,7 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
     Smoke::Type &rt = smoke->types[meth.ret];
     if (CommonQoreMethod::qoreToStackStatic(&xsink, args[0], cname, mname, rt, *aNode, -1, 0, true) == -1) {
         xsink.handleExceptions();
-        exit(1);
+        assert(0);
     }
 
     return true;

@@ -257,7 +257,7 @@ CommonQoreMethod::~CommonQoreMethod() {
 }
 
 static int get_qstring(Smoke::Type &t, QString &qstring, const AbstractQoreNode *n, ExceptionSink *xsink) {
-//     printd(0, "get_qstring() %s NT=%d\n", t.name, n->getType());
+//     printd(0, "get_qstring() %s NT=%d classId=%d\n", t.name, n->getType(), t.classId);
     if (n && n->getType() == NT_STRING) {
         const QoreStringNode *str = reinterpret_cast<const QoreStringNode *>(n);
         if (str->getEncoding() == QCS_ISO_8859_1) {
@@ -271,14 +271,29 @@ static int get_qstring(Smoke::Type &t, QString &qstring, const AbstractQoreNode 
             qstring = QString::fromUtf8(str->getBuffer());
         }
     } else if (n && n->getType() == NT_OBJECT) {
-        if (t.classId == 0)
-            qstring = QString();
-        else {
-            const QoreClass *qc = ClassNamesMap::Instance()->value(t.classId);
-            const QoreObject *obj = reinterpret_cast<const QoreObject *>(n);
-            QoreSmokePrivateData * p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(qc->getID(), xsink));
-            qstring = p && p->object() ? QString( *(QString*)(p->object()) ) : QString();
+        const QoreObject *obj = reinterpret_cast<const QoreObject *>(n);
+        QoreSmokePrivateData * p = 0;
+        QoreClass * qc = ClassNamesMap::Instance()->value("QChar");
+        if (qc && qc->getClass(qc->getID())) {
+            p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(qc->getID(), xsink));
+            qstring = p && p->object() ? QString( *(QChar*)(p->object()) ) : QString();
+            return 0;
         }
+        qc = ClassNamesMap::Instance()->value("QLatin1String");
+        if (qc && qc->getClass(qc->getID())) {
+            p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(qc->getID(), xsink));
+            qstring = p && p->object() ? QString( *(QLatin1String*)(p->object()) ) : QString();
+            return 0;
+        }
+        qc = ClassNamesMap::Instance()->value("QByteArray");
+        if (qc && qc->getClass(qc->getID())) {
+            p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(qc->getID(), xsink));
+            qstring = p && p->object() ? QString( *(QByteArray*)(p->object()) ) : QString();
+            return 0;
+        }
+        xsink->raiseException("QT-GET-QSTRING", "Cannot convert QoreObject (%s) to QString", t.name);
+        xsink->handleExceptions();
+        assert(0);
     }
     else {
         QoreStringValueHelper str(n, QCS_UTF8, xsink);
@@ -676,13 +691,13 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
     // QString has no class in smoke
     // TODO/FIXME: There we should avoid code duplication
     if (!strcmp(t.name, "QString")) {
-       if (cqm)
-      Q_ASSERT_X(0, "QString as a value, not ptr or ref", "never should go here");
-       std::auto_ptr<QString> qstr(new QString());
-       if (get_qstring(t, *(qstr.get()), node, xsink))
-      return -1;
-       si.s_voidp = qstr.release();
-       return 0;
+        if (cqm)
+            Q_ASSERT_X(0, "QString as a value, not ptr or ref", "never should go here");
+        std::auto_ptr<QString> qstr(new QString());
+        if (get_qstring(t, *(qstr.get()), node, xsink))
+            return -1;
+        si.s_voidp = qstr.release();
+        return 0;
     }
     
     if (tid == Smoke::t_voidp) {
@@ -740,7 +755,7 @@ void CommonQoreMethod::qoreToStack(Smoke::Type t,
                                    int index) {
     if (qoreToStackStatic(m_xsink, Stack[index], m_className, m_methodName, t, node, index, this) == -1) {
         m_xsink->handleExceptions();
-        exit(1);
+        assert(0);
     }
 }
 

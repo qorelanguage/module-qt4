@@ -152,12 +152,11 @@ void QoreQtDynamicMethod::qtToQore(const Smoke::Type &t, void *arg, QoreListNode
 //     } else
 //         assert(false);
 
-//AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, ExceptionSink *xsink);
     ExceptionSink xsink;
     AbstractQoreNode * newNode = Marshalling::stackToQore(t, si, &xsink);
     if (!newNode) {
         xsink.handleExceptions();
-        exit(1);
+        assert(0);
     }
     args->push(newNode);
 
@@ -166,14 +165,16 @@ void QoreQtDynamicMethod::qtToQore(const Smoke::Type &t, void *arg, QoreListNode
 void QoreQtDynamicMethod::qoreToQt(const Smoke::Type &qtType, Smoke::StackItem &si, void *&ptr, void *&save, const AbstractQoreNode *val) {
     save = 0;
     ptr = 0;
-    //printd(0, "qoreToQt() ptr=%p save=%p, val=%p (%s)\n", ptr, save, val, val ? val->getTypeName() : "n/a");
+//     printd(0, "qoreToQt() ptr=%p save=%p, val=%p (%s) typename=%s\n", ptr, save, val, val ? val->getTypeName() : "n/a", qtType.name);
 
     ExceptionSink xsink;
-    const char * cname = qt_Smoke->classes[qtType.classId].className;
+    
+    QByteArray bname(qtType.name);
+    const char * cname = (bname.startsWith("QString")) ? "QString" : qt_Smoke->classes[qtType.classId].className;
     const char * mname = "//unspecified//";
     if (CommonQoreMethod::qoreToStackStatic(&xsink, si, cname, mname, qtType, val) == -1) {
         xsink.handleExceptions();
-        exit(1);
+        assert(0);
     }
 
     switch (qtType.flags & Smoke::tf_elem) {
