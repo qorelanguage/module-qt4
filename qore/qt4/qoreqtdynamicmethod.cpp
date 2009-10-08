@@ -116,31 +116,46 @@ void QoreQtDynamicMethod::qtToQore(const Smoke::Type &t, void *arg, QoreListNode
     assert(t.name);
     Smoke::StackItem si;
 
-    if (t.flags & Smoke::t_voidp)
-        si.s_voidp = arg;
-    else if (t.flags & Smoke::t_bool)
-        si.s_bool = * reinterpret_cast<bool*>(arg);
-    else if (t.flags & Smoke::t_int)
-        si.s_int = * reinterpret_cast<int*>(arg);
-    else if (t.flags & Smoke::t_uint)
-        si.s_uint = * reinterpret_cast<uint*>(arg);
-    else if (t.flags & Smoke::t_long)
-        si.s_long = * reinterpret_cast<long*>(arg);
-    else if (t.flags & Smoke::t_ulong)
-        si.s_ulong = * reinterpret_cast<ulong*>(arg);
-    else if (t.flags & Smoke::t_double)
-        si.s_double = * reinterpret_cast<double*>(arg);
-    else if (t.flags & Smoke::t_float)
-        si.s_float = * reinterpret_cast<float*>(arg);
-    else if (t.flags & Smoke::t_enum)
-        si.s_enum = * reinterpret_cast<int*>(arg);
-    else if (t.flags & Smoke::t_class)
-        si.s_class = arg;
-    else if (!strcmp(t.name, "QString&"))
-        si.s_voidp = arg;
-    else {
-        printd(0, "QoreQtDynamicMethod::qtToQore type=%s flags=%d\n", t.name, t.flags);
-        Q_ASSERT_X(false, "sig/slot", "missing qt to qore handling");
+    int typ = t.flags & Smoke::tf_ref;
+
+    if (type == Smoke::tf_ref && !strcmp(t.name, "QString&"))
+       si.s_voidp = arg;
+    else 
+       switch (t.flags & Smoke::tf_elem) {
+	  case Smoke::t_voidp:
+	     si.s_voidp = arg;
+	     break;
+	  case Smoke::t_bool:
+	     si.s_bool = * reinterpret_cast<bool*>(arg);
+	     break;
+	  case Smoke::t_int:
+	     si.s_int = * reinterpret_cast<int*>(arg);
+	     break;
+	  case Smoke::t_uint:
+	     si.s_uint = * reinterpret_cast<uint*>(arg);
+	     break;
+	  case Smoke::t_long:
+	     si.s_long = * reinterpret_cast<long*>(arg);
+	     break;
+	  case Smoke::t_ulong:
+	     si.s_ulong = * reinterpret_cast<ulong*>(arg);
+	     break;
+	  case Smoke::t_double:
+	     si.s_double = * reinterpret_cast<double*>(arg);
+	     break;
+	  case Smoke::t_float:
+	     si.s_float = * reinterpret_cast<float*>(arg);
+	     break;
+	  case Smoke::t_enum:
+	     si.s_enum = * reinterpret_cast<int*>(arg);
+	     break;
+	  case Smoke::t_class:
+	     si.s_class = arg;
+	     break;
+	     
+	  default:
+	     printd(0, "QoreQtDynamicMethod::qtToQore type=%s flags=%d\n", t.name, t.flags);
+	     Q_ASSERT_X(false, "sig/slot", "missing qt to qore handling");
     }
 
 //     if ((t.flags & Smoke::tf_elem) == Smoke::t_bool) {
