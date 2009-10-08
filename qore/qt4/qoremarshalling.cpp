@@ -287,7 +287,7 @@ QoreQListBase * QoreToQtContainer::listToSimpleValue(const Smoke::Type &t, const
     switch (ptr->getType()) {
     case NT_LIST: {
         const QoreListNode * ln = reinterpret_cast<const QoreListNode*>(ptr);
-        for (int i = 0; i < ln->size(); ++i) {
+        for (uint i = 0; i < ln->size(); ++i) {
             // HACK: getAsFloat is used for all numbers
             ret->qlist.append(ln->retrieve_entry(i)->getAsFloat());
         }
@@ -309,7 +309,7 @@ QoreQListBase * QoreToQtContainer::listToQStringList(const Smoke::Type &t, const
     switch (ptr->getType()) {
     case NT_LIST: {
         const QoreListNode * ln = reinterpret_cast<const QoreListNode*>(ptr);
-        for (int i = 0; i < ln->size(); ++i) {
+        for (uint i = 0; i < ln->size(); ++i) {
             QoreStringValueHelper str(ln->retrieve_entry(i));
             ret->qlist.append(str->getBuffer());
         }
@@ -333,7 +333,7 @@ QoreQListBase * QoreToQtContainer::listToEnum(const Smoke::Type &t, const Abstra
     switch (ptr->getType()) {
     case NT_LIST: {
         const QoreListNode * ln = reinterpret_cast<const QoreListNode*>(ptr);
-        for (int i = 0; i < ln->size(); ++i) {
+        for (uint i = 0; i < ln->size(); ++i) {
             ret->qlist.append((SUBTYPET)ln->retrieve_entry(i)->getAsInt());
         }
         break;
@@ -362,7 +362,7 @@ QoreQListBase * QoreToQtContainer::listToObject(const Smoke::Type &t, const Abst
     switch (ptr->getType()) {
     case NT_LIST: {
         const QoreListNode * ln = reinterpret_cast<const QoreListNode*>(ptr);
-        for (int i = 0; i < ln->size(); ++i) {
+        for (uint i = 0; i < ln->size(); ++i) {
             const QoreObject * qo = reinterpret_cast<const QoreObject*>(ln->retrieve_entry(i));
             if (!qo) {
                 xsink->raiseException("QLIST-MARSHALL-QORE", "List members must be objects of: %s", tt.constData());
@@ -411,7 +411,7 @@ QoreQListBase * QoreToQtContainer::listToQObject(const Smoke::Type &t, const Abs
     switch (ptr->getType()) {
     case NT_LIST: {
         const QoreListNode * ln = reinterpret_cast<const QoreListNode*>(ptr);
-        for (int i = 0; i < ln->size(); ++i) {
+        for (uint i = 0; i < ln->size(); ++i) {
             const QoreObject * qo = reinterpret_cast<const QoreObject*>(ln->retrieve_entry(i));
             if (!qo) {
                 xsink->raiseException("QLIST-MARSHALL-QORE", "List members must be objects of: %s", tt.constData());

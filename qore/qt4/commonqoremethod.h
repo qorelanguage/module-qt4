@@ -40,7 +40,7 @@ extern ArgStringSink qore_string_sink;
 
 extern Smoke* qt_Smoke;
 
-static int get_qstring(QString &qstring, const AbstractQoreNode *n, ExceptionSink *xsink);
+int get_qstring(QString &qstring, const AbstractQoreNode *n, ExceptionSink *xsink);
 
 class ArgStringList {
     friend class ArgStringSink;
@@ -187,6 +187,8 @@ struct ref_store_s {
         case r_qvariant:
             delete data.q_qvariant;
             break;
+        default:
+            (void)data; // suppress compiler warning
         }
     }
 

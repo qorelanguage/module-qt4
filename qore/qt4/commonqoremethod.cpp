@@ -64,8 +64,8 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
         m_xsink(xsink),
         m_valid(false),
         qoreArgCnt(num_params(params)),
-        vl(xsink),
         ref_store(0),
+        vl(xsink),
     tparams(0),
     self(n_self),
     smc(n_smc),
@@ -256,7 +256,7 @@ CommonQoreMethod::~CommonQoreMethod() {
         tparams->deref(m_xsink);
 }
 
-static int get_qstring(Smoke::Type &t, QString &qstring, const AbstractQoreNode *n, ExceptionSink *xsink) {
+int get_qstring(Smoke::Type &t, QString &qstring, const AbstractQoreNode *n, ExceptionSink *xsink) {
 //     printd(0, "get_qstring() %s NT=%d classId=%d\n", t.name, n->getType(), t.classId);
     if (n && n->getType() == NT_STRING) {
         const QoreStringNode *str = reinterpret_cast<const QoreStringNode *>(n);
@@ -760,7 +760,7 @@ void CommonQoreMethod::qoreToStack(Smoke::Type t,
 }
 
 int CommonQoreMethod::getObject(Smoke::Index classId, const AbstractQoreNode *v, ReferenceHolder<QoreSmokePrivate> &c, int index, bool nullOk) {
-    getObjectStatic(m_xsink, m_className, m_methodName, classId, v, c, index, nullOk);
+    return getObjectStatic(m_xsink, m_className, m_methodName, classId, v, c, index, nullOk);
 }
 
 int CommonQoreMethod::getObjectStatic(ExceptionSink *xsink,

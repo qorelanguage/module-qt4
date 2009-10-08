@@ -346,7 +346,7 @@ static int arg_handler_QShortcut(Smoke::Stack &stack, ClassMap::TypeList &types,
         const AbstractQoreNode *n = get_param(args, i);
 
         // get Smoke type ID
-        int tid = t.flags & Smoke::tf_elem;
+//         int tid = t.flags & Smoke::tf_elem;
 
         // save parent class for afterwards
         if (i == 1)

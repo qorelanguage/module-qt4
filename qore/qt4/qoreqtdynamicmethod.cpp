@@ -302,7 +302,7 @@ QoreQtDynamicSlot::QoreQtDynamicSlot(const QoreObject *qo, const char *sig, Exce
         if (!method)
             return;
 
-        const char *tmp = sig;
+//         const char *tmp = sig;
 
         // FIXME: add return type detection
         //return_type = qqt_type_list.identify(tmp);

@@ -41,8 +41,8 @@ private:
 public:
     DLLLOCAL QoreQtEnumNode(int v, Smoke::Type t)
             : SimpleValueQoreNode(NT_QTENUM),
-            m_value(v),
-            m_type(t) {
+            m_type(t),
+            m_value(v) {
     }
 
     DLLLOCAL ~QoreQtEnumNode() {

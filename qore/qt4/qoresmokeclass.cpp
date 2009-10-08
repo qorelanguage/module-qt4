@@ -636,7 +636,7 @@ void emitStaticSignal(QObject *sender, int signalId, const QMetaMethod &qmm, con
     for (int i = 0; i < num_args; ++i) {
         // get argument QoreNode
         const AbstractQoreNode *n = args ? args->retrieve_entry(i + 1) : 0;
-        const char *str = params[i].data();
+//         const char *str = params[i].data();
 
         QoreQtDynamicMethod::addType(tlist, params[i].data(), params[i].size(), qmm.signature(), xsink);
         if (*xsink)

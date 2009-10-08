@@ -165,7 +165,7 @@ public:
     }
 
     DLLLOCAL void handleSignal(QoreObject *qore_obj, int id, void **arguments) {
-        assert(id < methodList.size());
+        assert(id < (int)methodList.size());
 
         QoreQtDynamicMethod *dmeth = methodList[id];
 
@@ -374,7 +374,7 @@ public:
 	    if (i->second)
 	       i->second->deref(xsink);
 	    if (data)
-	       i->second == data->refSelf();
+	       i->second = data->refSelf();
 	    else
 	       ni->second.erase(i);
 	    return;
