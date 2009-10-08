@@ -153,7 +153,7 @@ public:
             return -1;
         }
 
-        std::auto_ptr<QoreQtDynamicSignal> ds(new QoreQtDynamicSignal(theSignal.data(), xsink));
+        std::auto_ptr<QoreQtDynamicSignal> ds(new QoreQtDynamicSignal(signal, xsink));
         if (*xsink)
             return -1;
 
@@ -196,13 +196,16 @@ public:
 
         QByteArray theSignal = QMetaObject::normalizedSignature(signal + 1);
         QByteArray theSlot = QMetaObject::normalizedSignature(slot + 1);
+
+	printd(0, "connectDynamic() sig=%s (%s) slot=%s (%s)\n", signal, theSignal.data(), slot, theSlot.data());
+
         if (!QMetaObject::checkConnectArgs(theSignal, theSlot)) {
             xsink->raiseException("QT-CONNECT-ERROR", "cannot connect signal '%s' with '%s' due to incompatible arguments", signal + 1, slot + 1);
             //printd(5, "%s::connectDynamic(sender=%08p, signal=%s, slot=%s) this=%08p failed\n", getParentMetaObject()->className(), sender, signal, slot, this);
             return -1;
         }
 
-        int targetId = is_signal ? getSignalIndex(theSlot) : getSlotIndex(receiver, theSlot, xsink);
+        int targetId = is_signal ? getSignalIndex(theSlot) : getSlotIndex(receiver, theSlot, slot + 1, xsink);
         if (targetId < 0) {
             if (!*xsink) {
                 if (is_signal)
@@ -271,7 +274,7 @@ protected:
         return signalId + pmo->methodCount();
     }
 
-    DLLLOCAL int getSlotIndex(const QoreObject *receiver, const QByteArray &theSlot, ExceptionSink *xsink) {
+    DLLLOCAL int getSlotIndex(const QoreObject *receiver, const QByteArray &theSlot, const char *sig, ExceptionSink *xsink) {
         const QMetaObject *pmo = getParentMetaObject();
         int slotId = pmo->indexOfSlot(theSlot);
         // see if it's a static slot
@@ -288,7 +291,7 @@ protected:
         }
 
         // create the slot if possible
-        std::auto_ptr<QoreQtDynamicSlot> ds(new QoreQtDynamicSlot(receiver, theSlot.data(), xsink));
+        std::auto_ptr<QoreQtDynamicSlot> ds(new QoreQtDynamicSlot(receiver, sig, xsink));
         if (*xsink)
             return -1;
 
@@ -421,7 +424,7 @@ public:
 
     MungledToTypes * availableMethods(const QByteArray & className,
                                       const QByteArray & methodName) {
-        &m_map[className][methodName];
+       return &m_map[className][methodName];
     }
 
 //     TypeList *availableTypes(const char *className, const char *methodName, const char *mungedName) {
@@ -448,7 +451,7 @@ private:
 
     ClassMap() {};
     ClassMap(const ClassMap &);
-    ClassMap& operator=(const ClassMap&) {};
+    //ClassMap& operator=(const ClassMap&) {};
     ~ClassMap() {
         delete m_instance;
     }
@@ -497,7 +500,7 @@ private:
 
     ClassNamesMap() {};
     ClassNamesMap(const ClassNamesMap &);
-    ClassNamesMap& operator=(const ClassNamesMap&) {};
+    //ClassNamesMap& operator=(const ClassNamesMap&) {};
     ~ClassNamesMap() {
         delete m_instance;
     }

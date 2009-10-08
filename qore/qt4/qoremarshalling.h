@@ -70,7 +70,7 @@ private:
 
     QtContainerToQore();
     QtContainerToQore(const QtContainerToQore &);
-    QtContainerToQore& operator=(const QtContainerToQore&) {};
+    //QtContainerToQore& operator=(const QtContainerToQore&) {};
     ~QtContainerToQore() {
         delete m_instance;
     }
@@ -135,7 +135,7 @@ private:
 
     QoreToQtContainer();
     QoreToQtContainer(const QoreToQtContainer &);
-    QoreToQtContainer& operator=(const QoreToQtContainer&) {};
+    //QoreToQtContainer& operator=(const QoreToQtContainer&) {};
     ~QoreToQtContainer() {
         delete m_instance;
     }

@@ -43,7 +43,7 @@ private:
 
     QoreSmokeBinding(Smoke * s) : SmokeBinding(s) { };
     QoreSmokeBinding(const QoreSmokeBinding &);
-    QoreSmokeBinding& operator=(const QoreSmokeBinding&) {};
+    //QoreSmokeBinding& operator=(const QoreSmokeBinding&) {};
 
     ~QoreSmokeBinding() {
         delete m_instance;

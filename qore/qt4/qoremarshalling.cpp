@@ -731,6 +731,7 @@ void * constructCopy(void * obj, const char * className, ExceptionSink *xsink) {
         }
     }
     if (!methodFound) {
+       assert(xsink);
         xsink->raiseException("QT-COPY_CONSTRUCTOR", "No copy constructor found for: %s::%s(%s)",
                               realClassName.constData(), copyName.constData(), argName.constData());
         return 0;

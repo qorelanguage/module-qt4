@@ -60,28 +60,39 @@ int QoreQtDynamicMethod::identifyTypes(SmokeTypeList &typeList, const char *sig,
 }
 
 int QoreQtDynamicMethod::addType(SmokeTypeList &typeList, const char *b, int len, const char *sig, ExceptionSink *xsink) {
-    QByteArray tn(b, len);
-    printd(0, "QoreQtDynamicMethod::addType() processing type '%s'\n", tn.constData());
+    QByteArray tmp(b, len);
+    QString tn(tmp);
+    tn = tn.simplified();
+    if (tn.endsWith(" &"))
+       tn.replace(" &", "&");
+
+    printd(0, "QoreQtDynamicMethod::addType() processing type '%s'\n", tn.constData());    
 
     Smoke::Type t;
     t.classId = -1;
-    t.name = strdup(tn.constData());
 
     if (tn == "int") {
+        t.name = "int";
         t.flags = Smoke::t_int | Smoke::tf_stack;
     } else if (tn == "bool") {
+        t.name = "bool";
         t.flags = Smoke::t_bool | Smoke::tf_stack;
     } else if (tn == "uint") {
+        t.name = "uint";
         t.flags = Smoke::t_uint | Smoke::tf_stack;
     } else if (tn == "long") {
+        t.name = "long";
         t.flags = Smoke::t_long | Smoke::tf_stack;
     } else if (tn == "ulong") {
+        t.name = "ulong";
         t.flags = Smoke::t_ulong | Smoke::tf_stack;
     } else if (tn == "double") {
+        t.name = "double";
         t.flags = Smoke::t_double | Smoke::tf_stack;
     } else if (tn == "char*" ) {
+        t.name = "char*";
         t.flags = Smoke::t_voidp | Smoke::tf_ptr;
-    } else if (tn == "QString") {
+    } else if (tn.contains("QString")) {
         t.name = "QString&";
         t.flags = Smoke::t_voidp | Smoke::tf_ref;
     }
