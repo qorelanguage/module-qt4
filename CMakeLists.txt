@@ -23,6 +23,8 @@ set(CMAKE_BUILD_TYPE Debug)
 #    SET(CMAKE_OSX_ARCHITECTURES "i386")
 #    SET(CMAKE_CXX_FLAGS_DEBUG "-g -arch i386")
 #ENDIF (APPLE)
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
+
 
 MESSAGE(STATUS "*********************************************************")
 MESSAGE(STATUS "This is module under development.")
