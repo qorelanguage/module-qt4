@@ -246,6 +246,7 @@ QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) {
 	QC_QObject = m_qoreClass;
         m_qoreClass->addMethod("createSignal", (q_method_t)QOBJECT_createSignal);
         m_qoreClass->addMethod("emit",         (q_method_t)QOBJECT_emit);
+	m_qoreClass->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
 	SMI_QObject = m_classId;
     }
     else if (!CID_QWIDGET && !strcmp(className, "QWidget")) {
@@ -577,8 +578,10 @@ void common_destructor(const QoreClass &thisclass, QoreObject *self, AbstractPri
 
     QoreSmokePrivate *p = reinterpret_cast<QoreSmokePrivate*>(private_data);
 
-    if (!strcmp(thisclass.getName(), "QDesktopWidget"))
+/*
+    if (!strcmp(thisclass.getName(), "QWidgetItem"))
        printd(0, "common_destructor class=%p (%s), self=%p, private_data=%p, object=%p\n", &thisclass, thisclass.getName(), self, private_data, p->object());
+*/
 
     if (!p->object()) {
 //         printd(0, "common_destructor (WW) QoreSmokePrivate's Qt object does not exist anymore\n");

@@ -464,7 +464,7 @@ static QoreStringNode *qt_module_init() {
     cm.registerMethod("QApplication", "QApplication", "QApplication?", methodIndex.index, argv_charpp_h);
     cm.registerMethod("QApplication", "QApplication", "QApplication", methodIndex.index, argv_none_h);
 
-    // QLayout::addItem() handler
+    // QLayout::addItem() and ::addWidget() handlers
     cm.addArgHandler("QLayout", "addItem", addItem_handler);
     cm.addArgHandler("QGridLayout", "addItem", addItem_handler);
     cm.addArgHandler("QFormLayout", "addItem", addItem_handler);
@@ -473,6 +473,11 @@ static QoreStringNode *qt_module_init() {
     cm.addArgHandler("QGraphicsScene", "addItem", addItem_handler);
     cm.addArgHandler("QListWidget", "addItem", addItem_handler);
     cm.addArgHandler("QStackedLayout", "addItem", addItem_handler);
+
+    cm.addArgHandler("QLayout", "addWidget", addItem_handler);
+    cm.addArgHandler("QBoxLayout", "addWidget", addItem_handler);
+    cm.addArgHandler("QGridLayout", "addWidget", addItem_handler);
+    cm.addArgHandler("QStackedLayout", "addWidget", addItem_handler);
 
     // QShortcut handlers
     cm.addArgHandler("QShortcut", "QShortcut", arg_handler_QShortcut);

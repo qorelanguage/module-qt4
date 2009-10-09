@@ -165,27 +165,27 @@ class TetrixBoard::TetrixBoard inherits QFrame
         }
 
         switch ($event.key()) {
-            case Qt::Key_Left: {
+            case == Qt::Key_Left: {
                 $.tryMove($.curPiece, $.curX - 1, $.curY);
                 break;
             }
-            case Qt::Key_Right: {
+            case == Qt::Key_Right: {
                 $.tryMove($.curPiece, $.curX + 1, $.curY);
                 break;
             }
-            case Qt::Key_Down: {
+            case == Qt::Key_Down: {
                 $.tryMove($.curPiece.rotatedRight(), $.curX, $.curY);
                 break;
             }
-            case Qt::Key_Up: {
+            case == Qt::Key_Up: {
                 $.tryMove($.curPiece.rotatedLeft(), $.curX, $.curY);
                 break;
             }
-            case Qt::Key_Space: {
+            case == Qt::Key_Space: {
                 $.dropDown();
                 break;
             }
-            case Qt::Key_D: {
+            case == Qt::Key_D: {
                 $.oneLineDown();
                 break;
             }
