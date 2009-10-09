@@ -164,6 +164,8 @@ class TetrixBoard::TetrixBoard inherits QFrame
             return;
         }
 
+	# note that we use soft comparisons in the case expressions below
+	# because QKeyEvent::key() returns an int instead of an enum
         switch ($event.key()) {
             case == Qt::Key_Left: {
                 $.tryMove($.curPiece, $.curX - 1, $.curY);
