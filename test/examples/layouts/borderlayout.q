@@ -146,7 +146,7 @@ class BorderLayout inherits QLayout {
     }
 
     sizeHint() {
-        return $.calculateSize(SizeHint);
+	return $.calculateSize(SizeHint);
     }
 
     takeAt($index) {

@@ -226,16 +226,16 @@ static AbstractQoreNode *rv_handler_QAbstractItemView_reset(QoreObject *self, Sm
    return 0;
 }
 
-static int addItem_handler(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static int setExternallyOwned_handler(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     // Create a Smoke stack from params
     stack = new Smoke::StackItem[types.size() + 1];
-//    printd(0, "addItem_handler() allocated stack of size %d\n", types.size() + 1);
+    printd(0, "setExternallyOwned_handler() %s::%s() allocated stack of size %d\n", cqm.getClassName(), cqm.getMethodName(), types.size() + 1);
 
     for (int i = 0, e = types.size(); i < e; ++i) {
         Smoke::Type &t = types[i];
         const AbstractQoreNode *n = get_param(args, i);
 
-//       printd(0, "addItem_handler() type=%s (%d) arg=%s (%s)\n", t.name, t.classId, n ? n->getTypeName() : "NOTHING", t.classId > 0 && !(t.flags & Smoke::tf_const) ? "true" : "false");
+	printd(0, "setExternallyOwned_handler() %s::%s() type=%s (%d) arg=%s (%s)\n", cqm.getClassName(), cqm.getMethodName(), t.name, t.classId, n ? n->getTypeName() : "NOTHING", t.classId > 0 && !(t.flags & Smoke::tf_const) ? "true" : "false");
         if (t.classId > 0 && !(t.flags & Smoke::tf_const)) {
             // get QoreSmokePrivate object
             ReferenceHolder<QoreSmokePrivate> c(xsink);
@@ -465,19 +465,20 @@ static QoreStringNode *qt_module_init() {
     cm.registerMethod("QApplication", "QApplication", "QApplication", methodIndex.index, argv_none_h);
 
     // QLayout::addItem() and ::addWidget() handlers
-    cm.addArgHandler("QLayout", "addItem", addItem_handler);
-    cm.addArgHandler("QGridLayout", "addItem", addItem_handler);
-    cm.addArgHandler("QFormLayout", "addItem", addItem_handler);
-    cm.addArgHandler("QGraphicsGridLayout", "addItem", addItem_handler);
-    cm.addArgHandler("QGraphicsLinearLayout", "addItem", addItem_handler);
-    cm.addArgHandler("QGraphicsScene", "addItem", addItem_handler);
-    cm.addArgHandler("QListWidget", "addItem", addItem_handler);
-    cm.addArgHandler("QStackedLayout", "addItem", addItem_handler);
+    cm.addArgHandler("QLayout", "addItem", setExternallyOwned_handler);
+    cm.addArgHandler("QGridLayout", "addItem", setExternallyOwned_handler);
+    cm.addArgHandler("QFormLayout", "addItem", setExternallyOwned_handler);
+    cm.addArgHandler("QGraphicsGridLayout", "addItem", setExternallyOwned_handler);
+    cm.addArgHandler("QGraphicsLinearLayout", "addItem", setExternallyOwned_handler);
+    cm.addArgHandler("QGraphicsScene", "addItem", setExternallyOwned_handler);
+    cm.addArgHandler("QListWidget", "addItem", setExternallyOwned_handler);
+    cm.addArgHandler("QStackedLayout", "addItem", setExternallyOwned_handler);
 
-    cm.addArgHandler("QLayout", "addWidget", addItem_handler);
-    cm.addArgHandler("QBoxLayout", "addWidget", addItem_handler);
-    cm.addArgHandler("QGridLayout", "addWidget", addItem_handler);
-    cm.addArgHandler("QStackedLayout", "addWidget", addItem_handler);
+    cm.addArgHandler("QLayout", "addWidget", setExternallyOwned_handler);
+    cm.addArgHandler("QBoxLayout", "addWidget", setExternallyOwned_handler);
+    cm.addArgHandler("QGridLayout", "addWidget", setExternallyOwned_handler);
+    cm.addArgHandler("QStackedLayout", "addWidget", setExternallyOwned_handler);
+    cm.addArgHandler("QWidgetItem", "QWidgetItem", setExternallyOwned_handler);
 
     // QShortcut handlers
     cm.addArgHandler("QShortcut", "QShortcut", arg_handler_QShortcut);

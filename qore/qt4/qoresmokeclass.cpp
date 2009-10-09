@@ -544,7 +544,6 @@ const char * qoreMethodName2Qt(const char * name) {
     else return name;
 }
 
-
 AbstractQoreNode * common_method(const QoreMethod &method,
                                  QoreObject *self,
                                  AbstractPrivateData *apd,
@@ -552,8 +551,10 @@ AbstractQoreNode * common_method(const QoreMethod &method,
                                  ExceptionSink *xsink) {
     const char * methodName = qoreMethodName2Qt(method.getName());
     const char * className = method.getClass()->getName();
+
     QoreSmokePrivate * smc = reinterpret_cast<QoreSmokePrivate*>(apd);
     CommonQoreMethod cqm(self, smc, className, methodName, params, xsink);
+
     Q_ASSERT_X(smc!=0, "cast", "cannot get QoreSmokeClass from QoreObject");
     Q_ASSERT_X(smc->object()!=0, "cast", "cannot get an object from QoreSmokeClass");
 // if (QByteArray(methodName) == "setColumnWidths") assert(0);
