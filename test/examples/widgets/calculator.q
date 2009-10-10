@@ -1,11 +1,11 @@
 #!/usr/bin/env qore
 
 # This is basically a direct port of the QT widget example
-# "calculator" to Qore using Qore's "qt" module.  
+# "calculator" to Qore using Qore's "qt4" module.  
 
-# Note that Qore's "qt" module requires QT 4.3 or above 
+# Note that Qore's "qt4" module requires QT 4.3 or above 
 
-# use the "qt-gui" module
+# use the "qt4" module
 %requires qt4
 
 # this is an object-oriented program, the application class is "calculator_example"
@@ -201,7 +201,6 @@ class Calculator inherits QDialog
     multiplicativeOperatorClicked()
     {
         my $clickedButton = $.sender();
-		printf("SENDER %N\n", $clickedButton);
         my $clickedOperator = $clickedButton.text();
         my $operand = float($.display.text());
 

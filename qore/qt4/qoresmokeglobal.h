@@ -25,21 +25,21 @@
 #define _QORE_QORESMOKEGLOBAL_H
 
 #include <qore/Qore.h>
+#include <qore/QoreRWLock.h>
 
 #include <smoke.h>
 #include <qt_smoke.h>
 
 #include <QtDebug>
+#include <QHash>
 
 #define QORESMOKEPROPERTY "qoreptr"
 
-extern qore_classid_t CID_QOBJECT;
-extern qore_classid_t CID_QWIDGET;
-extern qore_classid_t CID_QABSTRACTITEMMODEL;
-extern const QoreClass *QC_QObject;
-extern Smoke::ModuleIndex SMI_QObject;
+extern const QoreClass *QC_QOBJECT, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT;
+extern Smoke::ModuleIndex SMI_QOBJECT;
+extern Smoke::Index SCI_QVARIANT;
 
-DLLLOCAL QoreObject *getQoreObject(const QObject *obj);
+DLLLOCAL QoreObject *getQoreQObject(const QObject *obj);
 DLLLOCAL QoreObject *getQoreObject(Smoke::Index classId, void *obj, QoreClass *&qc);
 DLLLOCAL bool isptrtype(const char *var, const char *type);
 
@@ -69,6 +69,40 @@ public:
         qore_smoke_clear_virtual();
     }
 };
+
+// map from non-qobject Qt objects to QoreObjects
+typedef QHash<void *, QoreObject *> qt_qore_map_t;
+
+class QtQoreMap : protected qt_qore_map_t, protected QoreRWLock {
+public:
+   DLLLOCAL ~QtQoreMap() {
+      assert(empty());
+   }
+   DLLLOCAL void add(void *qto, QoreObject *qo) {
+      QoreAutoRWWriteLocker l(this);
+      assert(!contains(qto));
+      insert(qto, qo);
+   }
+   DLLLOCAL QoreObject *get(void *qto) {
+      QoreAutoRWReadLocker l(this);
+      return value(qto, 0);
+   }
+   DLLLOCAL void del(void *qto) {
+      QoreAutoRWWriteLocker l(this);
+      assert(contains(qto));
+      remove(qto);
+   }
+};
+
+DLLLOCAL extern QtQoreMap qt_qore_map;
+
+static inline QoreObject *getQoreMappedObject(void *p) {
+   return qt_qore_map.get(p);
+}
+
+static inline QoreObject *getQoreMappedObject(Smoke::Index classId, void *p) {
+   return qt_Smoke->classes[classId].flags & Smoke::cf_virtual ? qt_qore_map.get(p) : 0;
+}
 
 DLLLOCAL const QoreMethod *findUserMethod(const QoreClass *qc, const char *name);
 

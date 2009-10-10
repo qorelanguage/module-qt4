@@ -26,7 +26,7 @@
 
 
 int QoreQtDynamicMethod::identifyTypes(SmokeTypeList &typeList, const char *sig, const char *p, ExceptionSink *xsink) {
-    printd(0, "QoreQtDynamicMethod::identifyTypes sig=%s p=%s\n", sig, p);
+   //printd(0, "QoreQtDynamicMethod::identifyTypes sig=%s p=%s\n", sig, p);
     while (*p && isblank(*p))
         ++p;
     if (*p != ')')
@@ -66,7 +66,7 @@ int QoreQtDynamicMethod::addType(SmokeTypeList &typeList, const char *b, int len
     if (tn.endsWith(" &"))
        tn.replace(" &", "&");
 
-    printd(0, "QoreQtDynamicMethod::addType() processing type '%s'\n", tn.constData());    
+    //printd(0, "QoreQtDynamicMethod::addType() processing type '%s'\n", tn.constData());    
 
     Smoke::Type t;
     t.classId = -1;
@@ -105,7 +105,7 @@ int QoreQtDynamicMethod::addType(SmokeTypeList &typeList, const char *b, int len
         for (int i = 0; i < qt_Smoke->numTypes; ++i) {
             st = qt_Smoke->types[i];
             if (tn == st.name) {
-                printd(0, "QoreQtDynamicMethod::addType() found object/ref to %s\n", st.name);
+	       //printd(0, "QoreQtDynamicMethod::addType() found object/ref to %s\n", st.name);
                 t.name = st.name;
                 t.flags = st.flags;
                 t.classId = st.classId;

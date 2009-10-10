@@ -190,7 +190,7 @@ static int createIndex_handler(Smoke::Stack &stack, ClassMap::TypeList &types, c
     QoreObject *self = cqm.getQoreObject();
     assert(self);
     // get QoreSmokePrivateQAbstractItemModelData ptr
-    ReferenceHolder<QoreSmokePrivateQAbstractItemModelData> data(reinterpret_cast<QoreSmokePrivateQAbstractItemModelData *>(self->getReferencedPrivateData(CID_QABSTRACTITEMMODEL, xsink)), xsink);
+    ReferenceHolder<QoreSmokePrivateQAbstractItemModelData> data(reinterpret_cast<QoreSmokePrivateQAbstractItemModelData *>(self->getReferencedPrivateData(QC_QABSTRACTITEMMODEL->getID(), xsink)), xsink);
     if (*xsink)
        return -1;
     data->storeIndex(row, column, n, xsink);
@@ -208,11 +208,11 @@ static AbstractQoreNode *rv_handler_internalPointer(QoreObject *self, Smoke::Typ
    if (!aim)
       return 0;
    
-   QoreObject *o = getQoreObject(aim);
+   QoreObject *o = getQoreQObject(aim);
    if (!o)
       return 0;
 
-   PrivateDataRefHolder<QoreSmokePrivateQAbstractItemModelData> c(o, CID_QABSTRACTITEMMODEL, xsink);
+   PrivateDataRefHolder<QoreSmokePrivateQAbstractItemModelData> c(o, QC_QABSTRACTITEMMODEL->getID(), xsink);
    if (!c)
       return 0;
 
@@ -229,13 +229,13 @@ static AbstractQoreNode *rv_handler_QAbstractItemView_reset(QoreObject *self, Sm
 static int setExternallyOwned_handler(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     // Create a Smoke stack from params
     stack = new Smoke::StackItem[types.size() + 1];
-    printd(0, "setExternallyOwned_handler() %s::%s() allocated stack of size %d\n", cqm.getClassName(), cqm.getMethodName(), types.size() + 1);
+    //printd(0, "setExternallyOwned_handler() %s::%s() allocated stack of size %d\n", cqm.getClassName(), cqm.getMethodName(), types.size() + 1);
 
     for (int i = 0, e = types.size(); i < e; ++i) {
         Smoke::Type &t = types[i];
         const AbstractQoreNode *n = get_param(args, i);
-
-	printd(0, "setExternallyOwned_handler() %s::%s() type=%s (%d) arg=%s (%s)\n", cqm.getClassName(), cqm.getMethodName(), t.name, t.classId, n ? n->getTypeName() : "NOTHING", t.classId > 0 && !(t.flags & Smoke::tf_const) ? "true" : "false");
+	
+	//printd(0, "setExternallyOwned_handler() %s::%s() type=%s (%d) arg=%s (%s)\n", cqm.getClassName(), cqm.getMethodName(), t.name, t.classId, n ? n->getTypeName() : "NOTHING", t.classId > 0 && !(t.flags & Smoke::tf_const) ? "true" : "false");
         if (t.classId > 0 && !(t.flags & Smoke::tf_const)) {
             // get QoreSmokePrivate object
             ReferenceHolder<QoreSmokePrivate> c(xsink);
@@ -271,7 +271,7 @@ public:
 	 return -1;
 
       timerId = startTimer(msec);
-      printd(0, "mySingleShotTimer::timerInit() msec: %d timerId: %d data: %p (QT=%p)\n", msec, timerId, my_data, my_data->object());
+      //printd(0, "mySingleShotTimer::timerInit() msec: %d timerId: %d data: %p (QT=%p)\n", msec, timerId, my_data, my_data->object());
       return 0;
    }
 
@@ -281,7 +281,7 @@ public:
 
 protected:
    DLLLOCAL virtual void timerEvent(QTimerEvent *) {
-      printd(0, "mySingleShotTimer::timerEvent() timerId: %d data: %p (QT=%p)\n", timerId, my_data, my_data->object());
+      //printd(0, "mySingleShotTimer::timerEvent() timerId: %d data: %p (QT=%p)\n", timerId, my_data, my_data->object());
 
       // need to kill the timer _before_ we emit timeout() in case the
       // slot connected to timeout calls processEvents()
@@ -306,7 +306,7 @@ static int arg_handler_QTimer_singleShot(Smoke::Stack &stack, ClassMap::TypeList
       return -1;
    }
 
-   PrivateDataRefHolder<QoreSmokePrivateQObjectData> receiver(o, CID_QOBJECT, xsink);
+   PrivateDataRefHolder<QoreSmokePrivateQObjectData> receiver(o, QC_QOBJECT->getID(), xsink);
    if (!receiver) {
       if (!*xsink)
          xsink->raiseException("QTIMER-SINGLESHOT-PARAM-ERROR", "expecting a QObject object as second argument to QTimer::singleShot()");
@@ -321,7 +321,7 @@ static int arg_handler_QTimer_singleShot(Smoke::Stack &stack, ClassMap::TypeList
    const char *member = pstr->getBuffer();
 
    mySingleShotTimer *sst = new mySingleShotTimer();
-   printd(0, "arg_handler_QTimer_singleShot() sst=%p\n", sst);
+   //printd(0, "arg_handler_QTimer_singleShot() sst=%p\n", sst);
    QoreSmokePrivateQObjectData *data;
    ReferenceHolder<QoreObject> obj(Marshalling::doQObject<QoreSmokePrivateQObjectData>(sst, xsink, &data), xsink);
    if (*xsink)
@@ -371,7 +371,7 @@ static int arg_handler_QShortcut(Smoke::Stack &stack, ClassMap::TypeList &types,
 }
 
 static AbstractQoreNode *rv_handler_QShortcut(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
-    ReferenceHolder<QoreSmokePrivateQObjectData> shortcut(reinterpret_cast<QoreSmokePrivateQObjectData *>(self->getReferencedPrivateData(CID_QOBJECT, xsink)), xsink);
+   ReferenceHolder<QoreSmokePrivateQObjectData> shortcut(reinterpret_cast<QoreSmokePrivateQObjectData *>(self->getReferencedPrivateData(QC_QOBJECT->getID(), xsink)), xsink);
     if (*xsink)
         return 0;
 
@@ -383,7 +383,7 @@ static AbstractQoreNode *rv_handler_QShortcut(QoreObject *self, Smoke::Type t, S
         assert(w->getType() == NT_OBJECT);
         const QoreObject *parent = reinterpret_cast<const QoreObject *>(w);
 
-        ReferenceHolder<QoreSmokePrivateQObjectData> po(reinterpret_cast<QoreSmokePrivateQObjectData *>(parent->getReferencedPrivateData(CID_QOBJECT, xsink)), xsink);
+        ReferenceHolder<QoreSmokePrivateQObjectData> po(reinterpret_cast<QoreSmokePrivateQObjectData *>(parent->getReferencedPrivateData(QC_QOBJECT->getID(), xsink)), xsink);
         if (*xsink)
             return 0;
 
@@ -406,6 +406,19 @@ static AbstractQoreNode *rv_handler_QShortcut(QoreObject *self, Smoke::Type t, S
 
 static AbstractQoreNode *rv_handler_spacer_item(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     return self ? self->refSelf() : 0;
+}
+
+static void setClassInfo(const QoreClass *&qc, const char *name) {
+   qc = ClassNamesMap::Instance()->value(name);
+   assert(qc);
+}
+
+static void setClassInfo(const QoreClass *&qc, Smoke::Index &sci, const char *name) {
+    Smoke::ModuleIndex sc = qt_Smoke->findClass(name);
+    assert(sc.smoke);
+    sci = sc.index;
+    qc = ClassNamesMap::Instance()->value(name);
+    assert(qc);    
 }
 
 // FIXME: handle other QApplication constructors with int &argc, char **argv arguments
@@ -437,6 +450,11 @@ static QoreStringNode *qt_module_init() {
 
     // setup the binding
     QoreSmokeBinding::Instance(qt_Smoke);
+
+    // set global variables to class information
+    setClassInfo(QC_QWIDGET, "QWidget");
+    setClassInfo(QC_QABSTRACTITEMMODEL, "QAbstractItemModel");
+    setClassInfo(QC_QVARIANT, SCI_QVARIANT, "QVariant");
 
     // add alternate method argument handlers
     ClassMap &cm = *(ClassMap::Instance());

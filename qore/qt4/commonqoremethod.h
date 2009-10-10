@@ -34,7 +34,6 @@
 #include "qoresmokeclass.h"
 #include "qoremarshalling.h"
 
-
 class ArgStringSink;
 extern ArgStringSink qore_string_sink;
 
@@ -317,7 +316,7 @@ public:
     DLLLOCAL QoreSmokePrivate *getPrivateData() {
        return smc;
     }
-    DLLLOCAL Smoke::Class smokeClass() {
+    DLLLOCAL Smoke::Class &smokeClass() {
         return qt_Smoke->classes[m_method.classId];
     }
     DLLLOCAL const char* mungedMethod() {
@@ -371,6 +370,8 @@ public:
     }
 
     DLLLOCAL AbstractQoreNode *callMethod();
+
+    DLLLOCAL void *callConstructor();
 
     DLLLOCAL void suppressMethod() {
        assert(!suppress_method);

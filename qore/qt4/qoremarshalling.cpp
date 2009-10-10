@@ -49,8 +49,6 @@
 #include <QWizard>
 // #include <>
 
-
-
 #include "qoresmokeclass.h"
 #include "qoremarshalling.h"
 #include "qoresmokebinding.h"
@@ -60,7 +58,6 @@ namespace Marshalling {
 
 QtContainerToQore * QtContainerToQore::m_instance = 0;
 QoreToQtContainer * QoreToQtContainer::m_instance = 0;
-
 
 AbstractQoreNode * QtContainerToQore::marshall(const Smoke::Type &t, void* ptr, ExceptionSink *xsink) {
     QByteArray tname(t.name);
@@ -125,7 +122,7 @@ AbstractQoreNode * QtContainerToQore::listToQObject(const Smoke::Type &t, void* 
     if (!qc) {
         return xsink->raiseException("QLIST-MARSHALL-QT", "Unknown QoreClass for QList< ??? > for %s", t.name);
     }
-    if (!qc->getClass(CID_QOBJECT)) {
+    if (!qc->getClass(QC_QOBJECT->getID())) {
         return xsink->raiseException("QLIST-MARSHALL-QT", "QList< ??? > argument %s is not QObject based!", t.name);
     }
     Smoke::ModuleIndex sc = qt_Smoke->findClass(tt.constData());
@@ -152,6 +149,17 @@ AbstractQoreNode * QtContainerToQore::listToQObject(const Smoke::Type &t, void* 
     return retList.release();
 }
 
+QoreObject *createQoreObjectFromNonQObject(const QoreClass *theclass, Smoke::Index classId, void *ptr, QoreSmokePrivate **p = 0) {
+   // ensure this is not a QObject
+   assert(!theclass->getClass(QC_QOBJECT->getID()));
+   QoreObject *o = new QoreObject(theclass, getProgram());
+   QoreSmokePrivateData *data = new QoreSmokePrivateData(classId, ptr, o);
+   o->setPrivate(theclass->getID(), data);
+   if (p)
+      *p = data;
+   return o;
+}
+
 template<class QLISTT>
 AbstractQoreNode * QtContainerToQore::listToObject(const Smoke::Type &t, void* ptr, ExceptionSink *xsink) {
     ReferenceHolder<QoreListNode> retList(new QoreListNode(), xsink);
@@ -162,23 +170,29 @@ AbstractQoreNode * QtContainerToQore::listToObject(const Smoke::Type &t, void* p
     if (!qc) {
         return xsink->raiseException("QLIST-MARSHALL-QT", "Unknown QoreClass for QList< ??? > for %s", t.name);
     }
-    if (qc->getClass(CID_QOBJECT)) {
+    if (qc->getClass(QC_QOBJECT->getID())) {
         return xsink->raiseException("QLIST-MARSHALL-QT", "QList< ??? > argument %s is QObject based", t.name);
     }
 
+    Smoke::ModuleIndex cls = qt_Smoke->findClass(tt.constData());
+    if (!cls.smoke) {
+       return xsink->raiseException("QLIST-MARSHALL-QT", "Class %s cannot be found in library map", tt.constData());
+    }
+
+    bool has_virtual = qt_Smoke->classes[cls.index].flags & Smoke::cf_virtual;
     for (int i = 0; i < l->count(); ++i) {
-        QoreObject *o = new QoreObject(qc, getProgram());
-        QoreSmokePrivate * p;
-        Smoke::ModuleIndex cls = qt_Smoke->findClass(tt.constData());
-        if (!cls.smoke) {
-            return xsink->raiseException("QLIST-MARSHALL-QT", "Class %s cannot be found in library map", tt.constData());
-        }
-        p = new QoreSmokePrivateData(cls.index,
-                                     Marshalling::constructCopy((void*)&l->at(i),
-                                                                tt.constData(),
-                                                                xsink)
-                                    );
-        o->setPrivate(qc->getID(), p);
+        void *qto = (void *)&l->at(i);
+	QoreObject *o = has_virtual ? getQoreMappedObject(qto) : 0;
+	if (o) {
+	   o->ref();
+	}
+	else {
+	   qto = Marshalling::constructCopy(qto, tt.constData(), xsink);
+	   if (*xsink)
+	      return 0;
+
+	   o = createQoreObjectFromNonQObject(qc, cls.index, qto);
+	}
         retList->push(o);
     }
 
@@ -564,6 +578,72 @@ QoreObject *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0) {
    return qto.release();
 }
 
+AbstractQoreNode *return_qvariant(QVariant &qv) {
+   switch (qv.type()) {
+      case QVariant::Invalid:
+	 return nothing();
+      case QVariant::Bool:
+	 return get_bool_node(qv.toBool());
+      case QVariant::Double:
+	 return new QoreFloatNode(qv.toDouble());
+      case QVariant::Int:
+	 return new QoreBigIntNode(qv.toInt());
+      case QVariant::LongLong:
+	 return new QoreBigIntNode(qv.toLongLong());
+      case QVariant::String:
+	 return new QoreStringNode(qv.toString().toUtf8().data(), QCS_UTF8);
+      case QVariant::UInt:
+	 return new QoreBigIntNode(qv.toUInt());
+      case QVariant::ULongLong: // WARNING: precision lost here
+	 return new QoreBigIntNode((int64)qv.toULongLong());
+
+      case QVariant::Char:
+      case QVariant::Date: 
+      case QVariant::DateTime:
+      case QVariant::Line:
+      case QVariant::LineF:
+      case QVariant::Locale:
+      case QVariant::Point:
+      case QVariant::PointF:
+      case QVariant::Rect:
+      case QVariant::RectF:
+      case QVariant::RegExp:
+      case QVariant::Size:
+      case QVariant::Url:
+      case QVariant::Time:
+      case QVariant::Map:
+      case QVariant::List:
+      case QVariant::StringList:
+      case QVariant::ByteArray:
+      case QVariant::BitArray:
+      case QVariant::SizeF:
+      case QVariant::Hash:
+      case QVariant::Font:
+      case QVariant::Pixmap:
+      case QVariant::Brush:
+      case QVariant::Color:
+      case QVariant::Palette:
+      case QVariant::Icon:
+      case QVariant::Image:
+      case QVariant::Polygon:
+      case QVariant::Region:
+      case QVariant::Bitmap:
+      case QVariant::Cursor:
+      case QVariant::SizePolicy:
+      case QVariant::KeySequence:
+      case QVariant::Pen:
+      case QVariant::TextLength:
+      case QVariant::TextFormat:
+      case QVariant::Matrix:
+      case QVariant::Transform:
+      case QVariant::UserType:
+      case QVariant::LastType:
+	 break;
+   }
+
+   return createQoreObjectFromNonQObject(QC_QVARIANT, SCI_QVARIANT, new QVariant(qv));
+}
+
 AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, ExceptionSink *xsink) {
 //     printd(0, "Marshalling::stackToQore() type: %s, %d\n", t.name, t.flags & Smoke::tf_elem);
 
@@ -638,24 +718,18 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
         return 0;
     }
     case Smoke::t_class: {
+        void *origObj = i.s_class;
+
+        if (t.classId == SCI_QVARIANT)
+	    return return_qvariant(*(reinterpret_cast<QVariant *>(origObj)));
+
         QoreClass * c = ClassNamesMap::Instance()->value(t.classId);
         if (!c) {
             xsink->raiseException("QT-RETURN-VALUE", "Unknown returning object type: %s", t.name);
             return 0;
         }
-        void *origObj;
 
-        // TODO/FIXME: WTF? Why are there
-//             if (flags == Smoke::tf_ref || flags == Smoke::tf_ptr) {
-//                printd(0, "Marshalling::stackToQore() is ref or ptr\n");
-        //if (strchr(t.name, '*') != 0) {
-//                origObj = i.s_class;
-        //origObj = *(void **)i.s_class;
-//             } else {
-        origObj = i.s_class;
-//             }
-
-//             printd(0, "Marshalling::stackToQore() %s: %p\n", t.name, origObj);
+	//printd(0, "Marshalling::stackToQore() %s: %p\n", t.name, origObj);
         if (!origObj) {
             //printd(0, "(WW) Marshalling::stackToQore - origObj = 0.\n");
             return 0;
@@ -667,42 +741,43 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
 //             printd(0, "Marshalling::stackToQore() got QoreObject %p\n", o);
             o->ref();
         } else {
-
 	    QoreSmokePrivate *p;
-
             // now it should be real object
             // o is still required to decide if is it QObject based or not
-	    if (c->getClass(CID_QABSTRACTITEMMODEL)) {	       
+	    if (c->getClass(QC_QABSTRACTITEMMODEL->getID())) {	       
 	       QoreSmokePrivateQAbstractItemModelData *p1;
 	       o = doQObject<QoreSmokePrivateQAbstractItemModelData>(origObj, xsink, &p1);
 	       p = p1;
 	    }
-            else if (c->getClass(CID_QOBJECT)) {
+            else if (c->getClass(QC_QOBJECT->getID())) {
 	       QoreSmokePrivateQObjectData *p1;
 	       o = doQObject<QoreSmokePrivateQObjectData>(origObj, xsink, &p1);
 	       p = p1;
             } 
 	    else {
-	       o = new QoreObject(c, getProgram());
-	       // it's not QObject based, just use copy constructor
-	       const char * className = qt_Smoke->classes[t.classId].className;
-	       
-	       //printd(0, "Marshalling::stackToQore() %s: origObj=%p qcid=%d (%s) scid=%d ref=%d ptr=%d stack=%d\n", t.name, origObj, c->getID(), c->getName(), t.classId, flags == Smoke::tf_ref, flags == Smoke::tf_ptr, flags == Smoke::tf_stack);
-	     
-	       if (iconst && flags == Smoke::tf_ref) {
-		  origObj = Marshalling::constructCopy(origObj, className, xsink);
-		  if (*xsink)
-		     return 0;
+	       o = getQoreMappedObject(t.classId, origObj);
+	       if (o) {
+		  o->ref();
 	       }
-	    
-	       p = new QoreSmokePrivateData(t.classId, origObj);
-	       o->setPrivate(c->getID(), p);
+	       else {
+		  // it's not QObject based, just use copy constructor
+		  const char * className = qt_Smoke->classes[t.classId].className;
+	       
+		  //printd(0, "Marshalling::stackToQore() %s: origObj=%p qcid=%d (%s) scid=%d ref=%d ptr=%d stack=%d\n", t.name, origObj, c->getID(), c->getName(), t.classId, flags == Smoke::tf_ref, flags == Smoke::tf_ptr, flags == Smoke::tf_stack);
+		  
+		  if (iconst && flags == Smoke::tf_ref) {
+		     origObj = Marshalling::constructCopy(origObj, className, xsink);
+		     if (*xsink)
+			return 0;
+		  }
+		  o = createQoreObjectFromNonQObject(c, t.classId, origObj, &p);
+	       }
 	    }
 	    if (flags == Smoke::tf_ptr)
 	       p->setExternallyOwned();
         }
         // it can return already existing object or non-qobject based one
-        // qobject based objs are handled in o->getClass(CID_QOBJECT) part
+        // qobject based objs are handled in o->getClass(QC_QOBJECT->getID()) part
         return o.release();
     } // case Smoke::t_class
     } // switch

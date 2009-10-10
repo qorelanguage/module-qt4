@@ -65,8 +65,13 @@ private:
 };
 
 class QoreSmokePrivateData : public QoreSmokePrivate {
+   bool save_map;
 public:
-    DLLLOCAL QoreSmokePrivateData(Smoke::Index classID, void *p) : QoreSmokePrivate(classID), m_object(p) {
+   DLLLOCAL QoreSmokePrivateData(Smoke::Index classID, void *p, QoreObject *self) : QoreSmokePrivate(classID), m_object(p) {
+       // register in object map if object is not derived from QObject and has virtual functions
+       save_map = qt_Smoke->classes[classID].flags & Smoke::cf_virtual;
+       if (save_map)
+	   qt_qore_map.add(p, self);
     }
     DLLLOCAL virtual ~QoreSmokePrivateData() {
         // the object must have been destroyed externally and cleared before this destructor is run
@@ -76,6 +81,8 @@ public:
         return m_object;
     }
     DLLLOCAL virtual void clear() {
+        if (save_map)
+	    qt_qore_map.del(m_object);
         m_object = 0;
     }
 
@@ -94,7 +101,7 @@ public:
         assert(!strcmp(qt_Smoke->methodNames[qt_Smoke->methods[qt_metacall_index].name], "qt_metacall"));
     }
     DLLLOCAL virtual ~QoreSmokePrivateQObjectData() {
-//         printd(0, "QoreSmokePrivateQObjectData::~QoreSmokePrivateQObjectData() this=%p obj=%p (%s)\n", this, m_qobject.data(), getClassName());
+       //printd(0, "QoreSmokePrivateQObjectData::~QoreSmokePrivateQObjectData() this=%p obj=%p (%s)\n", this, m_qobject.data(), getClassName());
         if (m_qobject.data() && !externallyOwned() && !m_qobject->parent()) {
             // set property to 0 because QoreObject is being deleted
             {
@@ -160,7 +167,7 @@ public:
         signalId = methodList.addMethod(ds.release());
         signalIndices[theSignal] = signalId;
 
-        printd(0, "%s::createDynamicSignal() this=%08p id=%d '%s'\n", getClassName(), this, signalId, signal);
+        //printd(0, "%s::createDynamicSignal() this=%08p id=%d '%s'\n", getClassName(), this, signalId, signal);
         return 0;
     }
 
@@ -197,7 +204,7 @@ public:
         QByteArray theSignal = QMetaObject::normalizedSignature(signal + 1);
         QByteArray theSlot = QMetaObject::normalizedSignature(slot + 1);
 
-	printd(0, "connectDynamic() sig=%s (%s) slot=%s (%s)\n", signal, theSignal.data(), slot, theSlot.data());
+	//printd(0, "connectDynamic() sig=%s (%s) slot=%s (%s)\n", signal, theSignal.data(), slot, theSlot.data());
 
         if (!QMetaObject::checkConnectArgs(theSignal, theSlot)) {
             xsink->raiseException("QT-CONNECT-ERROR", "cannot connect signal '%s' with '%s' due to incompatible arguments", signal + 1, slot + 1);
@@ -227,7 +234,7 @@ public:
             return -1;
         }
 
-        printd(0, "%s::connectDynamic(sender=%08p, signal=%d:%s (meta=%d), receiver=%d:%s (meta=%d)) receiver=%08p success\n", receiver->getClassName(), sender, signalId, signal, sender->getParentMetaObject()->methodCount(), targetId, slot, getParentMetaObject()->methodCount(), receiver);
+        //printd(0, "%s::connectDynamic(sender=%08p, signal=%d:%s (meta=%d), receiver=%d:%s (meta=%d)) receiver=%08p success\n", receiver->getClassName(), sender, signalId, signal, sender->getParentMetaObject()->methodCount(), targetId, slot, getParentMetaObject()->methodCount(), receiver);
         return 0;
     }
 
@@ -239,7 +246,7 @@ public:
 
         if (id >= 0) {
             QMetaMethod qmm = mo->method(id);
-            printd(0, "%s::emitSignal(%s, %p) static signal %d\n", mo->className(), sig, args, id);
+            //printd(0, "%s::emitSignal(%s, %p) static signal %d\n", mo->className(), sig, args, id);
 
             emitStaticSignal(m_qobject.data(), id, qmm, args, xsink);
         } else { // emit dynamic signal
@@ -248,7 +255,7 @@ public:
                 xsink->raiseException("EMIT-ERROR", "no signal found matching signature '%s'; register signals by calling QObject::createSignal(); note that signatures (arguments) must be C-style and must match", sig);
                 return;
             }
-            printd(0, "emitSignal(%s, %p) dynamic signal %d\n", sig, args, signalId);
+            //printd(0, "emitSignal(%s, %p) dynamic signal %d\n", sig, args, signalId);
             QoreQtDynamicSignal *sp = reinterpret_cast<QoreQtDynamicSignal *>(methodList[signalId]);
             sp->emitSignal(m_qobject, signalId + mo->methodCount(), args);
         }
@@ -463,8 +470,6 @@ private:
     void registerMethods();
 };
 
-
-
 // TODO/FIXME: rewrite it to use template?
 // Singleton. Everywhere available map Smoke::Class index -> QoreClass*
 // It's used to handle creating Qore objects from Qt ones (returned directly
@@ -506,7 +511,6 @@ private:
     }
 };
 
-
 // Initial setup for each Qt class. It creates common Qore binding between
 // qt class and qore class wrappers.
 // There is also a new namespace created if it's required (enums etc.).
@@ -527,8 +531,7 @@ private:
     void addSuperClasses(Smoke::Index ix, QoreNamespace &qt_ns);
 };
 
-
-// Functions to handle Qore cosntructor/any method/any static
+// Functions to handle Qore constructor/any method/any static
 // method for object/class instance.
 void common_constructor(const QoreClass &myclass,
                         QoreObject *self,

@@ -27,6 +27,7 @@
 #include "qoresmokeclass.h"
 #include "commonargument.h"
 #include "qoreqtenumnode.h"
+#include "qoresmokebinding.h"
 #include <QtDebug>
 
 #include <QWidget>
@@ -50,6 +51,28 @@ bool isptrtype(const char *var, const char *type) {
     }
     //printd(0, "isptrtype(%s, %s) returning %d\n", var, type, ((var[i] == '*' || var[i] == '&') && !type[i] && !var[i+1]) ? true : false);
     return ((var[i] == '*' || var[i] == '&') && !type[i] && !var[i+1]) ? true : false;
+}
+
+static void add_args(QoreStringNode &str, const QoreListNode *args) {
+   if (!args) {
+      str.concat("<empty list>");
+      return;
+   }
+
+   ConstListIterator ci(args);
+   while (ci.next()) {
+      const AbstractQoreNode *n = ci.getValue();
+      const char *tn;
+      if (!n)
+	 tn = "NOTHING";
+      else if (n->getType() == NT_OBJECT)
+	 tn = reinterpret_cast<const QoreObject *>(n)->getClassName();
+      else
+	 tn = n->getTypeName();
+      str.concat(tn);
+      if (!ci.last())
+	 str.concat(", ");
+   }
 }
 
 CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
@@ -116,7 +139,11 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
 //     printd(0, "CommonQoreMethod::CommonQoreMethod() candidates=%d\n", candidates.count());
 
     if (candidates.count() == 0) {
-        xsink->raiseException("QT-NO-METHOD-FOUND", "%s::%s() method not found with these args", m_className, methodName);
+        QoreStringNode *desc = new QoreStringNode;
+        desc->sprintf("no match found for call to %s::%s(", m_className, methodName);
+	add_args(*desc, params);
+	desc->concat(')');
+        xsink->raiseException("QT-NO-METHOD-FOUND", desc);
         // TODO/FIXME: print mMap candidates
         return;
     }
@@ -173,8 +200,12 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
         }
 
         if (m_munged.isEmpty()) {
-            xsink->raiseException("QT-NO-METHOD-FOUND", "cannot match any variant of %s::%s() with the arguments passed", className, methodName);
-            return;
+	   QoreStringNode *desc = new QoreStringNode;
+	   desc->sprintf("no match found for call to %s::%s(", m_className, methodName);
+	   add_args(*desc, params);
+	   desc->concat(')');
+	   xsink->raiseException("QT-NO-METHOD-FOUND", desc);
+	   return;
         }
     }
 
@@ -551,7 +582,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
             else {
                 // see if it is a QWidget
                 const QoreObject *obj = reinterpret_cast<const QoreObject *>(v);
-                if (obj->getClass(CID_QWIDGET)) {
+                if (obj->getClass(QC_QWIDGET->getID())) {
                     p = static_cast<QPaintDevice *>(reinterpret_cast<QWidget *>(o));
                     //printd(0, "o=%p p=%p d=0x%x\n", o, p, sizeof(QObject));
                     //printd(0, "paintingActive=%d\n", p->paintingActive());
@@ -984,4 +1015,23 @@ AbstractQoreNode *CommonQoreMethod::callMethod() {
    }
    // return return value
    return returnValue();
+}
+
+void *CommonQoreMethod::callConstructor() {
+    // call constructor
+    (* smokeClass().classFn)(m_method.method, 0, Stack);
+
+    // 0 argument in args is always the return value. So it's
+    // the newly created object for now.
+    void *qtObj = Stack[0].s_class;
+    assert(qtObj);
+
+    //printd(0, "CommonQoreMethod::callConstructor() %s installing qt bindings, qtObj=%p\n", className, qtObj);
+
+    // install qt bindings. It's mandatory for all smoked objects
+    Smoke::StackItem a[2];
+    a[1].s_voidp = QoreSmokeBinding::Instance(qt_Smoke);
+    (* smokeClass().classFn)(0, qtObj, a);    
+
+    return qtObj;
 }
