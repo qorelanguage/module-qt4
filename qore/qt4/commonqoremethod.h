@@ -30,6 +30,9 @@
 #include <QBrush>
 #include <QPen>
 #include <QColor>
+#include <QDateTime>
+#include <QDate>
+#include <QTime>
 
 #include "qoresmokeclass.h"
 #include "qoremarshalling.h"
@@ -129,6 +132,9 @@ struct ref_store_s {
         r_qreal,         // for qreal
         r_container,     // for QLists, QVectors, QMaps etc. - all with templates
         r_qvariant,      // for QVariant
+	r_qdatetime,     // for QDateTime
+	r_qdate,         // for QDate
+	r_qtime,         // for QTime
     };
 
     const ReferenceNode *ref;
@@ -146,6 +152,9 @@ struct ref_store_s {
         QBrush *q_qbrush;
         QPen *q_qpen;
         QColor *q_qcolor;
+        QDateTime *q_qdatetime;
+        QDate *q_qdate;
+        QTime *q_qtime;
         Marshalling::QoreQListBase * q_container;
         Marshalling::QoreQVariant * q_qvariant;
     } data;
@@ -186,6 +195,15 @@ struct ref_store_s {
         case r_qvariant:
             delete data.q_qvariant;
             break;
+	case r_qdatetime:
+	    delete data.q_qdatetime;
+	    break;
+	case r_qdate:
+	    delete data.q_qdate;
+	    break;
+	case r_qtime:
+	    delete data.q_qtime;
+	    break;	      
         default:
             (void)data; // suppress compiler warning
         }
@@ -239,6 +257,18 @@ struct ref_store_s {
         type = r_qcolor;
         data.q_qcolor = v;
     }
+    DLLLOCAL void assign(QDateTime *v) {
+        type = r_qdatetime;
+	data.q_qdatetime = v;
+    }
+    DLLLOCAL void assign(QDate *v) {
+        type = r_qdate;
+	data.q_qdate = v;
+    }
+    DLLLOCAL void assign(QTime *v) {
+        type = r_qtime;
+	data.q_qtime = v;
+    }
     DLLLOCAL void assign(Marshalling::QoreQListBase * v) {
         type = r_container;
         data.q_container = v;
@@ -286,6 +316,15 @@ struct ref_store_s {
             break;
         case r_qvariant:
             ptr = data.q_qvariant->s_class();
+            break;
+        case r_qdatetime:
+            ptr = data.q_qdatetime;
+            break;
+        case r_qdate:
+            ptr = data.q_qdate;
+            break;
+        case r_qtime:
+            ptr = data.q_qtime;
             break;
         default:
             assert(false);

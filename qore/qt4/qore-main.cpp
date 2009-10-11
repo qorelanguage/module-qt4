@@ -57,7 +57,9 @@ DLLEXPORT qore_license_t qore_module_license = QL_LGPL;
 DLLEXPORT qore_license_t qore_module_license = QL_GPL;
 #endif
 
-const QoreClass *QC_QOBJECT = 0, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT, *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR;
+const QoreClass *QC_QOBJECT = 0, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT, 
+   *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME;
+
 Smoke::Index SCI_QVARIANT, SCI_QLOCALE;
 
 extern Smoke* qt_Smoke;
@@ -461,6 +463,9 @@ static QoreStringNode *qt_module_init() {
     setClassInfo(QC_QLOCALE, SCI_QLOCALE, "QLocale");
     setClassInfo(QC_QCOLOR, "QColor");
     setClassInfo(QC_QBRUSH, "QBrush");
+    setClassInfo(QC_QDATE, "QDate");
+    setClassInfo(QC_QDATETIME, "QDateTime");
+    setClassInfo(QC_QTIME, "QTime");
 
     // add alternate method argument handlers
     ClassMap &cm = *(ClassMap::Instance());

@@ -288,6 +288,158 @@ CommonQoreMethod::~CommonQoreMethod() {
         tparams->deref(m_xsink);
 }
 
+int get_qdate(const AbstractQoreNode *n, QDate &date, ExceptionSink *xsink) {
+   qore_type_t t = n ? n->getType() : NT_NOTHING;
+   if (t == NT_DATE) {
+      const DateTimeNode *d = reinterpret_cast<const DateTimeNode *>(n);
+      date.setDate(d->getYear(), d->getMonth(), d->getDay());
+      return 0;
+   }
+
+   if (t != NT_OBJECT) {
+      xsink->raiseException("QT-QDATE-ERROR", "cannot convert type '%s' to QDate", n ? n->getTypeName() : "NOTHING");
+      return -1;
+   }
+
+   const QoreObject *o = reinterpret_cast<const QoreObject *>(n);
+   
+   ReferenceHolder<QoreSmokePrivateData> data(xsink);
+
+   data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QDATE->getID(), xsink));
+   if (*xsink)
+      return -1;
+
+   if (data) {
+      QDate *d = reinterpret_cast<QDate *>(data->object());
+      assert(d);
+      date = *d;
+      //date.setDate(d->year(), d->month(), d->day());
+      return 0;
+   }
+
+   data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QDATETIME->getID(), xsink));
+   if (*xsink)
+      return -1;
+
+   if (data) {
+      QDateTime *d = reinterpret_cast<QDateTime *>(data->object());
+      assert(d);
+      date = d->date();
+      return 0;
+   }
+
+   xsink->raiseException("QT-QDATE-ERROR", "class '%s' is not derived from QDate or QDateTime", o->getClassName());
+   return -1;
+}
+
+int get_qdatetime(const AbstractQoreNode *n, QDateTime &dt, ExceptionSink *xsink) {
+   qore_type_t t = n ? n->getType() : NT_NOTHING;
+   if (t == NT_DATE) {
+      const DateTimeNode *qdt = reinterpret_cast<const DateTimeNode *>(n);
+
+      dt.setDate(QDate(qdt->getYear(), qdt->getMonth(), qdt->getDay()));
+      dt.setTime(QTime(qdt->getHour(), qdt->getMinute(), qdt->getSecond(), qdt->getMillisecond()));
+
+      return 0;
+   }
+
+   if (t != NT_OBJECT) {
+      xsink->raiseException("QT-QDATETIME-ERROR", "cannot convert type '%s' to QDateTime", n ? n->getTypeName() : "NOTHING");
+      return -1;
+   }
+
+   const QoreObject *o = reinterpret_cast<const QoreObject *>(n);
+   
+   ReferenceHolder<QoreSmokePrivateData> data(xsink);
+
+   data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QDATE->getID(), xsink));
+   if (*xsink)
+      return -1;
+
+   if (data) {
+      QDate *d = reinterpret_cast<QDate *>(data->object());
+      assert(d);
+
+      dt.setTime(QTime());
+      dt.setDate(*d);
+      return 0;
+   }
+
+   data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QTIME->getID(), xsink));
+   if (*xsink)
+      return -1;
+
+   if (data) {
+      QTime *qt = reinterpret_cast<QTime *>(data->object());
+      assert(qt);
+
+      dt.setDate(QDate());
+      dt.setTime(*qt);
+
+      return 0;
+   }
+
+   data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QDATETIME->getID(), xsink));
+   if (*xsink)
+      return -1;
+
+   if (data) {
+      QDateTime *d = reinterpret_cast<QDateTime *>(data->object());
+      assert(d);
+      dt = *d;
+      return 0;
+   }
+
+   xsink->raiseException("QT-QDATETIME-ERROR", "class '%s' is not derived from QDateTime, QDate, or QTime", o->getClassName());
+   return -1;
+}
+
+int get_qtime(const AbstractQoreNode *n, QTime &time, ExceptionSink *xsink) {
+   qore_type_t t = n ? n->getType() : NT_NOTHING;
+   if (t == NT_DATE) {
+      const DateTimeNode *qdt = reinterpret_cast<const DateTimeNode *>(n);
+
+      time.setHMS(qdt->getHour(), qdt->getMinute(), qdt->getSecond(), qdt->getMillisecond());
+      return 0;
+   }
+
+   if (t != NT_OBJECT) {
+      xsink->raiseException("QT-QTIME-ERROR", "cannot convert type '%s' to QTime", n ? n->getTypeName() : "NOTHING");
+      return -1;
+   }
+
+   const QoreObject *o = reinterpret_cast<const QoreObject *>(n);
+   
+   ReferenceHolder<QoreSmokePrivateData> data(xsink);
+
+   data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QDATETIME->getID(), xsink));
+   if (*xsink)
+      return -1;
+
+   if (data) {
+      QDateTime *d = reinterpret_cast<QDateTime *>(data->object());
+      assert(d);
+      time = d->time();
+      return 0;
+   }
+
+   data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QTIME->getID(), xsink));
+   if (*xsink)
+      return -1;
+
+   if (data) {
+      QTime *qt = reinterpret_cast<QTime *>(data->object());
+      assert(qt);
+
+      time = *qt;
+
+      return 0;
+   }
+
+   xsink->raiseException("QT-QTIME-ERROR", "class '%s' is not derived from QTime or QDateTime", o->getClassName());
+   return -1;
+}
+
 int get_qstring(Smoke::Type &t, QString &qstring, const AbstractQoreNode *n, ExceptionSink *xsink) {
 //     printd(0, "get_qstring() %s NT=%d classId=%d\n", t.name, n->getType(), t.classId);
     if (n && n->getType() == NT_STRING) {
@@ -689,6 +841,45 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                 }
                 return 0;
             }
+	    else if (bname.startsWith("QDateTime")) {
+	       std::auto_ptr<QDateTime> qdt(new QDateTime());
+	       if (get_qdatetime(v, *(qdt.get()), xsink))
+		  return -1;
+
+	       if (cqm) {
+		  cqm->getRefEntry(index - 1)->assign(qdt.release());
+		  si.s_class = cqm->getRefEntry(index - 1)->getPtr();
+	       } else {
+		  si.s_class = qdt.release();
+	       }
+	       return 0;
+	    }
+	    else if (bname.startsWith("QDate")) {
+	       std::auto_ptr<QDate> qd(new QDate());
+	       if (get_qdate(v, *(qd.get()), xsink))
+		  return -1;
+
+	       if (cqm) {
+		  cqm->getRefEntry(index - 1)->assign(qd.release());
+		  si.s_class = cqm->getRefEntry(index - 1)->getPtr();
+	       } else {
+		  si.s_class = qd.release();
+	       }
+	       return 0;
+	    }
+	    else if (bname.startsWith("QTime")) {
+	       std::auto_ptr<QTime> qt(new QTime());
+	       if (get_qtime(v, *(qt.get()), xsink))
+		  return -1;
+
+	       if (cqm) {
+		  cqm->getRefEntry(index - 1)->assign(qt.release());
+		  si.s_class = cqm->getRefEntry(index - 1)->getPtr();
+	       } else {
+		  si.s_class = qt.release();
+	       }
+	       return 0;
+	    }
             // finally the generic Q stuff
             else {
 	       return returnQtObjectOnStack(si, className, methodName, v, t, index, xsink);
@@ -938,6 +1129,42 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
 	    // FIXME: slow - unnecessary allocations, etc
 	    std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(smoke_type, n, m_xsink));
             return variant->status;
+	} else if (isptrtype(name, "QDateTime")) {
+	   if (qore_type == NT_DATE)
+	      return 1;
+	   if (qore_type != NT_OBJECT)
+	      return 0;
+
+            const QoreObject *obj = reinterpret_cast<const QoreObject *>(n);
+	    if (obj->getClass(QC_QDATETIME->getID()))
+	       return 2;
+	    if (obj->getClass(QC_QDATE->getID()) || obj->getClass(QC_QTIME->getID()))
+	       return 1;
+	    return 0;
+	} else if (isptrtype(name, "QDate")) {
+	   if (qore_type == NT_DATE)
+	      return 1;
+	   if (qore_type != NT_OBJECT)
+	      return 0;
+
+            const QoreObject *obj = reinterpret_cast<const QoreObject *>(n);
+	    if (obj->getClass(QC_QDATETIME->getID()))
+	       return 1;
+	    if (obj->getClass(QC_QDATE->getID()))
+	       return 2;
+	    return 0;
+	} else if (isptrtype(name, "QTime")) {
+	   if (qore_type == NT_DATE)
+	      return 1;
+	   if (qore_type != NT_OBJECT)
+	      return 0;
+
+            const QoreObject *obj = reinterpret_cast<const QoreObject *>(n);
+	    if (obj->getClass(QC_QDATETIME->getID()))
+	       return 1;
+	    if (obj->getClass(QC_QTIME->getID()))
+	       return 2;
+	    return 0;
         } else if (bname.startsWith("QList<") || bname.startsWith("QVector<")) {
             return qore_type == NT_LIST ? 2 : 0;
             // TODO/FIXME: hardcode more automatic conversions (date, time, etc)
