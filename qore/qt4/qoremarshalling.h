@@ -83,6 +83,7 @@ public:
     QoreQListBase() {
         isValid = false;
     }
+    virtual ~QoreQListBase() {}
     virtual void * voidp() = 0;
 };
 
@@ -155,6 +156,7 @@ public:
     QoreQVariant() {
         status = Valid;
     }
+    virtual ~QoreQVariant() {}
     virtual void * s_class() {
         return &qvariant;
     }
