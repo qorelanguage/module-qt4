@@ -346,6 +346,48 @@ static T get_char(const AbstractQoreNode *node) {
     return (T)(node ? node->getAsInt() : 0);
 }
 
+
+int CommonQoreMethod::returnQtObjectOnStack(Smoke::StackItem &si, const char *cname, const char *mname, const AbstractQoreNode *v, Smoke::Type &t, int index, ExceptionSink *xsink, bool temp) {
+   int flags = t.flags & 0x30;
+
+   ReferenceHolder<QoreSmokePrivate> c(xsink);
+
+   if (getObjectStatic(xsink, cname, mname, t.classId, v, c, index, flags == Smoke::tf_ptr))
+      return -1;
+
+   void *p = c ? c->object() : 0;
+   //printd(0, "qoreToStackStatic() %s p=%p flags=%x\n", className, p, flags);
+   if (p) {
+      // if the object is on the stack, and we are passing a temporary value to QT,
+      // and the node is unique, then we must take the value and clear the QoreSmokePrivate
+      // data structure, otherwise we need to make a copy, because otherwise the data would
+      // be destroyed before QT has a chance to use it and QT would be using an invalid pointer
+      if (temp && flags == Smoke::tf_stack) {
+	 if (v->is_unique())
+	    c->clear();
+	 else {
+	    p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
+	    if (*xsink)
+	       return -1;
+	 }
+      } else if (flags == Smoke::tf_ref) {
+	 p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
+	 if (*xsink)
+	    return -1;
+      }
+   }
+
+   if (!p && flags == Smoke::tf_stack) {
+      // construct a new object if we have to
+      CommonQoreMethod cqm(0, 0, t.name, t.name, 0, xsink);
+      (* cqm.smokeClass().classFn)(cqm.method().method, 0, cqm.Stack);
+      p = cqm.Stack[0].s_class;
+   }
+
+   si.s_class = p;
+   return 0;
+}
+
 // FIXME: avoid string comparisons by setting global values to smoke classIds instead
 int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                                         Smoke::StackItem &si,
@@ -505,23 +547,41 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                 si.s_class = qks;
             }
             return 0;
-        } else if (v && isptrtype(name, "QBrush") && (v->getType() == NT_QTENUM || v->getType() == NT_INT)) {
-            if (v->getType() == NT_QTENUM) {
-                const QoreQtEnumNode *en = reinterpret_cast<const QoreQtEnumNode *>(v);
-                if (strcmp(en->smokeType().name, "Qt::GlobalColor")) {
+        } else if (v && isptrtype(name, "QBrush")) {
+	   if ((v->getType() == NT_QTENUM || v->getType() == NT_INT)) {
+	      if (v->getType() == NT_QTENUM) {
+		 const QoreQtEnumNode *en = reinterpret_cast<const QoreQtEnumNode *>(v);
+		 if (strcmp(en->smokeType().name, "Qt::GlobalColor")) {
                     xsink->raiseException("QT-ARGUMENT-ERROR", "%s::%s() expects QBrush, cannot convert from %s value passed", className, methodName, en->smokeType().name);
                     return -1;
-                }
-            }
-            if (cqm) {
-                ref_store_s *re = cqm->getRefEntry(index - 1);
-                re->assign(new QBrush((Qt::GlobalColor)v->getAsInt()));
-                si.s_class = re->getPtr();
-            } else {
-                QBrush *qb = new QBrush((Qt::GlobalColor)v->getAsInt());
-                si.s_class = qb;
-            }
-            return 0;
+		 }
+	      }
+	      if (cqm) {
+		 ref_store_s *re = cqm->getRefEntry(index - 1);
+		 re->assign(new QBrush((Qt::GlobalColor)v->getAsInt()));
+		 si.s_class = re->getPtr();
+	      } else {
+		 QBrush *qb = new QBrush((Qt::GlobalColor)v->getAsInt());
+		 si.s_class = qb;
+	      }
+	      return 0;
+	   }
+	   if (v->getType() == NT_OBJECT) {
+	      const QoreObject *obj = reinterpret_cast<const QoreObject *>(v);
+	      ReferenceHolder<QoreSmokePrivateData> p(xsink);
+	      
+	      // check for QColor
+	      p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QCOLOR->getID(), xsink));
+	      if (*xsink)
+		 return -1;
+	      if (p) {
+		 QColor *qc = reinterpret_cast<QColor *>(p->object());
+		 assert(qc);
+		 si.s_class = new QBrush(*qc);
+		 return 0;
+	      }
+	   }
+	   return returnQtObjectOnStack(si, className, methodName, v, t, index, xsink, temp);
         } else if (isptrtype(name, "QPen") && v && (v->getType() == NT_QTENUM || v->getType() == NT_INT)) {
             assert(iconst);
             if (v->getType() == NT_QTENUM) {
@@ -631,26 +691,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
             }
             // finally the generic Q stuff
             else {
-                ReferenceHolder<QoreSmokePrivate> c(xsink);
-
-                if (getObjectStatic(xsink, className, methodName, t.classId, v, c, index, flags == Smoke::tf_ptr))
-                    return -1;
-
-                void *p = c ? c->object() : 0;
-                //printd(0, "qoreToStackStatic() %s p=%p flags=%x\n", className, p, flags);
-                if (p && flags == Smoke::tf_ref) {
-                    p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
-                    assert(!*xsink);
-                }
-
-                if (!p && flags == Smoke::tf_stack) {
-                   CommonQoreMethod cqm(0, 0, t.name, t.name, 0, xsink);
-                   (* cqm.smokeClass().classFn)(cqm.method().method, 0, cqm.Stack);
-                   p = cqm.Stack[0].s_class;
-                }
-
-                si.s_class = p;
-                return 0;
+	       return returnQtObjectOnStack(si, className, methodName, v, t, index, xsink);
             }
         } else {
 //             printd(0, "can't handle ref type '%s'\n", t.name);
@@ -743,42 +784,8 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
         return 0;
     }
 
-    if (t.name[0] == 'Q') {
-        ReferenceHolder<QoreSmokePrivate> c(xsink);
-
-        if (getObjectStatic(xsink, className, methodName, t.classId, node, c, index, flags == Smoke::tf_ptr))
-            return -1;
-
-        void *p = c ? c->object() : 0;
-
-        if (p) {
-            // if the object is on the stack, and we are passing a temporary value to QT,
-            // and the node is unique, then we must take the value and clear the QoreSmokePrivate
-            // data structure, otherwise we need to make a copy, because otherwise the data would
-            // be destroyed before QT has a chance to use it and QT would be using an invalid pointer
-       if (flags == Smoke::tf_stack && temp) {
-          if (node->is_unique())
-         c->clear();
-          else {
-         p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
-         assert(!*xsink);
-          }
-       } else if (flags == Smoke::tf_ref) {
-          p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
-          assert(!*xsink);
-       }
-        }
-
-    if (!p && flags == Smoke::tf_stack) {
-       CommonQoreMethod cqm(0, 0, t.name, t.name, 0, xsink);
-       (* cqm.smokeClass().classFn)(cqm.method().method, 0, cqm.Stack);
-       p = cqm.Stack[0].s_class;
-    }
-
-        si.s_class = p;
-
-        return 0;
-    }
+    if (t.name[0] == 'Q')
+       return returnQtObjectOnStack(si, className, methodName, node, t, index, xsink, temp);
 
     xsink->raiseException("QT-ARGUMENT-ERROR", "don't know how to handle arguments ot type '%s'", t.name);
     return -1;
@@ -896,13 +903,23 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
                 return strcmp(en->smokeType().name, "Qt::Key") ? 0 : 2;
             }
             return 1;
-        } else if (isptrtype(name, "QBrush") && (qore_type == NT_QTENUM || qore_type == NT_INT)) {
-            if (qore_type == NT_QTENUM) {
-                const QoreQtEnumNode *en = reinterpret_cast<const QoreQtEnumNode *>(n);
+        } else if (isptrtype(name, "QBrush")) {
+	   if (qore_type == NT_QTENUM || qore_type == NT_INT) {
+	      if (qore_type == NT_QTENUM) {
+		 const QoreQtEnumNode *en = reinterpret_cast<const QoreQtEnumNode *>(n);
 //           printd(0, "getScore() %s enum=%s\n", name, en->smokeType().name);
-                return strcmp(en->smokeType().name, "Qt::GlobalColor") ? 0 : 2;
-            }
-            return 1;
+		 return strcmp(en->smokeType().name, "Qt::GlobalColor") ? 0 : 2;
+	      }
+	      return 1;
+	   }
+	   if (qore_type == NT_OBJECT) {
+	      const QoreObject *o = reinterpret_cast<const QoreObject *>(n);
+	      if (o->getClass(QC_QBRUSH->getID()))
+		 return 2;
+	      if (o->getClass(QC_QCOLOR->getID()))
+		 return 1;
+	      return 0;
+	   }
         } else if (isptrtype(name, "QPen") && (qore_type == NT_QTENUM || qore_type == NT_INT)) {
             if (qore_type == NT_QTENUM) {
                 const QoreQtEnumNode *en = reinterpret_cast<const QoreQtEnumNode *>(n);
@@ -918,7 +935,8 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
             }
             return 1;
         } else if (isptrtype(name, "QVariant")) {
-            Marshalling::QoreQVariant * variant = Marshalling::qoreToQVariant(smoke_type, n, m_xsink);
+	    // FIXME: slow - unnecessary allocations, etc
+	    std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(smoke_type, n, m_xsink));
             return variant->status;
         } else if (bname.startsWith("QList<") || bname.startsWith("QVector<")) {
             return qore_type == NT_LIST ? 2 : 0;

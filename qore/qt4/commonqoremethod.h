@@ -383,6 +383,8 @@ public:
 
     DLLLOCAL static int getObjectStatic(ExceptionSink *xsink, const char *className, const char *methodName, Smoke::Index classId, const AbstractQoreNode *v, ReferenceHolder<QoreSmokePrivate> &c, int index, bool nullOk = false);
 
+    DLLLOCAL static int returnQtObjectOnStack(Smoke::StackItem &si, const char *cname, const char *mname, const AbstractQoreNode *v, Smoke::Type &t, int index, ExceptionSink *xsink, bool temp = false);
+
     Smoke::Stack Stack;
 
 private:
