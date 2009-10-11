@@ -55,7 +55,7 @@ bool isptrtype(const char *var, const char *type) {
 
 static void add_args(QoreStringNode &str, const QoreListNode *args) {
    if (!args) {
-      str.concat("<empty list>");
+      str.concat("<no args>");
       return;
    }
 
@@ -229,7 +229,8 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
 
         int i = 1;
         foreach (Smoke::Type t, type_handler.types) {
-            qoreToStack(t, get_param(params, i-1), i);
+	    if (qoreToStack(t, get_param(params, i-1), i))
+	       break;
             ++i;
         }
     }
@@ -360,7 +361,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
     bool iconst = t.flags & Smoke::tf_const;
     ref_store_s *rf = 0;
 
-//     printd(0, "CommonQoreMethod::qoreToStack() %s::%s --- index %d cqm=%p '%s' classId=%d const=%s flags=0x%x (ptr=%s ref=%s) type=%d qore='%s' (%p)\n",
+//     printd(0, "CommonQoreMethod::qoreToStackStatic() %s::%s --- index %d cqm=%p '%s' classId=%d const=%s flags=0x%x (ptr=%s ref=%s) type=%d qore='%s' (%p)\n",
 //            className, methodName, index, cqm, t.name, (int)t.classId, iconst ? "true" : "false", flags, flags == Smoke::tf_ptr ? "true" : "false", flags == Smoke::tf_ref ? "true" : "false", tid, node ? node->getTypeName() : "n/a", node);
 
     // handle references and pointers
@@ -611,16 +612,20 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                 }
                 return 0;
             } else if (bname.startsWith("QVariant")) {
-                Marshalling::QoreQVariant * variant = Marshalling::qoreToQVariant(t, node, xsink);
-                if (variant->status == Marshalling::QoreQVariant::Invalid)
+	       std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(t, node, xsink));
+	       if (variant.get()->status == Marshalling::QoreQVariant::Invalid) {
+		  //printd(0, "CommonQoreMethod::qoreToStackStatic() invalid QVariant returned\n");
                     return -1;
+		}
                 if (cqm) {
                     assert(iconst);
                     ref_store_s *re = cqm->getRefEntry(index - 1);
-                    re->assign(variant);
+                    re->assign(variant.release());
                     si.s_class = re->getPtr();
+		    //printd(0, "CommonQoreMethod::qoreToStackStatic() %s::%s() valid QVariant returned (cqm) si.s_class=%p\n", className, methodName, si.s_class);
                 } else {
-                    si.s_class = variant->s_class();
+		   //printd(0, "CommonQoreMethod::qoreToStackStatic() valid QVariant returned (no cqm) variant=%p\n", variant.get());
+		   si.s_class = variant.get()->s_class();
                 }
                 return 0;
             }
@@ -781,13 +786,10 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
 
 
 // FIXME: avoid string comparisons by setting global values to smoke classIds instead
-void CommonQoreMethod::qoreToStack(Smoke::Type t,
+int CommonQoreMethod::qoreToStack(Smoke::Type t,
                                    const AbstractQoreNode * node,
                                    int index) {
-    if (qoreToStackStatic(m_xsink, Stack[index], m_className, m_methodName, t, node, index, this) == -1) {
-        m_xsink->handleExceptions();
-        assert(0);
-    }
+   return qoreToStackStatic(m_xsink, Stack[index], m_className, m_methodName, t, node, index, this);
 }
 
 int CommonQoreMethod::getObject(Smoke::Index classId, const AbstractQoreNode *v, ReferenceHolder<QoreSmokePrivate> &c, int index, bool nullOk) {
@@ -1007,12 +1009,16 @@ void CommonQoreMethod::postProcessConstructor(QoreSmokePrivate *n_smc, Smoke::St
 }
 
 AbstractQoreNode *CommonQoreMethod::callMethod() {
+   //printd(0, "CommonQoreMethod::callMethod() %s::%s() flags=0x%x\n", m_className, m_methodName, method().flags);
+   
    if (!isValid())
       return 0;
    if (!suppress_method) {
+      assert(m_method.method >= 0);
       // call smoke-qt method if not suppressed by arg handler
-      (* smokeClass().classFn)(method().method, smc ? smc->object() : 0, Stack);
+      (* smokeClass().classFn)(m_method.method, smc ? smc->object() : 0, Stack);
    }
+
    // return return value
    return returnValue();
 }

@@ -44,7 +44,9 @@ public:
     }
     DLLLOCAL virtual void * object() = 0;
     DLLLOCAL virtual void clear() = 0;
-
+    // the following is defined as pure virtual so only 1 virtual call has to be made when calling it
+    // (it could be implemented here with 2 other virtual calls)
+    DLLLOCAL virtual void *takeObject() = 0;
     DLLLOCAL Smoke::Index smokeClass() {
         return m_class;
     }
@@ -84,6 +86,11 @@ public:
         if (save_map)
 	    qt_qore_map.del(m_object);
         m_object = 0;
+    }
+    DLLLOCAL virtual void *takeObject() {
+       void *p = m_object;
+       QoreSmokePrivateData::clear();
+       return p;
     }
 
 private:
@@ -141,6 +148,12 @@ public:
     DLLLOCAL virtual void clear() {
         m_qobject = 0;
     }
+    DLLLOCAL virtual void *takeObject() {
+       void *p = (void *)m_qobject.data();
+       m_qobject = 0;
+       return p;
+    }
+
     DLLLOCAL QObject *qobject() {
         return m_qobject.data();
     }

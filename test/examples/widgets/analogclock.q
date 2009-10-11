@@ -1,11 +1,9 @@
 #!/usr/bin/env qore
 
 # This is basically a direct port of the QT widget example
-# "analogclock" to Qore using Qore's "qt" module.  
+# "analogclock" to Qore using Qore's "qt4" module.  
 
-# Note that Qore's "qt" module requires QT 4.3 or above 
-
-# use the "qt-gui" module
+# use the "qt4" module
 %requires qt4
 
 # this is an object-oriented program, the application class is "analog_clock_example"
@@ -27,12 +25,12 @@ class AnalogClock inherits QWidget
         $.resize(200, 200);
     }
 
-    paintEvent($event)
-    {        
+    paintEvent($event) {
         my $side = min($.width(), $.height());
         my $time = now();
 
         my $painter = new QPainter($self);
+
         $painter.setRenderHint(QPainter::Antialiasing);
         $painter.translate($.width() / 2, $.height() / 2);
         $painter.scale($side / 200.0, $side / 200.0);

@@ -76,7 +76,7 @@ typedef QHash<void *, QoreObject *> qt_qore_map_t;
 class QtQoreMap : protected qt_qore_map_t, protected QoreRWLock {
 public:
    DLLLOCAL ~QtQoreMap() {
-      assert(empty());
+      //assert(empty());
    }
    DLLLOCAL void add(void *qto, QoreObject *qo) {
       QoreAutoRWWriteLocker l(this);

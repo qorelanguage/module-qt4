@@ -559,13 +559,8 @@ void common_destructor(const QoreClass &thisclass, QoreObject *self, AbstractPri
 
     QoreSmokePrivate *p = reinterpret_cast<QoreSmokePrivate*>(private_data);
 
-/*
-    if (!strcmp(thisclass.getName(), "QWidgetItem"))
-       printd(0, "common_destructor class=%p (%s), self=%p, private_data=%p, object=%p\n", &thisclass, thisclass.getName(), self, private_data, p->object());
-*/
-
     if (!p->object()) {
-//         printd(0, "common_destructor (WW) QoreSmokePrivate's Qt object does not exist anymore\n");
+        //printd(0, "common_destructor (WW) QoreSmokePrivate's Qt object does not exist anymore\n");
         return;
     }
 
@@ -578,7 +573,7 @@ void common_destructor(const QoreClass &thisclass, QoreObject *self, AbstractPri
         }
 
         if (qtObj->parent()) {
-//        printd(0, "common_destructor() object %p not deleted; has parent\n", qtObj);
+	    //printd(0, "common_destructor() %s::destructor() object %p not deleted; has parent\n", thisclass.getName(), qtObj);
             // clear the private data
             p->clear();
             return;
@@ -586,7 +581,7 @@ void common_destructor(const QoreClass &thisclass, QoreObject *self, AbstractPri
     }
 
     if (p->externallyOwned()) {
-//        printd(0, "common_destructor() QT object %p is externally owned\n", p->object());
+        //printd(0, "common_destructor() %s::destructor(): QT object %p is externally owned\n", thisclass.getName(), p->object());
         p->clear();
         return;
     }
@@ -597,10 +592,10 @@ void common_destructor(const QoreClass &thisclass, QoreObject *self, AbstractPri
 
     CommonQoreMethod cqm(self, p, className, methodName.constData(), 0, xsink);
 
-//     printd(0, "common_destructor Qt: %p\n", p->object());
+    //printd(0, "common_destructor %s::destructor() Qt: %p\n", thisclass.getName(), p->object());
     assert(cqm.isValid());
-    (* cqm.smokeClass().classFn)(cqm.method().method, p->object(), cqm.Stack);
-    p->clear();
+    // call the destructor -- and take the object from the private data first
+    (* cqm.smokeClass().classFn)(cqm.method().method, p->takeObject(), cqm.Stack);
 }
 
 void emitStaticSignal(QObject *sender, int signalId, const QMetaMethod &qmm, const QoreListNode *args, ExceptionSink *xsink) {

@@ -213,7 +213,7 @@ class MainWindow inherits QMainWindow
             return;
 
         my $action = $.sender();
-        my $style = QStyleFactory::create($action.data().toString());
+        my $style = QStyleFactory::create($action.data());
         #Q_ASSERT(style);
 
         QApplication::setStyle($style);
@@ -499,7 +499,7 @@ class MainWindow inherits QMainWindow
     checkCurrentStyle()
     {
         foreach my $action in ($.styleActionGroup.actions()) {
-            my $styleName = $action.data().toString();
+            my $styleName = $action.data();
             my $candidate = QStyleFactory::create($styleName);
             #Q_ASSERT(candidate);
             if ($candidate.metaObject().className()

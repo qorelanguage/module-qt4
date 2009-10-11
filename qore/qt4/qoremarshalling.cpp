@@ -558,6 +558,7 @@ QoreObject *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0) {
       qc = ClassNamesMap::Instance()->value(cname);
       if (qc)
 	 break;
+      printd(0, "doQObject<>(%p) cannot find Qore class %s, checking parent class\n", qtObj, cname);
       meta = meta->superClass();
       assert(meta);
    }
@@ -743,7 +744,6 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
         } else {
 	    QoreSmokePrivate *p;
             // now it should be real object
-            // o is still required to decide if is it QObject based or not
 	    if (c->getClass(QC_QABSTRACTITEMMODEL->getID())) {	       
 	       QoreSmokePrivateQAbstractItemModelData *p1;
 	       o = doQObject<QoreSmokePrivateQAbstractItemModelData>(origObj, xsink, &p1);

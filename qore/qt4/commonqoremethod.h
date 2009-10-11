@@ -350,9 +350,9 @@ public:
     DLLLOCAL ClassMap::TypeHandler &getTypeHandler() {
         return type_handler;
     }
-    DLLLOCAL void qoreToStack(Smoke::Type t,
-                              const AbstractQoreNode * node,
-                              int index);
+    DLLLOCAL int qoreToStack(Smoke::Type t,
+			     const AbstractQoreNode * node,
+			     int index);
 
     DLLLOCAL AutoVLock &getVLock() {
         return vl;

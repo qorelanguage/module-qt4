@@ -118,7 +118,7 @@ static bool do_metacall(ExceptionSink *xsink, Smoke::Method &meth, QoreObject *o
 }
 
 bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack args, bool isAbstract) {
-   //printd(0, "QoreSmokeBinding::callMethod() %s::%s() method=%d obj=%p isAbstract=%s (virt=%s)\n", smoke->classes[smoke->methods[method].classId].className, smoke->methodNames[smoke->methods[method].name], method, obj, isAbstract ? "true" : "false", qore_smoke_is_virtual() ? "true" : "false");
+    //printd(0, "QoreSmokeBinding::callMethod() %s::%s() method=%d obj=%p isAbstract=%s (virt=%s)\n", smoke->classes[smoke->methods[method].classId].className, smoke->methodNames[smoke->methods[method].name], method, obj, isAbstract ? "true" : "false", qore_smoke_is_virtual() ? "true" : "false");
 
     if (qore_smoke_is_virtual()) {
         qore_smoke_clear_virtual();
@@ -138,6 +138,10 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
 
     if (!o) {
         // we must have an implementation for abstract methods
+#ifdef DEBUG
+       if (isAbstract)
+	  printd(0, "trying to execute pure virtual method %s::%s()\n", cname, mname);
+#endif
         assert(!isAbstract);
         return false;
     }
