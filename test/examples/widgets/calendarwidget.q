@@ -1,11 +1,9 @@
 #!/usr/bin/env qore
 
 # This is basically a direct port of the QT widget example
-# "calendarwidget" to Qore using Qore's "qt" module.  
+# "calendarwidget" to Qore using Qore's "qt4" module.  
 
-# Note that Qore's "qt" module requires QT 4.3 or above 
-
-# use the "qt-gui" module
+# use the "qt4" module
 %requires qt4
 
 # this is an object-oriented program, the application class is "calendarwidget_example"
@@ -14,7 +12,6 @@
 %require-our
 # enable all parse warnings
 %enable-all-warnings
-
 
 class Window inherits QWidget
 {
@@ -39,9 +36,8 @@ class Window inherits QWidget
         $.setWindowTitle($.tr("Calendar Widget"));        
     }
 
-    localeChanged($index)
-    {
-        $.calendar.setLocale($.localeCombo.itemData($index));
+    localeChanged($index) {
+	$.calendar.setLocale($.localeCombo.itemData($index));
     }
 
     firstDayChanged($index)

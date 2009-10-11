@@ -494,18 +494,19 @@ QoreToQtContainer::QoreToQtContainer() {
 }
 
 
-QoreQVariant * qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * node, ExceptionSink * xsink) {
+QoreQVariant *qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * node, ExceptionSink * xsink) {
 //     printd(0, "Marshalling::qoreToQVariant %s\n", t.name);
-    QoreQVariant * ret = new QoreQVariant();
+   std::auto_ptr<QoreQVariant> ret(new QoreQVariant());
 
+   // FIXME: implement all conversions
     if (node == 0) { // NOTHING
         ret->qvariant = QVariant();
-        return ret;
+        return ret.release();
     }
 
     if (node->getType() == NT_QTENUM) {
         ret->qvariant = QVariant(node->getAsInt());
-        return ret;
+        return ret.release();
     }
 
     switch (node->getType()) {
@@ -524,11 +525,30 @@ QoreQVariant * qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * no
         ret->qvariant = QVariant(node->getAsBool());
         break;
     case NT_OBJECT: {
-        const QoreClass *qc = ClassNamesMap::Instance()->value(t.classId);
         const QoreObject *obj = reinterpret_cast<const QoreObject *>(node);
-        QoreSmokePrivateData * p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(qc->getID(), xsink));
-        ret->qvariant = p && p->object() ? QVariant( *(QVariant*)(p->object()) ) : QVariant();
-        ret->status = QoreQVariant::RealQVariant;
+	ReferenceHolder<QoreSmokePrivateData> p(xsink);
+
+        // check for QLocale
+	p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QLOCALE->getID(), xsink));
+	if (*xsink) {
+	   ret->status = QoreQVariant::Invalid;
+	   return 0;
+	}
+	if (p) {
+	   // only call this once because it's a virtual call (slow)
+	   void *o = p->object();
+	   ret->qvariant = o ? QVariant(*(reinterpret_cast<QLocale *>(o))) : QVariant();
+	}
+	else {
+	   // check for QVariant
+	   p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QVARIANT->getID(), xsink));
+	   if (*xsink) {
+	      ret->status = QoreQVariant::Invalid;
+	      return 0;
+	   }
+	   ret->qvariant = p && p->object() ? QVariant( *(QVariant*)(p->object()) ) : QVariant();
+	}
+	ret->status = QoreQVariant::RealQVariant;
         break;
     }
     default:
@@ -536,7 +556,7 @@ QoreQVariant * qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * no
         ret->status = QoreQVariant::Invalid;
     } // switch
 
-    return ret;
+    return ret.release();
 }
 
 template <typename T>
@@ -580,6 +600,7 @@ QoreObject *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0) {
 }
 
 AbstractQoreNode *return_qvariant(QVariant &qv) {
+   //printd(0, "return_qvariant() type=%d\n", qv.type());
    switch (qv.type()) {
       case QVariant::Invalid:
 	 return nothing();
@@ -597,13 +618,15 @@ AbstractQoreNode *return_qvariant(QVariant &qv) {
 	 return new QoreBigIntNode(qv.toUInt());
       case QVariant::ULongLong: // WARNING: precision lost here
 	 return new QoreBigIntNode((int64)qv.toULongLong());
+      case QVariant::Locale:
+	 return createQoreObjectFromNonQObject(QC_QLOCALE, SCI_QLOCALE, new QLocale(qv.toLocale()));
 
+	 // FIXME: implement all conversions
       case QVariant::Char:
       case QVariant::Date: 
       case QVariant::DateTime:
       case QVariant::Line:
       case QVariant::LineF:
-      case QVariant::Locale:
       case QVariant::Point:
       case QVariant::PointF:
       case QVariant::Rect:

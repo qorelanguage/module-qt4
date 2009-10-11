@@ -33,10 +33,7 @@
 #include <QVariant>
 #include <QAbstractItemModel>
 
-const QoreClass *QC_QOBJECT = 0, *QC_QWIDGET = 0, *QC_QABSTRACTITEMMODEL = 0, *QC_QVARIANT = 0;
-
 Smoke::ModuleIndex SMI_QOBJECT;
-Smoke::Index SCI_QVARIANT = 0;
 
 extern Smoke* qt_Smoke;
 
