@@ -132,9 +132,9 @@ struct ref_store_s {
         r_qreal,         // for qreal
         r_container,     // for QLists, QVectors, QMaps etc. - all with templates
         r_qvariant,      // for QVariant
-	r_qdatetime,     // for QDateTime
-	r_qdate,         // for QDate
-	r_qtime,         // for QTime
+        r_qdatetime,     // for QDateTime
+        r_qdate,         // for QDate
+        r_qtime,         // for QTime
     };
 
     const ReferenceNode *ref;
@@ -195,15 +195,15 @@ struct ref_store_s {
         case r_qvariant:
             delete data.q_qvariant;
             break;
-	case r_qdatetime:
-	    delete data.q_qdatetime;
-	    break;
-	case r_qdate:
-	    delete data.q_qdate;
-	    break;
-	case r_qtime:
-	    delete data.q_qtime;
-	    break;	      
+        case r_qdatetime:
+            delete data.q_qdatetime;
+            break;
+        case r_qdate:
+            delete data.q_qdate;
+            break;
+        case r_qtime:
+            delete data.q_qtime;
+            break;
         default:
             (void)data; // suppress compiler warning
         }
@@ -259,15 +259,15 @@ struct ref_store_s {
     }
     DLLLOCAL void assign(QDateTime *v) {
         type = r_qdatetime;
-	data.q_qdatetime = v;
+        data.q_qdatetime = v;
     }
     DLLLOCAL void assign(QDate *v) {
         type = r_qdate;
-	data.q_qdate = v;
+        data.q_qdate = v;
     }
     DLLLOCAL void assign(QTime *v) {
         type = r_qtime;
-	data.q_qtime = v;
+        data.q_qtime = v;
     }
     DLLLOCAL void assign(Marshalling::QoreQListBase * v) {
         type = r_container;
@@ -342,7 +342,7 @@ struct ref_store_s {
 class CommonQoreMethod {
 public:
     CommonQoreMethod(QoreObject *n_self,
-             QoreSmokePrivate *n_smc,
+                     QoreSmokePrivate *n_smc,
                      const char* className,
                      const char* methodName,
                      const QoreListNode* params,
@@ -350,10 +350,10 @@ public:
     ~CommonQoreMethod();
 
     DLLLOCAL QoreObject *getQoreObject() {
-       return self;
+        return self;
     }
     DLLLOCAL QoreSmokePrivate *getPrivateData() {
-       return smc;
+        return smc;
     }
     DLLLOCAL Smoke::Class &smokeClass() {
         return qt_Smoke->classes[m_method.classId];
@@ -390,8 +390,8 @@ public:
         return type_handler;
     }
     DLLLOCAL int qoreToStack(Smoke::Type t,
-			     const AbstractQoreNode * node,
-			     int index);
+                             const AbstractQoreNode * node,
+                             int index);
 
     DLLLOCAL AutoVLock &getVLock() {
         return vl;
@@ -413,8 +413,8 @@ public:
     DLLLOCAL void *callConstructor();
 
     DLLLOCAL void suppressMethod() {
-       assert(!suppress_method);
-       suppress_method = true;
+        assert(!suppress_method);
+        suppress_method = true;
     }
 
     // static functions

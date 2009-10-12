@@ -30,8 +30,8 @@ class QByteArray;
 
 namespace Marshalling {
 
-   template <typename T>
-   QoreObject *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0); 
+template <typename T>
+QoreObject *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0);
 
 class QtContainerToQore {
 public:
@@ -172,7 +172,13 @@ Using copy constructor. */
 void * constructCopy(void * obj, const char * className,
                      ExceptionSink *xsink);
 
-}
+/*! Lookup for the most specific class for given ptr.
+Example: if somebody calls QWidget::event(QEvent *e),
+this function will try to setup the real event object for
+Qore (for example QHelpEvent) automatically.
+*/
+Smoke::Index resolveQtClass(void * ptr, Smoke::Index classId);
 
+}
 
 #endif

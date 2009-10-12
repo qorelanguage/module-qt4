@@ -90,7 +90,9 @@ class SortingBox inherits QWidget
             $painter.translate($shapeItem.position());
             $painter.setBrush($shapeItem.color());
             $painter.drawPath($shapeItem.path());
-            $painter.translate($shapeItem.position().unaryMinus());
+            my $orig = $shapeItem.position();
+            my $tmp = new QPoint(-$orig.x(), -$orig.y());
+            $painter.translate($tmp); #$shapeItem.position().unaryMinus()
         }
     }
 

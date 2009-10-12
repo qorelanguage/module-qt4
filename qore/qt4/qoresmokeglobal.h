@@ -35,8 +35,8 @@
 
 #define QORESMOKEPROPERTY "qoreptr"
 
-extern const QoreClass *QC_QOBJECT, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT, 
-   *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME;
+extern const QoreClass *QC_QOBJECT, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT,
+*QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME;
 
 extern Smoke::ModuleIndex SMI_QOBJECT;
 extern Smoke::Index SCI_QVARIANT, SCI_QLOCALE;
@@ -77,33 +77,33 @@ typedef QHash<void *, QoreObject *> qt_qore_map_t;
 
 class QtQoreMap : protected qt_qore_map_t, protected QoreRWLock {
 public:
-   DLLLOCAL ~QtQoreMap() {
-      //assert(empty());
-   }
-   DLLLOCAL void add(void *qto, QoreObject *qo) {
-      QoreAutoRWWriteLocker l(this);
-      assert(!contains(qto));
-      insert(qto, qo);
-   }
-   DLLLOCAL QoreObject *get(void *qto) {
-      QoreAutoRWReadLocker l(this);
-      return value(qto, 0);
-   }
-   DLLLOCAL void del(void *qto) {
-      QoreAutoRWWriteLocker l(this);
-      assert(contains(qto));
-      remove(qto);
-   }
+    DLLLOCAL ~QtQoreMap() {
+        //assert(empty());
+    }
+    DLLLOCAL void add(void *qto, QoreObject *qo) {
+        QoreAutoRWWriteLocker l(this);
+        assert(!contains(qto));
+        insert(qto, qo);
+    }
+    DLLLOCAL QoreObject *get(void *qto) {
+        QoreAutoRWReadLocker l(this);
+        return value(qto, 0);
+    }
+    DLLLOCAL void del(void *qto) {
+        QoreAutoRWWriteLocker l(this);
+        assert(contains(qto));
+        remove(qto);
+    }
 };
 
 DLLLOCAL extern QtQoreMap qt_qore_map;
 
 static inline QoreObject *getQoreMappedObject(void *p) {
-   return qt_qore_map.get(p);
+    return qt_qore_map.get(p);
 }
 
 static inline QoreObject *getQoreMappedObject(Smoke::Index classId, void *p) {
-   return qt_Smoke->classes[classId].flags & Smoke::cf_virtual ? qt_qore_map.get(p) : 0;
+    return qt_Smoke->classes[classId].flags & Smoke::cf_virtual ? qt_qore_map.get(p) : 0;
 }
 
 DLLLOCAL const QoreMethod *findUserMethod(const QoreClass *qc, const char *name);

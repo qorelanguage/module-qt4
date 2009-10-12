@@ -114,10 +114,10 @@ ClassMap::TypeHandler ClassMap::typeList(Smoke::Method m, Smoke::Index methodInd
 
 // add an argument handler to all versions of a specific munged method
 void ClassMap::addArgHandler(const char *cls, const char *meth, const char *munged, arg_handler_t arg_handler) {
-   /*
-     for (MungledToTypes::iterator i = m_map[cls][meth].begin(), e = m_map[cls][meth].end(); i != e; ++i)
-       printf("%s\n", i.key().data());
-   */
+    /*
+      for (MungledToTypes::iterator i = m_map[cls][meth].begin(), e = m_map[cls][meth].end(); i != e; ++i)
+        printf("%s\n", i.key().data());
+    */
 
     assert(m_map[cls][meth].values(munged).count());
 
@@ -225,7 +225,7 @@ static AbstractQoreNode *QOBJECT_emit(QoreObject *self, QoreSmokePrivateQObjectD
 }
 
 static bool qobject_delete_blocker(QoreObject *self, QoreSmokePrivateQObjectData *data) {
-   return data->deleteBlocker(self);
+    return data->deleteBlocker(self);
 }
 
 QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) {
@@ -244,11 +244,11 @@ QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) {
     m_qoreClass = new QoreClass(m_class.className, QDOM_GUI);
 
     if (!QC_QOBJECT && !strcmp(className, "QObject")) {
-	QC_QOBJECT = m_qoreClass;
+        QC_QOBJECT = m_qoreClass;
         m_qoreClass->addMethod("createSignal", (q_method_t)QOBJECT_createSignal);
         m_qoreClass->addMethod("emit",         (q_method_t)QOBJECT_emit);
-	m_qoreClass->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
-	SMI_QOBJECT = m_classId;
+        m_qoreClass->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
+        SMI_QOBJECT = m_classId;
     }
 
     ClassNamesMap::Instance()->addItem(m_classId.index, m_qoreClass);
@@ -321,7 +321,7 @@ AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const QoreListNode
 }
 
 AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink) {
-	// HACK: workaround for $.connect(o, sig, o, slot) call type
+    // HACK: workaround for $.connect(o, sig, o, slot) call type
     if (num_params(params) == 4)
         return f_QOBJECT_connect(method, params, xsink);
 
@@ -364,9 +364,9 @@ void QoreSmokeClass::addSuperClasses(Smoke::Index ix, QoreNamespace &qt_ns) {
             QoreSmokeClass qsc(qt_Smoke->classes[(*i)].className, qt_ns);
             parent = qsc.m_qoreClass;
         }
-	if (QC_QOBJECT && parent == QC_QOBJECT) {
-	   m_qoreClass->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
-	}
+        if (QC_QOBJECT && parent == QC_QOBJECT) {
+            m_qoreClass->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
+        }
         m_qoreClass->addBuiltinVirtualBaseClass(parent);
 
         addSuperClasses(*i, qt_ns);
@@ -499,8 +499,7 @@ void common_constructor(const QoreClass &myclass, QoreObject *self,
         QoreQtVirtualFlagHelper vfh;
         QAbstractItemModel *qtBaseObj = static_cast<QAbstractItemModel*>(qtObj);
         qtBaseObj->setProperty(QORESMOKEPROPERTY, reinterpret_cast<qulonglong>(self));
-    }
-    else if (myclass.getClass(QC_QOBJECT->getID())) {
+    } else if (myclass.getClass(QC_QOBJECT->getID())) {
         obj = new QoreSmokePrivateQObjectData(cqm.method().classId, (QObject *)qtObj);
         QoreQtVirtualFlagHelper vfh;
         QObject * qtBaseObj = static_cast<QObject*>(qtObj);
@@ -508,14 +507,14 @@ void common_constructor(const QoreClass &myclass, QoreObject *self,
         qtBaseObj->setProperty(QORESMOKEPROPERTY, reinterpret_cast<qulonglong>(self));
     } else {
         obj = new QoreSmokePrivateData(cqm.method().classId, qtObj, self);
-	//printd(0, "common_constructor() (EE) is not QObject based: %s\n", className);
+        //printd(0, "common_constructor() (EE) is not QObject based: %s\n", className);
     }
 
 //     printd(0, "common_constructor() %s setting private data %p for classid %d objclassid %d self:%p\n",
 //            className, obj, myclass.getID(), self->getClass()->getID(), self);
-    self->setPrivate(myclass.getID(), obj);	
+    self->setPrivate(myclass.getID(), obj);
 
-    cqm.postProcessConstructor(obj, cqm.Stack[0]);    
+    cqm.postProcessConstructor(obj, cqm.Stack[0]);
 }
 
 // a helper function to handle conflicting names
@@ -575,7 +574,7 @@ void common_destructor(const QoreClass &thisclass, QoreObject *self, AbstractPri
         }
 
         if (qtObj->parent()) {
-	    //printd(0, "common_destructor() %s::destructor() object %p not deleted; has parent\n", thisclass.getName(), qtObj);
+            //printd(0, "common_destructor() %s::destructor() object %p not deleted; has parent\n", thisclass.getName(), qtObj);
             // clear the private data
             p->clear();
             return;

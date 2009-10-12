@@ -67,13 +67,13 @@ private:
 };
 
 class QoreSmokePrivateData : public QoreSmokePrivate {
-   bool save_map;
+    bool save_map;
 public:
-   DLLLOCAL QoreSmokePrivateData(Smoke::Index classID, void *p, QoreObject *self) : QoreSmokePrivate(classID), m_object(p) {
-       // register in object map if object is not derived from QObject and has virtual functions
-       save_map = qt_Smoke->classes[classID].flags & Smoke::cf_virtual;
-       if (save_map)
-	   qt_qore_map.add(p, self);
+    DLLLOCAL QoreSmokePrivateData(Smoke::Index classID, void *p, QoreObject *self) : QoreSmokePrivate(classID), m_object(p) {
+        // register in object map if object is not derived from QObject and has virtual functions
+        save_map = qt_Smoke->classes[classID].flags & Smoke::cf_virtual;
+        if (save_map)
+            qt_qore_map.add(p, self);
     }
     DLLLOCAL virtual ~QoreSmokePrivateData() {
         // the object must have been destroyed externally and cleared before this destructor is run
@@ -84,13 +84,13 @@ public:
     }
     DLLLOCAL virtual void clear() {
         if (save_map)
-	    qt_qore_map.del(m_object);
+            qt_qore_map.del(m_object);
         m_object = 0;
     }
     DLLLOCAL virtual void *takeObject() {
-       void *p = m_object;
-       QoreSmokePrivateData::clear();
-       return p;
+        void *p = m_object;
+        QoreSmokePrivateData::clear();
+        return p;
     }
 
 private:
@@ -99,7 +99,7 @@ private:
 
 class QoreSmokePrivateQObjectData : public QoreSmokePrivate {
 public:
-   DLLLOCAL QoreSmokePrivateQObjectData(Smoke::Index classID, QObject *p) : QoreSmokePrivate(classID), m_qobject(p), m_meta(0), obj_ref(false) {
+    DLLLOCAL QoreSmokePrivateQObjectData(Smoke::Index classID, QObject *p) : QoreSmokePrivate(classID), m_qobject(p), m_meta(0), obj_ref(false) {
         qt_metaobject_method_count = getParentMetaObject()->methodCount();
         Smoke::ModuleIndex mi = qt_Smoke->findMethod(qt_Smoke->classes[classID].className, "qt_metacall$$?");
         assert(mi.smoke);
@@ -108,7 +108,7 @@ public:
         assert(!strcmp(qt_Smoke->methodNames[qt_Smoke->methods[qt_metacall_index].name], "qt_metacall"));
     }
     DLLLOCAL virtual ~QoreSmokePrivateQObjectData() {
-       //printd(0, "QoreSmokePrivateQObjectData::~QoreSmokePrivateQObjectData() this=%p obj=%p (%s)\n", this, m_qobject.data(), getClassName());
+        //printd(0, "QoreSmokePrivateQObjectData::~QoreSmokePrivateQObjectData() this=%p obj=%p (%s)\n", this, m_qobject.data(), getClassName());
         if (m_qobject.data() && !externallyOwned() && !m_qobject->parent()) {
             // set property to 0 because QoreObject is being deleted
             {
@@ -120,27 +120,27 @@ public:
         }
     }
     DLLLOCAL bool deleteBlocker(QoreObject *self) {
-       //printd(0, "QoreSmokePrivateQObjectData::deleteBlocker(%p) %s obj=%p parent=%p eo=%s\n", self, self->getClassName(), m_qobject.data(), m_qobject.data() ? m_qobject->parent() : 0, externallyOwned() ? "true" : "false");
-       if (m_qobject.data() && (m_qobject->parent() || externallyOwned())) {
-	  if (!obj_ref) {
-	     obj_ref = true;
-	     // note that if we call QoreObject::ref() here, it will cause an immediate deadlock!
-	     self->deleteBlockerRef();
-	  }
-	  return true;
-       }
-       return false;
+        //printd(0, "QoreSmokePrivateQObjectData::deleteBlocker(%p) %s obj=%p parent=%p eo=%s\n", self, self->getClassName(), m_qobject.data(), m_qobject.data() ? m_qobject->parent() : 0, externallyOwned() ? "true" : "false");
+        if (m_qobject.data() && (m_qobject->parent() || externallyOwned())) {
+            if (!obj_ref) {
+                obj_ref = true;
+                // note that if we call QoreObject::ref() here, it will cause an immediate deadlock!
+                self->deleteBlockerRef();
+            }
+            return true;
+        }
+        return false;
     }
-   DLLLOCAL void externalDelete(QoreObject *obj, ExceptionSink *xsink) {
-       if (obj_ref) {
+    DLLLOCAL void externalDelete(QoreObject *obj, ExceptionSink *xsink) {
+        if (obj_ref) {
             //printd(5, "QoreSmokePrivateQObjectData::externalDelete() deleting object of class %s\n", obj->getClassName());
             obj_ref = false;
             // delete the object if necessary (if not already in the destructor)
-            if (obj->isValid()) 
-               obj->doDelete(xsink);
+            if (obj->isValid())
+                obj->doDelete(xsink);
             obj->deref(xsink);
-         }
-       clear();
+        }
+        clear();
     }
     DLLLOCAL virtual void *object() {
         return m_qobject.data();
@@ -149,9 +149,9 @@ public:
         m_qobject = 0;
     }
     DLLLOCAL virtual void *takeObject() {
-       void *p = (void *)m_qobject.data();
-       m_qobject = 0;
-       return p;
+        void *p = (void *)m_qobject.data();
+        m_qobject = 0;
+        return p;
     }
 
     DLLLOCAL QObject *qobject() {
@@ -217,7 +217,7 @@ public:
         QByteArray theSignal = QMetaObject::normalizedSignature(signal + 1);
         QByteArray theSlot = QMetaObject::normalizedSignature(slot + 1);
 
-	//printd(0, "connectDynamic() sig=%s (%s) slot=%s (%s)\n", signal, theSignal.data(), slot, theSlot.data());
+        //printd(0, "connectDynamic() sig=%s (%s) slot=%s (%s)\n", signal, theSignal.data(), slot, theSlot.data());
 
         if (!QMetaObject::checkConnectArgs(theSignal, theSlot)) {
             xsink->raiseException("QT-CONNECT-ERROR", "cannot connect signal '%s' with '%s' due to incompatible arguments", signal + 1, slot + 1);
@@ -345,68 +345,68 @@ protected:
 
 class QoreSmokePrivateQAbstractItemModelData : public QoreSmokePrivateQObjectData {
 protected:
-   typedef std::map<int, AbstractQoreNode *> int_node_map_t;
-   typedef std::map<int, int_node_map_t> node_map_t;
-   node_map_t node_map;
-   QoreRWLock rwl;
+    typedef std::map<int, AbstractQoreNode *> int_node_map_t;
+    typedef std::map<int, int_node_map_t> node_map_t;
+    node_map_t node_map;
+    QoreRWLock rwl;
 
-   // unlocked
-   DLLLOCAL AbstractQoreNode *getData(int row, int column) {
-      node_map_t::iterator ni = node_map.find(row);
-      if (ni == node_map.end())
-	 return 0;
+    // unlocked
+    DLLLOCAL AbstractQoreNode *getData(int row, int column) {
+        node_map_t::iterator ni = node_map.find(row);
+        if (ni == node_map.end())
+            return 0;
 
-      int_node_map_t::iterator i = ni->second.find(column);
-      return (i == ni->second.end() ? 0 : i->second);
-   }
+        int_node_map_t::iterator i = ni->second.find(column);
+        return (i == ni->second.end() ? 0 : i->second);
+    }
 
-   // unlocked
-   DLLLOCAL void purgeMapIntern(ExceptionSink *xsink) {
-      // dereference all stored ptrs
-      for (node_map_t::iterator i = node_map.begin(), e = node_map.end(); i != e; ++i) {
-	 for (int_node_map_t::iterator ii = i->second.begin(), ie = i->second.end(); ii != ie; ++ii) {
-	    assert(ii->second);
-	    ii->second->deref(xsink);
-	 }
-      }
-      node_map.clear();
-   }
+    // unlocked
+    DLLLOCAL void purgeMapIntern(ExceptionSink *xsink) {
+        // dereference all stored ptrs
+        for (node_map_t::iterator i = node_map.begin(), e = node_map.end(); i != e; ++i) {
+            for (int_node_map_t::iterator ii = i->second.begin(), ie = i->second.end(); ii != ie; ++ii) {
+                assert(ii->second);
+                ii->second->deref(xsink);
+            }
+        }
+        node_map.clear();
+    }
 
 public:
-   DLLLOCAL QoreSmokePrivateQAbstractItemModelData(Smoke::Index classID, QObject *p) : QoreSmokePrivateQObjectData(classID, p) {
-   }
-   DLLLOCAL virtual ~QoreSmokePrivateQAbstractItemModelData() {
-      // dereference all stored data ptrs
-   }
-   DLLLOCAL AbstractQoreNode *isQoreData(int row, int column, void *data) {
-      assert(data);
-      QoreAutoRWReadLocker al(rwl);
-      AbstractQoreNode *d = reinterpret_cast<AbstractQoreNode *>(data);
-      d = getData(row, column) == d ? d : 0;
-      return d ? d->refSelf() : 0;
-   }
-   DLLLOCAL void storeIndex(int row, int column, const AbstractQoreNode *data, ExceptionSink *xsink) {
-      QoreAutoRWWriteLocker al(rwl);
-      node_map_t::iterator ni = node_map.find(row);
-      if (ni != node_map.end()) {
-	 int_node_map_t::iterator i = ni->second.find(column);
-	 if (i != ni->second.end()) {
-	    if (i->second)
-	       i->second->deref(xsink);
-	    if (data)
-	       i->second = data->refSelf();
-	    else
-	       ni->second.erase(i);
-	    return;
-	 }
-      }
-      if (data)
-	 node_map[row][column] = data->refSelf(); 
-   }
-   DLLLOCAL void purgeMap(ExceptionSink *xsink) {
-      QoreAutoRWWriteLocker al(rwl);
-      purgeMapIntern(xsink);
-   }
+    DLLLOCAL QoreSmokePrivateQAbstractItemModelData(Smoke::Index classID, QObject *p) : QoreSmokePrivateQObjectData(classID, p) {
+    }
+    DLLLOCAL virtual ~QoreSmokePrivateQAbstractItemModelData() {
+        // dereference all stored data ptrs
+    }
+    DLLLOCAL AbstractQoreNode *isQoreData(int row, int column, void *data) {
+        assert(data);
+        QoreAutoRWReadLocker al(rwl);
+        AbstractQoreNode *d = reinterpret_cast<AbstractQoreNode *>(data);
+        d = getData(row, column) == d ? d : 0;
+        return d ? d->refSelf() : 0;
+    }
+    DLLLOCAL void storeIndex(int row, int column, const AbstractQoreNode *data, ExceptionSink *xsink) {
+        QoreAutoRWWriteLocker al(rwl);
+        node_map_t::iterator ni = node_map.find(row);
+        if (ni != node_map.end()) {
+            int_node_map_t::iterator i = ni->second.find(column);
+            if (i != ni->second.end()) {
+                if (i->second)
+                    i->second->deref(xsink);
+                if (data)
+                    i->second = data->refSelf();
+                else
+                    ni->second.erase(i);
+                return;
+            }
+        }
+        if (data)
+            node_map[row][column] = data->refSelf();
+    }
+    DLLLOCAL void purgeMap(ExceptionSink *xsink) {
+        QoreAutoRWWriteLocker al(rwl);
+        purgeMapIntern(xsink);
+    }
 };
 
 class CommonQoreMethod;
@@ -444,7 +444,7 @@ public:
 
     MungledToTypes * availableMethods(const QByteArray & className,
                                       const QByteArray & methodName) {
-       return &m_map[className][methodName];
+        return &m_map[className][methodName];
     }
 
 //     TypeList *availableTypes(const char *className, const char *methodName, const char *mungedName) {

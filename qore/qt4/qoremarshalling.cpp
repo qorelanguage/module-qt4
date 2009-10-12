@@ -47,6 +47,7 @@
 #include <QNetworkProxy>
 #include <QFontDatabase>
 #include <QWizard>
+#include <QLayoutItem>
 // #include <>
 
 #include "qoresmokeclass.h"
@@ -150,14 +151,14 @@ AbstractQoreNode * QtContainerToQore::listToQObject(const Smoke::Type &t, void* 
 }
 
 QoreObject *createQoreObjectFromNonQObject(const QoreClass *theclass, Smoke::Index classId, void *ptr, QoreSmokePrivate **p = 0) {
-   // ensure this is not a QObject
-   assert(!theclass->getClass(QC_QOBJECT->getID()));
-   QoreObject *o = new QoreObject(theclass, getProgram());
-   QoreSmokePrivateData *data = new QoreSmokePrivateData(classId, ptr, o);
-   o->setPrivate(theclass->getID(), data);
-   if (p)
-      *p = data;
-   return o;
+    // ensure this is not a QObject
+    assert(!theclass->getClass(QC_QOBJECT->getID()));
+    QoreObject *o = new QoreObject(theclass, getProgram());
+    QoreSmokePrivateData *data = new QoreSmokePrivateData(classId, ptr, o);
+    o->setPrivate(theclass->getID(), data);
+    if (p)
+        *p = data;
+    return o;
 }
 
 template<class QLISTT>
@@ -176,23 +177,22 @@ AbstractQoreNode * QtContainerToQore::listToObject(const Smoke::Type &t, void* p
 
     Smoke::ModuleIndex cls = qt_Smoke->findClass(tt.constData());
     if (!cls.smoke) {
-       return xsink->raiseException("QLIST-MARSHALL-QT", "Class %s cannot be found in library map", tt.constData());
+        return xsink->raiseException("QLIST-MARSHALL-QT", "Class %s cannot be found in library map", tt.constData());
     }
 
     bool has_virtual = qt_Smoke->classes[cls.index].flags & Smoke::cf_virtual;
     for (int i = 0; i < l->count(); ++i) {
         void *qto = (void *)&l->at(i);
-	QoreObject *o = has_virtual ? getQoreMappedObject(qto) : 0;
-	if (o) {
-	   o->ref();
-	}
-	else {
-	   qto = Marshalling::constructCopy(qto, tt.constData(), xsink);
-	   if (*xsink)
-	      return 0;
+        QoreObject *o = has_virtual ? getQoreMappedObject(qto) : 0;
+        if (o) {
+            o->ref();
+        } else {
+            qto = Marshalling::constructCopy(qto, tt.constData(), xsink);
+            if (*xsink)
+                return 0;
 
-	   o = createQoreObjectFromNonQObject(qc, cls.index, qto);
-	}
+            o = createQoreObjectFromNonQObject(qc, cls.index, qto);
+        }
         retList->push(o);
     }
 
@@ -496,9 +496,9 @@ QoreToQtContainer::QoreToQtContainer() {
 
 QoreQVariant *qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * node, ExceptionSink * xsink) {
 //     printd(0, "Marshalling::qoreToQVariant %s\n", t.name);
-   std::auto_ptr<QoreQVariant> ret(new QoreQVariant());
+    std::auto_ptr<QoreQVariant> ret(new QoreQVariant());
 
-   // FIXME: implement all conversions
+    // FIXME: implement all conversions
     if (node == 0) { // NOTHING
         ret->qvariant = QVariant();
         return ret.release();
@@ -526,29 +526,28 @@ QoreQVariant *qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * nod
         break;
     case NT_OBJECT: {
         const QoreObject *obj = reinterpret_cast<const QoreObject *>(node);
-	ReferenceHolder<QoreSmokePrivateData> p(xsink);
+        ReferenceHolder<QoreSmokePrivateData> p(xsink);
 
         // check for QLocale
-	p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QLOCALE->getID(), xsink));
-	if (*xsink) {
-	   ret->status = QoreQVariant::Invalid;
-	   return 0;
-	}
-	if (p) {
-	   // only call this once because it's a virtual call (slow)
-	   void *o = p->object();
-	   ret->qvariant = o ? QVariant(*(reinterpret_cast<QLocale *>(o))) : QVariant();
-	}
-	else {
-	   // check for QVariant
-	   p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QVARIANT->getID(), xsink));
-	   if (*xsink) {
-	      ret->status = QoreQVariant::Invalid;
-	      return 0;
-	   }
-	   ret->qvariant = p && p->object() ? QVariant( *(QVariant*)(p->object()) ) : QVariant();
-	}
-	ret->status = QoreQVariant::RealQVariant;
+        p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QLOCALE->getID(), xsink));
+        if (*xsink) {
+            ret->status = QoreQVariant::Invalid;
+            return 0;
+        }
+        if (p) {
+            // only call this once because it's a virtual call (slow)
+            void *o = p->object();
+            ret->qvariant = o ? QVariant(*(reinterpret_cast<QLocale *>(o))) : QVariant();
+        } else {
+            // check for QVariant
+            p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QVARIANT->getID(), xsink));
+            if (*xsink) {
+                ret->status = QoreQVariant::Invalid;
+                return 0;
+            }
+            ret->qvariant = p && p->object() ? QVariant( *(QVariant*)(p->object()) ) : QVariant();
+        }
+        ret->status = QoreQVariant::RealQVariant;
         break;
     }
     default:
@@ -561,111 +560,114 @@ QoreQVariant *qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * nod
 
 template <typename T>
 QoreObject *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0) {
-   QObject* qtObj = reinterpret_cast<QObject *>(origObj);
-   // get real object's class depending on QObject::metaObject
-   // it's a must for e.g. sender() call or for objects that
-   // are deleted in Qore, but kept in Qt (parenting etc.)
-   const QMetaObject *meta;
-   {
-      QoreQtVirtualFlagHelper vfh;
-      meta = qtObj->metaObject();
-   }
+    QObject* qtObj = reinterpret_cast<QObject *>(origObj);
+    // get real object's class depending on QObject::metaObject
+    // it's a must for e.g. sender() call or for objects that
+    // are deleted in Qore, but kept in Qt (parenting etc.)
+    const QMetaObject *meta;
+    {
+        QoreQtVirtualFlagHelper vfh;
+        meta = qtObj->metaObject();
+    }
 
-   const char * cname;
-   const QoreClass *qc;
-   while (true) {
-      cname = meta->className();
-      qc = ClassNamesMap::Instance()->value(cname);
-      if (qc)
-	 break;
-      printd(0, "doQObject<>(%p) cannot find Qore class %s, checking parent class\n", qtObj, cname);
-      meta = meta->superClass();
-      assert(meta);
-   }
-   Smoke::ModuleIndex cid = qt_Smoke->findClass(cname);
-   // New qoreobject for really required Qt class/object
-   ReferenceHolder<QoreObject> qto(new QoreObject(qc, getProgram()), xsink);
-   assert(cid.smoke);
+    const char * cname;
+    const QoreClass *qc;
+    while (true) {
+        cname = meta->className();
+        qc = ClassNamesMap::Instance()->value(cname);
+        if (qc) {
+            printd(0, "doQObject<>(%p) found Qore class %s\n", qtObj, cname);
+            break;
+        }
+        printd(0, "doQObject<>(%p) cannot find Qore class %s, checking parent class\n", qtObj, cname);
+        meta = meta->superClass();
+        assert(meta);
+    }
+    Smoke::ModuleIndex cid = qt_Smoke->findClass(cname);
+    // New qoreobject for really required Qt class/object
+    ReferenceHolder<QoreObject> qto(new QoreObject(qc, getProgram()), xsink);
+    assert(cid.smoke);
 
-   T *data = new T(cid.index, qtObj);
-   // QObject based obj
-   {
-      QoreQtVirtualFlagHelper vfh;
-      qtObj->setProperty(QORESMOKEPROPERTY, reinterpret_cast<qulonglong>(*qto));
-   }
-   qto->setPrivate(qc->getID(), data);
-   if (p)
-      *p = data;
-   return qto.release();
+    T *data = new T(cid.index, qtObj);
+    // QObject based obj
+    {
+        QoreQtVirtualFlagHelper vfh;
+        qtObj->setProperty(QORESMOKEPROPERTY, reinterpret_cast<qulonglong>(*qto));
+    }
+    qto->setPrivate(qc->getID(), data);
+    if (p)
+        *p = data;
+    return qto.release();
 }
 
 AbstractQoreNode *return_qvariant(QVariant &qv) {
-   //printd(0, "return_qvariant() type=%d\n", qv.type());
-   switch (qv.type()) {
-      case QVariant::Invalid:
-	 return nothing();
-      case QVariant::Bool:
-	 return get_bool_node(qv.toBool());
-      case QVariant::Double:
-	 return new QoreFloatNode(qv.toDouble());
-      case QVariant::Int:
-	 return new QoreBigIntNode(qv.toInt());
-      case QVariant::LongLong:
-	 return new QoreBigIntNode(qv.toLongLong());
-      case QVariant::String:
-	 return new QoreStringNode(qv.toString().toUtf8().data(), QCS_UTF8);
-      case QVariant::UInt:
-	 return new QoreBigIntNode(qv.toUInt());
-      case QVariant::ULongLong: // WARNING: precision lost here
-	 return new QoreBigIntNode((int64)qv.toULongLong());
-      case QVariant::Locale:
-	 return createQoreObjectFromNonQObject(QC_QLOCALE, SCI_QLOCALE, new QLocale(qv.toLocale()));
+    //printd(0, "return_qvariant() type=%d\n", qv.type());
+    switch (qv.type()) {
+    case QVariant::Invalid:
+        return nothing();
+    case QVariant::Bool:
+        return get_bool_node(qv.toBool());
+    case QVariant::Double:
+        return new QoreFloatNode(qv.toDouble());
+    case QVariant::Int:
+        return new QoreBigIntNode(qv.toInt());
+    case QVariant::LongLong:
+        return new QoreBigIntNode(qv.toLongLong());
+    case QVariant::String:
+        return new QoreStringNode(qv.toString().toUtf8().data(), QCS_UTF8);
+    case QVariant::UInt:
+        return new QoreBigIntNode(qv.toUInt());
+    case QVariant::ULongLong: // WARNING: precision lost here
+        return new QoreBigIntNode((int64)qv.toULongLong());
+    case QVariant::Locale:
+        return createQoreObjectFromNonQObject(QC_QLOCALE, SCI_QLOCALE, new QLocale(qv.toLocale()));
 
-	 // FIXME: implement all conversions
-      case QVariant::Char:
-      case QVariant::Date: 
-      case QVariant::DateTime:
-      case QVariant::Line:
-      case QVariant::LineF:
-      case QVariant::Point:
-      case QVariant::PointF:
-      case QVariant::Rect:
-      case QVariant::RectF:
-      case QVariant::RegExp:
-      case QVariant::Size:
-      case QVariant::Url:
-      case QVariant::Time:
-      case QVariant::Map:
-      case QVariant::List:
-      case QVariant::StringList:
-      case QVariant::ByteArray:
-      case QVariant::BitArray:
-      case QVariant::SizeF:
-      case QVariant::Hash:
-      case QVariant::Font:
-      case QVariant::Pixmap:
-      case QVariant::Brush:
-      case QVariant::Color:
-      case QVariant::Palette:
-      case QVariant::Icon:
-      case QVariant::Image:
-      case QVariant::Polygon:
-      case QVariant::Region:
-      case QVariant::Bitmap:
-      case QVariant::Cursor:
-      case QVariant::SizePolicy:
-      case QVariant::KeySequence:
-      case QVariant::Pen:
-      case QVariant::TextLength:
-      case QVariant::TextFormat:
-      case QVariant::Matrix:
-      case QVariant::Transform:
-      case QVariant::UserType:
-      case QVariant::LastType:
-	 break;
-   }
+        // FIXME: implement all conversions
+    case QVariant::Char:
+    case QVariant::Date:
+    case QVariant::DateTime:
+    case QVariant::Line:
+    case QVariant::LineF:
+    case QVariant::Point:
+    case QVariant::PointF:
+    case QVariant::Rect:
+    case QVariant::RectF:
+    case QVariant::RegExp:
+    case QVariant::Size:
+    case QVariant::Url:
+    case QVariant::Time:
+    case QVariant::Map:
+    case QVariant::List:
+    case QVariant::StringList:
+    case QVariant::ByteArray:
+    case QVariant::BitArray:
+    case QVariant::SizeF:
+    case QVariant::Hash:
+    case QVariant::Font:
+    case QVariant::Pixmap:
+    case QVariant::Brush:
+    case QVariant::Color:
+    case QVariant::Palette:
+    case QVariant::Icon:
+    case QVariant::Image:
+    case QVariant::Polygon:
+    case QVariant::Region:
+    case QVariant::Bitmap:
+    case QVariant::Cursor:
+    case QVariant::SizePolicy:
+    case QVariant::KeySequence:
+    case QVariant::Pen:
+    case QVariant::TextLength:
+    case QVariant::TextFormat:
+    case QVariant::Matrix:
+    case QVariant::Transform:
+    case QVariant::UserType:
+    case QVariant::LastType:
+        printd(0, "Missing QVariant implementation\n");
+        break;
+    }
 
-   return createQoreObjectFromNonQObject(QC_QVARIANT, SCI_QVARIANT, new QVariant(qv));
+    return createQoreObjectFromNonQObject(QC_QVARIANT, SCI_QVARIANT, new QVariant(qv));
 }
 
 AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, ExceptionSink *xsink) {
@@ -731,10 +733,10 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
             return new QoreBigIntNode( (unsigned long)*reinterpret_cast<WId*>(i.s_voidp));
         }
 
-// 		if (tname == "void*") {
-// 			printd(0, "Marshalling::stackToQore() handling of void* = %p\n", i.s_voidp);
-// 			return 0;
-// 		}
+//         if (tname == "void*") {
+//             printd(0, "Marshalling::stackToQore() handling of void* = %p\n", i.s_voidp);
+//             return 0;
+//         }
 
         printd(0, "Marshalling::stackToQore() unhandled voidp type: '%s'\n", t.name);
         Q_ASSERT_X(0, "unhandled voidp", "Smoke::t_voidp marshalling");
@@ -743,61 +745,59 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
     }
     case Smoke::t_class: {
         void *origObj = i.s_class;
+        Smoke::Index classId = resolveQtClass(origObj, t.classId);
 
-        if (t.classId == SCI_QVARIANT)
-	    return return_qvariant(*(reinterpret_cast<QVariant *>(origObj)));
+        if (classId == SCI_QVARIANT)
+            return return_qvariant(*(reinterpret_cast<QVariant *>(origObj)));
 
-        QoreClass * c = ClassNamesMap::Instance()->value(t.classId);
+        QoreClass * c = ClassNamesMap::Instance()->value(classId);
         if (!c) {
             xsink->raiseException("QT-RETURN-VALUE", "Unknown returning object type: %s", t.name);
             return 0;
         }
 
-	//printd(0, "Marshalling::stackToQore() %s: %p\n", t.name, origObj);
+        //printd(0, "Marshalling::stackToQore() %s: %p\n", t.name, origObj);
         if (!origObj) {
             //printd(0, "(WW) Marshalling::stackToQore - origObj = 0.\n");
             return 0;
         }
 
         QoreClass *qc;
-        ReferenceHolder<QoreObject> o(getQoreObject(t.classId, origObj, qc), xsink);
+        ReferenceHolder<QoreObject> o(getQoreObject(classId, origObj, qc), xsink);
         if (o) {
 //             printd(0, "Marshalling::stackToQore() got QoreObject %p\n", o);
             o->ref();
         } else {
-	    QoreSmokePrivate *p;
+            QoreSmokePrivate *p;
             // now it should be real object
-	    if (c->getClass(QC_QABSTRACTITEMMODEL->getID())) {	       
-	       QoreSmokePrivateQAbstractItemModelData *p1;
-	       o = doQObject<QoreSmokePrivateQAbstractItemModelData>(origObj, xsink, &p1);
-	       p = p1;
-	    }
-            else if (c->getClass(QC_QOBJECT->getID())) {
-	       QoreSmokePrivateQObjectData *p1;
-	       o = doQObject<QoreSmokePrivateQObjectData>(origObj, xsink, &p1);
-	       p = p1;
-            } 
-	    else {
-	       o = getQoreMappedObject(t.classId, origObj);
-	       if (o) {
-		  o->ref();
-	       }
-	       else {
-		  // it's not QObject based, just use copy constructor
-		  const char * className = qt_Smoke->classes[t.classId].className;
-	       
-		  //printd(0, "Marshalling::stackToQore() %s: origObj=%p qcid=%d (%s) scid=%d ref=%d ptr=%d stack=%d\n", t.name, origObj, c->getID(), c->getName(), t.classId, flags == Smoke::tf_ref, flags == Smoke::tf_ptr, flags == Smoke::tf_stack);
-		  
-		  if (iconst && flags == Smoke::tf_ref) {
-		     origObj = Marshalling::constructCopy(origObj, className, xsink);
-		     if (*xsink)
-			return 0;
-		  }
-		  o = createQoreObjectFromNonQObject(c, t.classId, origObj, &p);
-	       }
-	    }
-	    if (flags == Smoke::tf_ptr)
-	       p->setExternallyOwned();
+            if (c->getClass(QC_QABSTRACTITEMMODEL->getID())) {
+                QoreSmokePrivateQAbstractItemModelData *p1;
+                o = doQObject<QoreSmokePrivateQAbstractItemModelData>(origObj, xsink, &p1);
+                p = p1;
+            } else if (c->getClass(QC_QOBJECT->getID())) {
+                QoreSmokePrivateQObjectData *p1;
+                o = doQObject<QoreSmokePrivateQObjectData>(origObj, xsink, &p1);
+                p = p1;
+            } else {
+                o = getQoreMappedObject(classId, origObj);
+                if (o) {
+                    o->ref();
+                } else {
+                    // it's not QObject based, just use copy constructor
+                    const char * className = qt_Smoke->classes[classId].className;
+
+                    //printd(0, "Marshalling::stackToQore() %s: origObj=%p qcid=%d (%s) scid=%d ref=%d ptr=%d stack=%d\n", t.name, origObj, c->getID(), c->getName(), t.classId, flags == Smoke::tf_ref, flags == Smoke::tf_ptr, flags == Smoke::tf_stack);
+
+                    if (iconst && flags == Smoke::tf_ref) {
+                        origObj = Marshalling::constructCopy(origObj, className, xsink);
+                        if (*xsink)
+                            return 0;
+                    }
+                    o = createQoreObjectFromNonQObject(c, classId, origObj, &p);
+                }
+            }
+            if (flags == Smoke::tf_ptr)
+                p->setExternallyOwned();
         }
         // it can return already existing object or non-qobject based one
         // qobject based objs are handled in o->getClass(QC_QOBJECT->getID()) part
@@ -829,7 +829,7 @@ void * constructCopy(void * obj, const char * className, ExceptionSink *xsink) {
         }
     }
     if (!methodFound) {
-       assert(xsink);
+        assert(xsink);
         xsink->raiseException("QT-COPY_CONSTRUCTOR", "No copy constructor found for: %s::%s(%s)",
                               realClassName.constData(), copyName.constData(), argName.constData());
         return 0;
@@ -848,5 +848,280 @@ void * constructCopy(void * obj, const char * className, ExceptionSink *xsink) {
 
     return args[0].s_class;
 }
+
+static Smoke::Index findClass(const char * cname) {
+    Smoke::ModuleIndex mi = qt_Smoke->idClass(cname);
+    Q_ASSERT_X(mi.smoke, "smoke not found", cname);
+    return mi.index;
+}
+
+Smoke::Index resolveQtClass(void * ptr, Smoke::Index classId) {
+    Smoke::Index ret = classId;
+    if (qt_Smoke->isDerivedFromByName(qt_Smoke->classes[classId].className, "QEvent")) {
+        QEvent * qevent = (QEvent *) qt_Smoke->cast(ptr, classId, qt_Smoke->idClass("QEvent").index);
+        switch (qevent->type()) {
+        case QEvent::Timer:
+            ret = findClass("QTimerEvent");
+            break;
+        case QEvent::MouseButtonPress:
+        case QEvent::MouseButtonRelease:
+        case QEvent::MouseButtonDblClick:
+        case QEvent::MouseMove:
+            ret = findClass("QMouseEvent");
+            break;
+        case QEvent::KeyPress:
+        case QEvent::KeyRelease:
+        case QEvent::ShortcutOverride:
+            ret = findClass("QKeyEvent");
+            break;
+        case QEvent::FocusIn:
+        case QEvent::FocusOut:
+            ret = findClass("QFocusEvent");
+            break;
+        case QEvent::Enter:
+        case QEvent::Leave:
+            ret = findClass("QEvent");
+            break;
+        case QEvent::Paint:
+            ret = findClass("QPaintEvent");
+            break;
+        case QEvent::Move:
+            ret = findClass("QMoveEvent");
+            break;
+        case QEvent::Resize:
+            ret = findClass("QResizeEvent");
+            break;
+        case QEvent::Create:
+        case QEvent::Destroy:
+            ret = findClass("QEvent");
+            break;
+        case QEvent::Show:
+            ret = findClass("QShowEvent");
+            break;
+        case QEvent::Hide:
+            ret = findClass("QHideEvent");
+        case QEvent::Close:
+            ret = findClass("QCloseEvent");
+            break;
+        case QEvent::Quit:
+        case QEvent::ParentChange:
+        case QEvent::ParentAboutToChange:
+        case QEvent::ThreadChange:
+        case QEvent::WindowActivate:
+        case QEvent::WindowDeactivate:
+        case QEvent::ShowToParent:
+        case QEvent::HideToParent:
+            ret = findClass("QEvent");
+            break;
+        case QEvent::Wheel:
+            ret = findClass("QWheelEvent");
+            break;
+        case QEvent::WindowTitleChange:
+        case QEvent::WindowIconChange:
+        case QEvent::ApplicationWindowIconChange:
+        case QEvent::ApplicationFontChange:
+        case QEvent::ApplicationLayoutDirectionChange:
+        case QEvent::ApplicationPaletteChange:
+        case QEvent::PaletteChange:
+            ret = findClass("QEvent");
+            break;
+        case QEvent::Clipboard:
+            ret = findClass("QClipboardEvent");
+            break;
+        case QEvent::Speech:
+        case QEvent::MetaCall:
+        case QEvent::SockAct:
+        case QEvent::WinEventAct:
+        case QEvent::DeferredDelete:
+            ret = findClass("QEvent");
+            break;
+        case QEvent::DragEnter:
+            ret = findClass("QDragEnterEvent");
+            break;
+        case QEvent::DragLeave:
+            ret = findClass("QDragLeaveEvent");
+            break;
+        case QEvent::DragMove:
+            ret = findClass("QDragMoveEvent");
+        case QEvent::Drop:
+            ret = findClass("QDropEvent");
+            break;
+        case QEvent::DragResponse:
+            ret = findClass("QDragResponseEvent");
+            break;
+        case QEvent::ChildAdded:
+        case QEvent::ChildRemoved:
+        case QEvent::ChildPolished:
+            ret = findClass("QChildEvent");
+            break;
+        case QEvent::ShowWindowRequest:
+        case QEvent::PolishRequest:
+        case QEvent::Polish:
+        case QEvent::LayoutRequest:
+        case QEvent::UpdateRequest:
+        case QEvent::EmbeddingControl:
+        case QEvent::ActivateControl:
+        case QEvent::DeactivateControl:
+            ret = findClass("QEvent");
+            break;
+        case QEvent::ContextMenu:
+            ret = findClass("QContextMenuEvent");
+            break;
+        case QEvent::InputMethod:
+            ret = findClass("QInputMethodEvent");
+            break;
+        case QEvent::AccessibilityPrepare:
+            ret = findClass("QEvent");
+            break;
+        case QEvent::TabletMove:
+        case QEvent::TabletPress:
+        case QEvent::TabletRelease:
+            ret = findClass("QTabletEvent");
+            break;
+        case QEvent::LocaleChange:
+        case QEvent::LanguageChange:
+        case QEvent::LayoutDirectionChange:
+        case QEvent::Style:
+        case QEvent::OkRequest:
+        case QEvent::HelpRequest:
+            ret = findClass("QEvent");
+            break;
+        case QEvent::IconDrag:
+            ret = findClass("QIconDragEvent");
+            break;
+        case QEvent::FontChange:
+        case QEvent::EnabledChange:
+        case QEvent::ActivationChange:
+        case QEvent::StyleChange:
+        case QEvent::IconTextChange:
+        case QEvent::ModifiedChange:
+        case QEvent::MouseTrackingChange:
+            ret = findClass("QEvent");
+            break;
+        case QEvent::WindowBlocked:
+        case QEvent::WindowUnblocked:
+        case QEvent::WindowStateChange:
+            ret = findClass("QWindowStateChangeEvent");
+            break;
+        case QEvent::ToolTip:
+        case QEvent::WhatsThis:
+            ret = findClass("QHelpEvent");
+            break;
+        case QEvent::StatusTip:
+            ret = findClass("QEvent");
+            break;
+        case QEvent::ActionChanged:
+        case QEvent::ActionAdded:
+        case QEvent::ActionRemoved:
+            ret = findClass("QActionEvent");
+            break;
+        case QEvent::FileOpen:
+            ret = findClass("QFileOpenEvent");
+            break;
+        case QEvent::Shortcut:
+            ret = findClass("QShortcutEvent");
+            break;
+        case QEvent::WhatsThisClicked:
+            ret = findClass("QWhatsThisClickedEvent");
+            break;
+        case QEvent::ToolBarChange:
+            ret = findClass("QToolBarChangeEvent");
+            break;
+        case QEvent::ApplicationActivated:
+        case QEvent::ApplicationDeactivated:
+        case QEvent::QueryWhatsThis:
+        case QEvent::EnterWhatsThisMode:
+        case QEvent::LeaveWhatsThisMode:
+        case QEvent::ZOrderChange:
+            ret = findClass("QEvent");
+            break;
+        case QEvent::HoverEnter:
+        case QEvent::HoverLeave:
+        case QEvent::HoverMove:
+            ret = findClass("QHoverEvent");
+            break;
+        case QEvent::AccessibilityHelp:
+        case QEvent::AccessibilityDescription:
+            ret = findClass("QEvent");
+#if QT_VERSION >= 0x40200
+        case QEvent::GraphicsSceneMouseMove:
+        case QEvent::GraphicsSceneMousePress:
+        case QEvent::GraphicsSceneMouseRelease:
+        case QEvent::GraphicsSceneMouseDoubleClick:
+            ret = findClass("QGraphicsSceneMouseEvent");
+            break;
+        case QEvent::GraphicsSceneContextMenu:
+            ret = findClass("QGraphicsSceneContextMenuEvent");
+            break;
+        case QEvent::GraphicsSceneHoverEnter:
+        case QEvent::GraphicsSceneHoverMove:
+        case QEvent::GraphicsSceneHoverLeave:
+            ret = findClass("QGraphicsSceneHoverEvent");
+            break;
+        case QEvent::GraphicsSceneHelp:
+            ret = findClass("QGraphicsSceneHelpEvent");
+            break;
+        case QEvent::GraphicsSceneDragEnter:
+        case QEvent::GraphicsSceneDragMove:
+        case QEvent::GraphicsSceneDragLeave:
+        case QEvent::GraphicsSceneDrop:
+            ret = findClass("QGraphicsSceneDragDropEvent");
+            break;
+        case QEvent::GraphicsSceneWheel:
+            ret = findClass("QGraphicsSceneWheelEvent");
+            break;
+        case QEvent::KeyboardLayoutChange:
+            ret = findClass("QEvent");
+            break;
+#endif
+        default:
+            break;
+        }
+    } else if (qt_Smoke->isDerivedFromByName(qt_Smoke->classes[classId].className, "QGraphicsItem")) {
+        QGraphicsItem * item = (QGraphicsItem *) qt_Smoke->cast(ptr, classId, qt_Smoke->idClass("QGraphicsItem").index);
+        switch (item->type()) {
+        case 1:
+            ret = findClass("QGraphicsItem");
+            break;
+        case 2:
+            ret = findClass("QGraphicsPathItem");
+            break;
+        case 3:
+            ret = findClass("QGraphicsRectItem");
+        case 4:
+            ret = findClass("QGraphicsEllipseItem");
+            break;
+        case 5:
+            ret = findClass("QGraphicsPolygonItem");
+            break;
+        case 6:
+            ret = findClass("QGraphicsLineItem");
+            break;
+        case 7:
+            ret = findClass("QGraphicsItem");
+            break;
+        case 8:
+            ret = findClass("QGraphicsTextItem");
+            break;
+        case 9:
+            ret = findClass("QGraphicsSimpleTextItem");
+            break;
+        case 10:
+            ret = findClass("QGraphicsItemGroup");
+            break;
+        }
+    } else if (qt_Smoke->isDerivedFromByName(qt_Smoke->classes[classId].className, "QLayoutItem")) {
+        QLayoutItem * item = (QLayoutItem *) qt_Smoke->cast(ptr, classId, qt_Smoke->idClass("QLayoutItem").index);
+        if (item->widget() != 0) {
+            ret = findClass("QWidgetItem");
+        } else if (item->spacerItem() != 0) {
+            ret = findClass("QSpacerItem");
+        }
+    }
+
+    return ret;
+}
+
+
 
 } // namespace

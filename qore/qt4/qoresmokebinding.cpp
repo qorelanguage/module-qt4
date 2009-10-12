@@ -79,10 +79,10 @@ void QoreSmokeBinding::deleted(Smoke::Index classId, void *obj) {
 //         printd(0, "QoreSmokeBinding::deleted() external delete Qore class %s (Qt class %s) (qsd=%p)\n", o->getClassName(), className(classId), *qsd);
 
         if (qsd)
-	   qsd->externalDelete(o, &xsink);
-	else 
-	   // mark qore object as externally deleted
-	   o->externalDelete(qc->getID(), &xsink);
+            qsd->externalDelete(o, &xsink);
+        else
+            // mark qore object as externally deleted
+            o->externalDelete(qc->getID(), &xsink);
     }
 }
 
@@ -133,14 +133,14 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
 
     QoreClass *qc;
     QoreObject *o = getQoreObject(meth.classId, obj, qc);
-    
+
     //printd(0, "QoreSmokeBinding::callMethod() %s::%s() qore object=%p\n", cname, mname, o);
 
     if (!o) {
         // we must have an implementation for abstract methods
 #ifdef DEBUG
-       if (isAbstract)
-	  printd(0, "trying to execute pure virtual method %s::%s()\n", cname, mname);
+        if (isAbstract)
+            printd(0, "trying to execute pure virtual method %s::%s()\n", cname, mname);
 #endif
         assert(!isAbstract);
         return false;
@@ -169,7 +169,7 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
     const QoreMethod * qoreMethod = o->getClass()->findMethod(mname);
     //printd(0, "QoreSmokeBinding::callMethod() virtual method %s::%s() user method=%p\n", o->getClassName(), mname, qoreMethod);
     if (!qoreMethod || !qoreMethod->isUser()) {
-       //printd(0, "QoreSmokeBinding::callMethod() virtual method %s::%s() not found\n", o->getClassName(), mname);
+        //printd(0, "QoreSmokeBinding::callMethod() virtual method %s::%s() not found\n", o->getClassName(), mname);
         if (isAbstract) {
             xsink.raiseException("QT-ABSTRACT-METHOD-ERROR", "The Qt library tried to execute pure virtual %s::%s(), but this method is not implemented in the %s class", o->getClassName(), mname, o->getClassName());
             xsink.handleExceptions();

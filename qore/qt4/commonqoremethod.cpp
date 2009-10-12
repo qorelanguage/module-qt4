@@ -54,29 +54,29 @@ bool isptrtype(const char *var, const char *type) {
 }
 
 static void add_args(QoreStringNode &str, const QoreListNode *args) {
-   if (!args) {
-      str.concat("<no args>");
-      return;
-   }
+    if (!args) {
+        str.concat("<no args>");
+        return;
+    }
 
-   ConstListIterator ci(args);
-   while (ci.next()) {
-      const AbstractQoreNode *n = ci.getValue();
-      const char *tn;
-      if (!n)
-	 tn = "NOTHING";
-      else if (n->getType() == NT_OBJECT)
-	 tn = reinterpret_cast<const QoreObject *>(n)->getClassName();
-      else
-	 tn = n->getTypeName();
-      str.concat(tn);
-      if (!ci.last())
-	 str.concat(", ");
-   }
+    ConstListIterator ci(args);
+    while (ci.next()) {
+        const AbstractQoreNode *n = ci.getValue();
+        const char *tn;
+        if (!n)
+            tn = "NOTHING";
+        else if (n->getType() == NT_OBJECT)
+            tn = reinterpret_cast<const QoreObject *>(n)->getClassName();
+        else
+            tn = n->getTypeName();
+        str.concat(tn);
+        if (!ci.last())
+            str.concat(", ");
+    }
 }
 
 CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
-                   QoreSmokePrivate *n_smc,
+                                   QoreSmokePrivate *n_smc,
                                    const char* className,
                                    const char* methodName,
                                    const QoreListNode* params,
@@ -89,10 +89,10 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
         qoreArgCnt(num_params(params)),
         ref_store(0),
         vl(xsink),
-    tparams(0),
-    self(n_self),
-    smc(n_smc),
-    suppress_method(false) {
+        tparams(0),
+        self(n_self),
+        smc(n_smc),
+        suppress_method(false) {
     /*
     // find last position with a value
     if (qoreArgCnt) {
@@ -141,8 +141,8 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
     if (candidates.count() == 0) {
         QoreStringNode *desc = new QoreStringNode;
         desc->sprintf("no match found for call to %s::%s(", m_className, methodName);
-	add_args(*desc, params);
-	desc->concat(')');
+        add_args(*desc, params);
+        desc->concat(')');
         xsink->raiseException("QT-NO-METHOD-FOUND", desc);
         // TODO/FIXME: print mMap candidates
         return;
@@ -200,12 +200,12 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
         }
 
         if (m_munged.isEmpty()) {
-	   QoreStringNode *desc = new QoreStringNode;
-	   desc->sprintf("no match found for call to %s::%s(", m_className, methodName);
-	   add_args(*desc, params);
-	   desc->concat(')');
-	   xsink->raiseException("QT-NO-METHOD-FOUND", desc);
-	   return;
+            QoreStringNode *desc = new QoreStringNode;
+            desc->sprintf("no match found for call to %s::%s(", m_className, methodName);
+            add_args(*desc, params);
+            desc->concat(')');
+            xsink->raiseException("QT-NO-METHOD-FOUND", desc);
+            return;
         }
     }
 
@@ -229,8 +229,8 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
 
         int i = 1;
         foreach (Smoke::Type t, type_handler.types) {
-	    if (qoreToStack(t, get_param(params, i-1), i))
-	       break;
+            if (qoreToStack(t, get_param(params, i-1), i))
+                break;
             ++i;
         }
     }
@@ -289,155 +289,155 @@ CommonQoreMethod::~CommonQoreMethod() {
 }
 
 int get_qdate(const AbstractQoreNode *n, QDate &date, ExceptionSink *xsink) {
-   qore_type_t t = n ? n->getType() : NT_NOTHING;
-   if (t == NT_DATE) {
-      const DateTimeNode *d = reinterpret_cast<const DateTimeNode *>(n);
-      date.setDate(d->getYear(), d->getMonth(), d->getDay());
-      return 0;
-   }
+    qore_type_t t = n ? n->getType() : NT_NOTHING;
+    if (t == NT_DATE) {
+        const DateTimeNode *d = reinterpret_cast<const DateTimeNode *>(n);
+        date.setDate(d->getYear(), d->getMonth(), d->getDay());
+        return 0;
+    }
 
-   if (t != NT_OBJECT) {
-      xsink->raiseException("QT-QDATE-ERROR", "cannot convert type '%s' to QDate", n ? n->getTypeName() : "NOTHING");
-      return -1;
-   }
+    if (t != NT_OBJECT) {
+        xsink->raiseException("QT-QDATE-ERROR", "cannot convert type '%s' to QDate", n ? n->getTypeName() : "NOTHING");
+        return -1;
+    }
 
-   const QoreObject *o = reinterpret_cast<const QoreObject *>(n);
-   
-   ReferenceHolder<QoreSmokePrivateData> data(xsink);
+    const QoreObject *o = reinterpret_cast<const QoreObject *>(n);
 
-   data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QDATE->getID(), xsink));
-   if (*xsink)
-      return -1;
+    ReferenceHolder<QoreSmokePrivateData> data(xsink);
 
-   if (data) {
-      QDate *d = reinterpret_cast<QDate *>(data->object());
-      assert(d);
-      date = *d;
-      //date.setDate(d->year(), d->month(), d->day());
-      return 0;
-   }
+    data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QDATE->getID(), xsink));
+    if (*xsink)
+        return -1;
 
-   data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QDATETIME->getID(), xsink));
-   if (*xsink)
-      return -1;
+    if (data) {
+        QDate *d = reinterpret_cast<QDate *>(data->object());
+        assert(d);
+        date = *d;
+        //date.setDate(d->year(), d->month(), d->day());
+        return 0;
+    }
 
-   if (data) {
-      QDateTime *d = reinterpret_cast<QDateTime *>(data->object());
-      assert(d);
-      date = d->date();
-      return 0;
-   }
+    data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QDATETIME->getID(), xsink));
+    if (*xsink)
+        return -1;
 
-   xsink->raiseException("QT-QDATE-ERROR", "class '%s' is not derived from QDate or QDateTime", o->getClassName());
-   return -1;
+    if (data) {
+        QDateTime *d = reinterpret_cast<QDateTime *>(data->object());
+        assert(d);
+        date = d->date();
+        return 0;
+    }
+
+    xsink->raiseException("QT-QDATE-ERROR", "class '%s' is not derived from QDate or QDateTime", o->getClassName());
+    return -1;
 }
 
 int get_qdatetime(const AbstractQoreNode *n, QDateTime &dt, ExceptionSink *xsink) {
-   qore_type_t t = n ? n->getType() : NT_NOTHING;
-   if (t == NT_DATE) {
-      const DateTimeNode *qdt = reinterpret_cast<const DateTimeNode *>(n);
+    qore_type_t t = n ? n->getType() : NT_NOTHING;
+    if (t == NT_DATE) {
+        const DateTimeNode *qdt = reinterpret_cast<const DateTimeNode *>(n);
 
-      dt.setDate(QDate(qdt->getYear(), qdt->getMonth(), qdt->getDay()));
-      dt.setTime(QTime(qdt->getHour(), qdt->getMinute(), qdt->getSecond(), qdt->getMillisecond()));
+        dt.setDate(QDate(qdt->getYear(), qdt->getMonth(), qdt->getDay()));
+        dt.setTime(QTime(qdt->getHour(), qdt->getMinute(), qdt->getSecond(), qdt->getMillisecond()));
 
-      return 0;
-   }
+        return 0;
+    }
 
-   if (t != NT_OBJECT) {
-      xsink->raiseException("QT-QDATETIME-ERROR", "cannot convert type '%s' to QDateTime", n ? n->getTypeName() : "NOTHING");
-      return -1;
-   }
+    if (t != NT_OBJECT) {
+        xsink->raiseException("QT-QDATETIME-ERROR", "cannot convert type '%s' to QDateTime", n ? n->getTypeName() : "NOTHING");
+        return -1;
+    }
 
-   const QoreObject *o = reinterpret_cast<const QoreObject *>(n);
-   
-   ReferenceHolder<QoreSmokePrivateData> data(xsink);
+    const QoreObject *o = reinterpret_cast<const QoreObject *>(n);
 
-   data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QDATE->getID(), xsink));
-   if (*xsink)
-      return -1;
+    ReferenceHolder<QoreSmokePrivateData> data(xsink);
 
-   if (data) {
-      QDate *d = reinterpret_cast<QDate *>(data->object());
-      assert(d);
+    data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QDATE->getID(), xsink));
+    if (*xsink)
+        return -1;
 
-      dt.setTime(QTime());
-      dt.setDate(*d);
-      return 0;
-   }
+    if (data) {
+        QDate *d = reinterpret_cast<QDate *>(data->object());
+        assert(d);
 
-   data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QTIME->getID(), xsink));
-   if (*xsink)
-      return -1;
+        dt.setTime(QTime());
+        dt.setDate(*d);
+        return 0;
+    }
 
-   if (data) {
-      QTime *qt = reinterpret_cast<QTime *>(data->object());
-      assert(qt);
+    data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QTIME->getID(), xsink));
+    if (*xsink)
+        return -1;
 
-      dt.setDate(QDate());
-      dt.setTime(*qt);
+    if (data) {
+        QTime *qt = reinterpret_cast<QTime *>(data->object());
+        assert(qt);
 
-      return 0;
-   }
+        dt.setDate(QDate());
+        dt.setTime(*qt);
 
-   data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QDATETIME->getID(), xsink));
-   if (*xsink)
-      return -1;
+        return 0;
+    }
 
-   if (data) {
-      QDateTime *d = reinterpret_cast<QDateTime *>(data->object());
-      assert(d);
-      dt = *d;
-      return 0;
-   }
+    data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QDATETIME->getID(), xsink));
+    if (*xsink)
+        return -1;
 
-   xsink->raiseException("QT-QDATETIME-ERROR", "class '%s' is not derived from QDateTime, QDate, or QTime", o->getClassName());
-   return -1;
+    if (data) {
+        QDateTime *d = reinterpret_cast<QDateTime *>(data->object());
+        assert(d);
+        dt = *d;
+        return 0;
+    }
+
+    xsink->raiseException("QT-QDATETIME-ERROR", "class '%s' is not derived from QDateTime, QDate, or QTime", o->getClassName());
+    return -1;
 }
 
 int get_qtime(const AbstractQoreNode *n, QTime &time, ExceptionSink *xsink) {
-   qore_type_t t = n ? n->getType() : NT_NOTHING;
-   if (t == NT_DATE) {
-      const DateTimeNode *qdt = reinterpret_cast<const DateTimeNode *>(n);
+    qore_type_t t = n ? n->getType() : NT_NOTHING;
+    if (t == NT_DATE) {
+        const DateTimeNode *qdt = reinterpret_cast<const DateTimeNode *>(n);
 
-      time.setHMS(qdt->getHour(), qdt->getMinute(), qdt->getSecond(), qdt->getMillisecond());
-      return 0;
-   }
+        time.setHMS(qdt->getHour(), qdt->getMinute(), qdt->getSecond(), qdt->getMillisecond());
+        return 0;
+    }
 
-   if (t != NT_OBJECT) {
-      xsink->raiseException("QT-QTIME-ERROR", "cannot convert type '%s' to QTime", n ? n->getTypeName() : "NOTHING");
-      return -1;
-   }
+    if (t != NT_OBJECT) {
+        xsink->raiseException("QT-QTIME-ERROR", "cannot convert type '%s' to QTime", n ? n->getTypeName() : "NOTHING");
+        return -1;
+    }
 
-   const QoreObject *o = reinterpret_cast<const QoreObject *>(n);
-   
-   ReferenceHolder<QoreSmokePrivateData> data(xsink);
+    const QoreObject *o = reinterpret_cast<const QoreObject *>(n);
 
-   data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QDATETIME->getID(), xsink));
-   if (*xsink)
-      return -1;
+    ReferenceHolder<QoreSmokePrivateData> data(xsink);
 
-   if (data) {
-      QDateTime *d = reinterpret_cast<QDateTime *>(data->object());
-      assert(d);
-      time = d->time();
-      return 0;
-   }
+    data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QDATETIME->getID(), xsink));
+    if (*xsink)
+        return -1;
 
-   data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QTIME->getID(), xsink));
-   if (*xsink)
-      return -1;
+    if (data) {
+        QDateTime *d = reinterpret_cast<QDateTime *>(data->object());
+        assert(d);
+        time = d->time();
+        return 0;
+    }
 
-   if (data) {
-      QTime *qt = reinterpret_cast<QTime *>(data->object());
-      assert(qt);
+    data = reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QTIME->getID(), xsink));
+    if (*xsink)
+        return -1;
 
-      time = *qt;
+    if (data) {
+        QTime *qt = reinterpret_cast<QTime *>(data->object());
+        assert(qt);
 
-      return 0;
-   }
+        time = *qt;
 
-   xsink->raiseException("QT-QTIME-ERROR", "class '%s' is not derived from QTime or QDateTime", o->getClassName());
-   return -1;
+        return 0;
+    }
+
+    xsink->raiseException("QT-QTIME-ERROR", "class '%s' is not derived from QTime or QDateTime", o->getClassName());
+    return -1;
 }
 
 int get_qstring(Smoke::Type &t, QString &qstring, const AbstractQoreNode *n, ExceptionSink *xsink) {
@@ -478,8 +478,7 @@ int get_qstring(Smoke::Type &t, QString &qstring, const AbstractQoreNode *n, Exc
         xsink->raiseException("QT-GET-QSTRING", "Cannot convert QoreObject (%s) to QString", t.name);
         xsink->handleExceptions();
         assert(0);
-    }
-    else {
+    } else {
         QoreStringValueHelper str(n, QCS_UTF8, xsink);
         if (*xsink)
             return -1;
@@ -500,44 +499,44 @@ static T get_char(const AbstractQoreNode *node) {
 
 
 int CommonQoreMethod::returnQtObjectOnStack(Smoke::StackItem &si, const char *cname, const char *mname, const AbstractQoreNode *v, Smoke::Type &t, int index, ExceptionSink *xsink, bool temp) {
-   int flags = t.flags & 0x30;
+    int flags = t.flags & 0x30;
 
-   ReferenceHolder<QoreSmokePrivate> c(xsink);
+    ReferenceHolder<QoreSmokePrivate> c(xsink);
 
-   if (getObjectStatic(xsink, cname, mname, t.classId, v, c, index, flags == Smoke::tf_ptr))
-      return -1;
+    if (getObjectStatic(xsink, cname, mname, t.classId, v, c, index, flags == Smoke::tf_ptr))
+        return -1;
 
-   void *p = c ? c->object() : 0;
-   //printd(0, "qoreToStackStatic() %s p=%p flags=%x\n", className, p, flags);
-   if (p) {
-      // if the object is on the stack, and we are passing a temporary value to QT,
-      // and the node is unique, then we must take the value and clear the QoreSmokePrivate
-      // data structure, otherwise we need to make a copy, because otherwise the data would
-      // be destroyed before QT has a chance to use it and QT would be using an invalid pointer
-      if (temp && flags == Smoke::tf_stack) {
-	 if (v->is_unique())
-	    c->clear();
-	 else {
-	    p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
-	    if (*xsink)
-	       return -1;
-	 }
-      } else if (flags == Smoke::tf_ref) {
-	 p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
-	 if (*xsink)
-	    return -1;
-      }
-   }
+    void *p = c ? c->object() : 0;
+    //printd(0, "qoreToStackStatic() %s p=%p flags=%x\n", className, p, flags);
+    if (p) {
+        // if the object is on the stack, and we are passing a temporary value to QT,
+        // and the node is unique, then we must take the value and clear the QoreSmokePrivate
+        // data structure, otherwise we need to make a copy, because otherwise the data would
+        // be destroyed before QT has a chance to use it and QT would be using an invalid pointer
+        if (temp && flags == Smoke::tf_stack) {
+            if (v->is_unique())
+                c->clear();
+            else {
+                p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
+                if (*xsink)
+                    return -1;
+            }
+        } else if (flags == Smoke::tf_ref) {
+            p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
+            if (*xsink)
+                return -1;
+        }
+    }
 
-   if (!p && flags == Smoke::tf_stack) {
-      // construct a new object if we have to
-      CommonQoreMethod cqm(0, 0, t.name, t.name, 0, xsink);
-      (* cqm.smokeClass().classFn)(cqm.method().method, 0, cqm.Stack);
-      p = cqm.Stack[0].s_class;
-   }
+    if (!p && flags == Smoke::tf_stack) {
+        // construct a new object if we have to
+        CommonQoreMethod cqm(0, 0, t.name, t.name, 0, xsink);
+        (* cqm.smokeClass().classFn)(cqm.method().method, 0, cqm.Stack);
+        p = cqm.Stack[0].s_class;
+    }
 
-   si.s_class = p;
-   return 0;
+    si.s_class = p;
+    return 0;
 }
 
 // FIXME: avoid string comparisons by setting global values to smoke classIds instead
@@ -670,8 +669,8 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
             }
             cqm->getRefEntry(index - 1)->assign(v ? v->getAsBool() : false);
         } else if (isptrtype(name, "QKeySequence")
-                    && v
-                    && (v->getType() == NT_QTENUM || v->getType() == NT_INT || v->getType() == NT_STRING)) {
+                   && v
+                   && (v->getType() == NT_QTENUM || v->getType() == NT_INT || v->getType() == NT_STRING)) {
             if (v->getType() == NT_QTENUM) {
                 const QoreQtEnumNode *en = reinterpret_cast<const QoreQtEnumNode *>(v);
                 if (strcmp(en->smokeType().name, "Qt::Key")) {
@@ -700,40 +699,40 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
             }
             return 0;
         } else if (v && isptrtype(name, "QBrush")) {
-	   if ((v->getType() == NT_QTENUM || v->getType() == NT_INT)) {
-	      if (v->getType() == NT_QTENUM) {
-		 const QoreQtEnumNode *en = reinterpret_cast<const QoreQtEnumNode *>(v);
-		 if (strcmp(en->smokeType().name, "Qt::GlobalColor")) {
-                    xsink->raiseException("QT-ARGUMENT-ERROR", "%s::%s() expects QBrush, cannot convert from %s value passed", className, methodName, en->smokeType().name);
+            if ((v->getType() == NT_QTENUM || v->getType() == NT_INT)) {
+                if (v->getType() == NT_QTENUM) {
+                    const QoreQtEnumNode *en = reinterpret_cast<const QoreQtEnumNode *>(v);
+                    if (strcmp(en->smokeType().name, "Qt::GlobalColor")) {
+                        xsink->raiseException("QT-ARGUMENT-ERROR", "%s::%s() expects QBrush, cannot convert from %s value passed", className, methodName, en->smokeType().name);
+                        return -1;
+                    }
+                }
+                if (cqm) {
+                    ref_store_s *re = cqm->getRefEntry(index - 1);
+                    re->assign(new QBrush((Qt::GlobalColor)v->getAsInt()));
+                    si.s_class = re->getPtr();
+                } else {
+                    QBrush *qb = new QBrush((Qt::GlobalColor)v->getAsInt());
+                    si.s_class = qb;
+                }
+                return 0;
+            }
+            if (v->getType() == NT_OBJECT) {
+                const QoreObject *obj = reinterpret_cast<const QoreObject *>(v);
+                ReferenceHolder<QoreSmokePrivateData> p(xsink);
+
+                // check for QColor
+                p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QCOLOR->getID(), xsink));
+                if (*xsink)
                     return -1;
-		 }
-	      }
-	      if (cqm) {
-		 ref_store_s *re = cqm->getRefEntry(index - 1);
-		 re->assign(new QBrush((Qt::GlobalColor)v->getAsInt()));
-		 si.s_class = re->getPtr();
-	      } else {
-		 QBrush *qb = new QBrush((Qt::GlobalColor)v->getAsInt());
-		 si.s_class = qb;
-	      }
-	      return 0;
-	   }
-	   if (v->getType() == NT_OBJECT) {
-	      const QoreObject *obj = reinterpret_cast<const QoreObject *>(v);
-	      ReferenceHolder<QoreSmokePrivateData> p(xsink);
-	      
-	      // check for QColor
-	      p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QCOLOR->getID(), xsink));
-	      if (*xsink)
-		 return -1;
-	      if (p) {
-		 QColor *qc = reinterpret_cast<QColor *>(p->object());
-		 assert(qc);
-		 si.s_class = new QBrush(*qc);
-		 return 0;
-	      }
-	   }
-	   return returnQtObjectOnStack(si, className, methodName, v, t, index, xsink, temp);
+                if (p) {
+                    QColor *qc = reinterpret_cast<QColor *>(p->object());
+                    assert(qc);
+                    si.s_class = new QBrush(*qc);
+                    return 0;
+                }
+            }
+            return returnQtObjectOnStack(si, className, methodName, v, t, index, xsink, temp);
         } else if (isptrtype(name, "QPen") && v && (v->getType() == NT_QTENUM || v->getType() == NT_INT)) {
             assert(iconst);
             if (v->getType() == NT_QTENUM) {
@@ -824,65 +823,62 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                 }
                 return 0;
             } else if (bname.startsWith("QVariant")) {
-	       std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(t, node, xsink));
-	       if (variant.get()->status == Marshalling::QoreQVariant::Invalid) {
-		  //printd(0, "CommonQoreMethod::qoreToStackStatic() invalid QVariant returned\n");
+                std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(t, node, xsink));
+                if (variant.get()->status == Marshalling::QoreQVariant::Invalid) {
+                    //printd(0, "CommonQoreMethod::qoreToStackStatic() invalid QVariant returned\n");
                     return -1;
-		}
+                }
                 if (cqm) {
                     assert(iconst);
                     ref_store_s *re = cqm->getRefEntry(index - 1);
                     re->assign(variant.release());
                     si.s_class = re->getPtr();
-		    //printd(0, "CommonQoreMethod::qoreToStackStatic() %s::%s() valid QVariant returned (cqm) si.s_class=%p\n", className, methodName, si.s_class);
+                    //printd(0, "CommonQoreMethod::qoreToStackStatic() %s::%s() valid QVariant returned (cqm) si.s_class=%p\n", className, methodName, si.s_class);
                 } else {
-		   //printd(0, "CommonQoreMethod::qoreToStackStatic() valid QVariant returned (no cqm) variant=%p\n", variant.get());
-		   si.s_class = variant.get()->s_class();
+                    //printd(0, "CommonQoreMethod::qoreToStackStatic() valid QVariant returned (no cqm) variant=%p\n", variant.get());
+                    si.s_class = variant.get()->s_class();
+                }
+                return 0;
+            } else if (bname.startsWith("QDateTime")) {
+                std::auto_ptr<QDateTime> qdt(new QDateTime());
+                if (get_qdatetime(v, *(qdt.get()), xsink))
+                    return -1;
+
+                if (cqm) {
+                    cqm->getRefEntry(index - 1)->assign(qdt.release());
+                    si.s_class = cqm->getRefEntry(index - 1)->getPtr();
+                } else {
+                    si.s_class = qdt.release();
+                }
+                return 0;
+            } else if (bname.startsWith("QDate")) {
+                std::auto_ptr<QDate> qd(new QDate());
+                if (get_qdate(v, *(qd.get()), xsink))
+                    return -1;
+
+                if (cqm) {
+                    cqm->getRefEntry(index - 1)->assign(qd.release());
+                    si.s_class = cqm->getRefEntry(index - 1)->getPtr();
+                } else {
+                    si.s_class = qd.release();
+                }
+                return 0;
+            } else if (bname.startsWith("QTime")) {
+                std::auto_ptr<QTime> qt(new QTime());
+                if (get_qtime(v, *(qt.get()), xsink))
+                    return -1;
+
+                if (cqm) {
+                    cqm->getRefEntry(index - 1)->assign(qt.release());
+                    si.s_class = cqm->getRefEntry(index - 1)->getPtr();
+                } else {
+                    si.s_class = qt.release();
                 }
                 return 0;
             }
-	    else if (bname.startsWith("QDateTime")) {
-	       std::auto_ptr<QDateTime> qdt(new QDateTime());
-	       if (get_qdatetime(v, *(qdt.get()), xsink))
-		  return -1;
-
-	       if (cqm) {
-		  cqm->getRefEntry(index - 1)->assign(qdt.release());
-		  si.s_class = cqm->getRefEntry(index - 1)->getPtr();
-	       } else {
-		  si.s_class = qdt.release();
-	       }
-	       return 0;
-	    }
-	    else if (bname.startsWith("QDate")) {
-	       std::auto_ptr<QDate> qd(new QDate());
-	       if (get_qdate(v, *(qd.get()), xsink))
-		  return -1;
-
-	       if (cqm) {
-		  cqm->getRefEntry(index - 1)->assign(qd.release());
-		  si.s_class = cqm->getRefEntry(index - 1)->getPtr();
-	       } else {
-		  si.s_class = qd.release();
-	       }
-	       return 0;
-	    }
-	    else if (bname.startsWith("QTime")) {
-	       std::auto_ptr<QTime> qt(new QTime());
-	       if (get_qtime(v, *(qt.get()), xsink))
-		  return -1;
-
-	       if (cqm) {
-		  cqm->getRefEntry(index - 1)->assign(qt.release());
-		  si.s_class = cqm->getRefEntry(index - 1)->getPtr();
-	       } else {
-		  si.s_class = qt.release();
-	       }
-	       return 0;
-	    }
             // finally the generic Q stuff
             else {
-	       return returnQtObjectOnStack(si, className, methodName, v, t, index, xsink);
+                return returnQtObjectOnStack(si, className, methodName, v, t, index, xsink);
             }
         } else {
 //             printd(0, "can't handle ref type '%s'\n", t.name);
@@ -914,7 +910,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
         return 0;
     case Smoke::t_int:
         si.s_int = node ? node->getAsInt() : 0;
-    //printd(0, "qoreToStackStatic() setting arg %d to int %d\n", index, si.s_int);
+        //printd(0, "qoreToStackStatic() setting arg %d to int %d\n", index, si.s_int);
         return 0;
     case Smoke::t_uint:
         si.s_uint = node ? node->getAsBigInt() : 0;
@@ -932,8 +928,8 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
         si.s_double = node ? node->getAsFloat() : 0.0;
         return 0;
     case Smoke::t_enum:
-    si.s_enum = node ? node->getAsBigInt() : 0;
-    return 0;
+        si.s_enum = node ? node->getAsBigInt() : 0;
+        return 0;
     }
 
     if (!t.name)
@@ -949,11 +945,11 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
     }
 
     if (!strcmp(t.name, "QVariant")) {
-       std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(t, node, xsink));
-       if (variant->status == Marshalling::QoreQVariant::Invalid)
-      return -1;
-       si.s_class = variant.release();
-       return 0;
+        std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(t, node, xsink));
+        if (variant->status == Marshalling::QoreQVariant::Invalid)
+            return -1;
+        si.s_class = variant.release();
+        return 0;
     }
 
     // QString has no class in smoke
@@ -967,7 +963,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
         si.s_voidp = qstr.release();
         return 0;
     }
-    
+
     if (tid == Smoke::t_voidp) {
         xsink->raiseException("QT-ARGUMENT-ERROR", "DEBUG: need special handler for void* argument to %s::%s()", className, methodName);
         printd(0, "void * (%s) in %s::%s()\n", t.name, className, methodName);
@@ -976,7 +972,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
     }
 
     if (t.name[0] == 'Q')
-       return returnQtObjectOnStack(si, className, methodName, node, t, index, xsink, temp);
+        return returnQtObjectOnStack(si, className, methodName, node, t, index, xsink, temp);
 
     xsink->raiseException("QT-ARGUMENT-ERROR", "don't know how to handle arguments ot type '%s'", t.name);
     return -1;
@@ -985,9 +981,9 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
 
 // FIXME: avoid string comparisons by setting global values to smoke classIds instead
 int CommonQoreMethod::qoreToStack(Smoke::Type t,
-                                   const AbstractQoreNode * node,
-                                   int index) {
-   return qoreToStackStatic(m_xsink, Stack[index], m_className, m_methodName, t, node, index, this);
+                                  const AbstractQoreNode * node,
+                                  int index) {
+    return qoreToStackStatic(m_xsink, Stack[index], m_className, m_methodName, t, node, index, this);
 }
 
 int CommonQoreMethod::getObject(Smoke::Index classId, const AbstractQoreNode *v, ReferenceHolder<QoreSmokePrivate> &c, int index, bool nullOk) {
@@ -1041,7 +1037,7 @@ int CommonQoreMethod::getObjectStatic(ExceptionSink *xsink,
 
 int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n, int index) {
     qore_type_t qore_type = n ? n->getType() : NT_NOTHING;
-    
+
 //     printd(0, "CommonQoreMethod::getScore name=%s; node=%d\n", smoke_type.name, n->getType());
 
     // TODO/FIXME: is it good approach? example class F inherits X { constructor($parent): X($parent)...} and then new F(); will result for NOTHING as parent
@@ -1095,22 +1091,22 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
             }
             return 1;
         } else if (isptrtype(name, "QBrush")) {
-	   if (qore_type == NT_QTENUM || qore_type == NT_INT) {
-	      if (qore_type == NT_QTENUM) {
-		 const QoreQtEnumNode *en = reinterpret_cast<const QoreQtEnumNode *>(n);
+            if (qore_type == NT_QTENUM || qore_type == NT_INT) {
+                if (qore_type == NT_QTENUM) {
+                    const QoreQtEnumNode *en = reinterpret_cast<const QoreQtEnumNode *>(n);
 //           printd(0, "getScore() %s enum=%s\n", name, en->smokeType().name);
-		 return strcmp(en->smokeType().name, "Qt::GlobalColor") ? 0 : 2;
-	      }
-	      return 1;
-	   }
-	   if (qore_type == NT_OBJECT) {
-	      const QoreObject *o = reinterpret_cast<const QoreObject *>(n);
-	      if (o->getClass(QC_QBRUSH->getID()))
-		 return 2;
-	      if (o->getClass(QC_QCOLOR->getID()))
-		 return 1;
-	      return 0;
-	   }
+                    return strcmp(en->smokeType().name, "Qt::GlobalColor") ? 0 : 2;
+                }
+                return 1;
+            }
+            if (qore_type == NT_OBJECT) {
+                const QoreObject *o = reinterpret_cast<const QoreObject *>(n);
+                if (o->getClass(QC_QBRUSH->getID()))
+                    return 2;
+                if (o->getClass(QC_QCOLOR->getID()))
+                    return 1;
+                return 0;
+            }
         } else if (isptrtype(name, "QPen") && (qore_type == NT_QTENUM || qore_type == NT_INT)) {
             if (qore_type == NT_QTENUM) {
                 const QoreQtEnumNode *en = reinterpret_cast<const QoreQtEnumNode *>(n);
@@ -1126,45 +1122,45 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
             }
             return 1;
         } else if (isptrtype(name, "QVariant")) {
-	    // FIXME: slow - unnecessary allocations, etc
-	    std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(smoke_type, n, m_xsink));
+            // FIXME: slow - unnecessary allocations, etc
+            std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(smoke_type, n, m_xsink));
             return variant->status;
-	} else if (isptrtype(name, "QDateTime")) {
-	   if (qore_type == NT_DATE)
-	      return 1;
-	   if (qore_type != NT_OBJECT)
-	      return 0;
+        } else if (isptrtype(name, "QDateTime")) {
+            if (qore_type == NT_DATE)
+                return 1;
+            if (qore_type != NT_OBJECT)
+                return 0;
 
             const QoreObject *obj = reinterpret_cast<const QoreObject *>(n);
-	    if (obj->getClass(QC_QDATETIME->getID()))
-	       return 2;
-	    if (obj->getClass(QC_QDATE->getID()) || obj->getClass(QC_QTIME->getID()))
-	       return 1;
-	    return 0;
-	} else if (isptrtype(name, "QDate")) {
-	   if (qore_type == NT_DATE)
-	      return 1;
-	   if (qore_type != NT_OBJECT)
-	      return 0;
+            if (obj->getClass(QC_QDATETIME->getID()))
+                return 2;
+            if (obj->getClass(QC_QDATE->getID()) || obj->getClass(QC_QTIME->getID()))
+                return 1;
+            return 0;
+        } else if (isptrtype(name, "QDate")) {
+            if (qore_type == NT_DATE)
+                return 1;
+            if (qore_type != NT_OBJECT)
+                return 0;
 
             const QoreObject *obj = reinterpret_cast<const QoreObject *>(n);
-	    if (obj->getClass(QC_QDATETIME->getID()))
-	       return 1;
-	    if (obj->getClass(QC_QDATE->getID()))
-	       return 2;
-	    return 0;
-	} else if (isptrtype(name, "QTime")) {
-	   if (qore_type == NT_DATE)
-	      return 1;
-	   if (qore_type != NT_OBJECT)
-	      return 0;
+            if (obj->getClass(QC_QDATETIME->getID()))
+                return 1;
+            if (obj->getClass(QC_QDATE->getID()))
+                return 2;
+            return 0;
+        } else if (isptrtype(name, "QTime")) {
+            if (qore_type == NT_DATE)
+                return 1;
+            if (qore_type != NT_OBJECT)
+                return 0;
 
             const QoreObject *obj = reinterpret_cast<const QoreObject *>(n);
-	    if (obj->getClass(QC_QDATETIME->getID()))
-	       return 1;
-	    if (obj->getClass(QC_QTIME->getID()))
-	       return 2;
-	    return 0;
+            if (obj->getClass(QC_QDATETIME->getID()))
+                return 1;
+            if (obj->getClass(QC_QTIME->getID()))
+                return 2;
+            return 0;
         } else if (bname.startsWith("QList<") || bname.startsWith("QVector<")) {
             return qore_type == NT_LIST ? 2 : 0;
             // TODO/FIXME: hardcode more automatic conversions (date, time, etc)
@@ -1254,18 +1250,18 @@ void CommonQoreMethod::postProcessConstructor(QoreSmokePrivate *n_smc, Smoke::St
 }
 
 AbstractQoreNode *CommonQoreMethod::callMethod() {
-   //printd(0, "CommonQoreMethod::callMethod() %s::%s() flags=0x%x\n", m_className, m_methodName, method().flags);
-   
-   if (!isValid())
-      return 0;
-   if (!suppress_method) {
-      assert(m_method.method >= 0);
-      // call smoke-qt method if not suppressed by arg handler
-      (* smokeClass().classFn)(m_method.method, smc ? smc->object() : 0, Stack);
-   }
+    //printd(0, "CommonQoreMethod::callMethod() %s::%s() flags=0x%x\n", m_className, m_methodName, method().flags);
 
-   // return return value
-   return returnValue();
+    if (!isValid())
+        return 0;
+    if (!suppress_method) {
+        assert(m_method.method >= 0);
+        // call smoke-qt method if not suppressed by arg handler
+        (* smokeClass().classFn)(m_method.method, smc ? smc->object() : 0, Stack);
+    }
+
+    // return return value
+    return returnValue();
 }
 
 void *CommonQoreMethod::callConstructor() {
@@ -1282,7 +1278,7 @@ void *CommonQoreMethod::callConstructor() {
     // install qt bindings. It's mandatory for all smoked objects
     Smoke::StackItem a[2];
     a[1].s_voidp = QoreSmokeBinding::Instance(qt_Smoke);
-    (* smokeClass().classFn)(0, qtObj, a);    
+    (* smokeClass().classFn)(0, qtObj, a);
 
     return qtObj;
 }
