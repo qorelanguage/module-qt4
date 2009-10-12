@@ -446,11 +446,8 @@ static QoreStringNode *qt_module_init() {
     Smoke::Class cls;
     for (Smoke::Index i = 1; i < qt_Smoke->numClasses; ++i) {
         cls = qt_Smoke->classes[i];
-        qDebug() << cls.className;
         QoreSmokeClass c(cls.className, qt_ns);
     }
-    // Register "Qt" namespace for its enums. It's a pseudoclass in Smoke.
-    QoreSmokeClass c("Qt", qt_ns);
     // register qt "addons"
     registerQtFunctions(qt_ns);
 
