@@ -446,6 +446,7 @@ static QoreStringNode *qt_module_init() {
     Smoke::Class cls;
     for (Smoke::Index i = 1; i < qt_Smoke->numClasses; ++i) {
         cls = qt_Smoke->classes[i];
+        qDebug() << cls.className;
         QoreSmokeClass c(cls.className, qt_ns);
     }
     // Register "Qt" namespace for its enums. It's a pseudoclass in Smoke.
@@ -537,7 +538,7 @@ static QoreStringNode *qt_module_init() {
 
 #ifdef DEBUG
     // TODO/FIXME: remove it after testing!
-//     ClassMap::Instance()->printMapToFile("maps.txt");
+    ClassMap::Instance()->printMapToFile("maps.txt");
 #endif
 
     return 0;

@@ -4,7 +4,7 @@ Work in progress.
 CMakeLists.txt - setup and build config for cmake. It's contained in every subdir too.
 README - build instructions etc.
 cmake - additional cmake modules
-kalyptus - set of PERL scripts used to create Smoke C++ code
+generator - used to create Smoke C++ code
 qore - Qore Qt4 bindings module source
   qt4 - module sources
   tools - UI compiler etc.

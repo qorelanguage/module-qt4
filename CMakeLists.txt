@@ -84,6 +84,7 @@ OPTION(ENABLE_QTTEST "build qttest" OFF)
 OPTION(ENABLE_QIMAGEBLITZ_SMOKE "build qimageblitz smoke" OFF)
 
 set(kdebindings_SOURCE_DIR ${CMAKE_SOURCE_DIR})
+add_subdirectory(generator)
 add_subdirectory(smoke)
 add_subdirectory(qore)
 

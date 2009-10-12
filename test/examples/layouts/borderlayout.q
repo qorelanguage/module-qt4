@@ -36,10 +36,6 @@ class BorderLayout inherits QLayout {
 
     constructor($parent, $margin, $spacing) : QLayout($parent instanceof QObject ? $parent : NOTHING) {
         $.list = ();
-        if (!exists $margin) {
-            $.setSpacing($parent);
-            return;
-        }
         $.setMargin($margin);
         $.setSpacing($spacing);
     }

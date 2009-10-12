@@ -234,6 +234,10 @@ QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) {
     if (ClassNamesMap::Instance()->value(m_classId.index)) {
         return;
     }
+    if (!m_classId.smoke) {
+        printd(0, "Unknown class %s. Skipping.\n", className);
+        return;
+    }
 
     m_class = m_classId.smoke->classes[m_classId.index];
 
@@ -249,7 +253,7 @@ QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) {
 
     ClassNamesMap::Instance()->addItem(m_classId.index, m_qoreClass);
 
-    // namepsace "enums" constants
+    // namespace "enums" constants
     m_namespace = 0;
 
     // add own stuff
@@ -267,7 +271,8 @@ QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) {
 }
 
 QoreSmokeClass::~QoreSmokeClass() {
-    assert(!m_namespace);
+//     if (m_classId.smoke)
+//         assert(!m_namespace);
 }
 
 AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const QoreListNode *params, ExceptionSink *xsink) {
