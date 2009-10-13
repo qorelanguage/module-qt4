@@ -162,9 +162,6 @@ class CannonField inherits QWidget {
 
     paintEvent() {
 	my $painter = new QPainter($self);
-	printf("paintEvent() painter=%N active=%N paintingActive=%N\n", $painter, $painter.isActive(), $self.paintingActive());
-
-	#exit();
 
 	if ($.gameEnded) {
 	    $painter.setPen(Qt::black);
