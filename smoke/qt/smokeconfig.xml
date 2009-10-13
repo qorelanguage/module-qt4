@@ -16,6 +16,7 @@
         <signature>.*QLocale::p.*</signature>
         <signature>.*QLocale::v.*</signature>
         <signature>.*QIPv6Address::c.*</signature>
+        <signature>.*QPixmapData.*</signature>
         <!-- why doesn't this work?! -->
         <signature>QTextCodec::DefaultConversion</signature>
         <signature>.*QTextCodec::ConverterState::state_data.*</signature>

@@ -296,7 +296,7 @@ class CodeStylePage inherits QWizardPage
          $.setLayout($layout);
      }
      
-     private initializePage()
+     initializePage()
      {
          my $className = $.field("className");
          $.macroNameLineEdit.setText(toupper($className) + "_H");
@@ -356,7 +356,7 @@ class OutputFilesPage inherits QWizardPage
         $.setLayout($layout);
     }
 
-    private initializePage()
+    initializePage()
     {
         my $className = $.field("className");
         $.headerLineEdit.setText(tolower($className) + ".h");
@@ -382,7 +382,7 @@ class ConclusionPage inherits QWizardPage
         $.setLayout($layout);
     }
 
-    private initializePage()
+    initializePage()
     {
         my $finishText = $.wizard().buttonText(QWizard::FinishButton);
         $finishText =~ s/&//g;
