@@ -65,7 +65,8 @@ int QoreQtDynamicMethod::addType(SmokeTypeList &typeList, const char *b, int len
     tn = tn.simplified();
     if (tn.endsWith(" &"))
         tn.replace(" &", "&");
-
+    if (tn.endsWith(" *"))
+        tn.replace(" *", "*");
     //printd(0, "QoreQtDynamicMethod::addType() processing type '%s'\n", tn.constData());
 
     Smoke::Type t;

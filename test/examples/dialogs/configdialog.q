@@ -65,18 +65,21 @@ class ConfigDialog inherits QDialog
         $configButton.setText($.tr("Configuration"));
         $configButton.setTextAlignment(Qt::AlignHCenter);
         $configButton.setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+        $.contentsWidget.addItem($configButton);
 
         my $updateButton = new QListWidgetItem($.contentsWidget);
         $updateButton.setIcon(new QIcon($dir + "images/update.png"));
         $updateButton.setText($.tr("Update"));
         $updateButton.setTextAlignment(Qt::AlignHCenter);
         $updateButton.setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+        $.contentsWidget.addItem($updateButton);
 
         my $queryButton = new QListWidgetItem($.contentsWidget);
         $queryButton.setIcon(new QIcon($dir + "images/query.png"));
         $queryButton.setText($.tr("Query"));
         $queryButton.setTextAlignment(Qt::AlignHCenter);
         $queryButton.setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+        $.contentsWidget.addItem($queryButton);
 
         $.connect($.contentsWidget, SIGNAL("currentItemChanged(QListWidgetItem *, QListWidgetItem *)"), SLOT("changePage(QListWidgetItem *, QListWidgetItem*)"));
     }

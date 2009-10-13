@@ -1161,11 +1161,12 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
             if (obj->getClass(QC_QTIME->getID()))
                 return 2;
             return 0;
-        } else if (bname.startsWith("QList<") || bname.startsWith("QVector<")) {
+        } else if (bname.startsWith("QList<") || bname.startsWith("QVector<")  || bname.startsWith("QStringList")) {
             return qore_type == NT_LIST ? 2 : 0;
             // TODO/FIXME: hardcode more automatic conversions (date, time, etc)
         } else if (name[0] == 'Q') {
             assert(smoke_type.classId != -1);
+            assert(smoke_type.classId);
 //             printd(0, "getScore Q %s\n", smoke_type.name);
             const QoreClass *qc = ClassNamesMap::Instance()->value(smoke_type.classId);
             Q_ASSERT_X(qc, "getScore ClassNamesMap", "find failed");
