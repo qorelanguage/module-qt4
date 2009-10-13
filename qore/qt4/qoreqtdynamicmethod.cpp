@@ -92,6 +92,9 @@ int QoreQtDynamicMethod::addType(SmokeTypeList &typeList, const char *b, int len
     } else if (tn == "char*" ) {
         t.name = "char*";
         t.flags = Smoke::t_voidp | Smoke::tf_ptr;
+    } else if (tn == "qreal") {
+        t.name = "qreal";
+        t.flags = Smoke::t_double | Smoke::tf_stack;
     } else if (tn.contains("QString")) {
         t.name = "QString&";
         t.flags = Smoke::t_voidp | Smoke::tf_ref;
