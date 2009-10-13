@@ -646,5 +646,9 @@
         <!-- namespaces -->
         <class>Qt</class>
         <class>QDBus</class>
+        <class>QGL</class>
+        <class>QSsl</class>
+        <class>QSql</class>
+
     </classList>
 </config>
