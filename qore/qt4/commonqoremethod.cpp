@@ -1044,8 +1044,8 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
 
     int tid = smoke_type.flags & Smoke::tf_elem;
     int flags = smoke_type.flags & 0x30;
-
-    //printd(0, "CommonQoreMethod::getScore smoke_name=%s (flags=0x%x tid=%d); qore_type=%s\n", smoke_type.name, flags, tid, n->getTypeName());
+    
+    //printd(0, "CommonQoreMethod::getScore() smoke_name=%s (flags=0x%x tid=%d); qore_type=%s\n", smoke_type.name, flags, tid, n->getTypeName());
 
     if (flags == Smoke::tf_ref || flags == Smoke::tf_ptr) {
         bool iconst = smoke_type.flags & Smoke::tf_const;
@@ -1075,8 +1075,6 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
         }
         QByteArray bname(name);
 
-	if (tid == Smoke::t_voidp)
-	   return qore_type == NT_OBJECT ? 2 : 0;
         if (isptrtype(name, "int")) {
             if (qore_type == NT_INT)
                 return 2;
@@ -1181,7 +1179,8 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
 
             const QoreObject *obj = reinterpret_cast<const QoreObject *>(n);
             return obj->validInstanceOf(qc->getID()) ? 2 : 0;
-        }
+        } else if (tid == Smoke::t_voidp)
+	   return qore_type == NT_OBJECT ? 2 : 0;
     } else {
         switch (tid) {
         case Smoke::t_voidp:
