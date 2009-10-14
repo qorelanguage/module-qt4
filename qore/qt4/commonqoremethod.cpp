@@ -164,11 +164,11 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
         for (ClassMap::MungledToTypes::iterator i = candidates.begin(), e = candidates.end(); i != e; ++i) {
             int score = 0, cnt = 0, matches = 0;
 
-//             printd(0, "calling getScore() %s::%s()...\n", className, methodName);
+	    //printd(0, "calling getScore() %s::%s()...\n", className, methodName);
             foreach (Smoke::Type t, i.value().types) {
                 const AbstractQoreNode *n = get_param(params, cnt);
                 int rc = getScore(t, n, cnt);
-//                 printd(0, "  arg %d: %s qore type=%s (%p) rc=%d\n", cnt, t.name, n ? n->getTypeName() : "NOTHING", n, rc);
+		//printd(0, "  arg %d: %s qoretype=%s (%p) rc=%d\n", cnt, t.name, n ? n->getTypeName() : "NOTHING", n, rc);
                 ++cnt;
                 if (rc)
                     ++matches;
@@ -1038,14 +1038,14 @@ int CommonQoreMethod::getObjectStatic(ExceptionSink *xsink,
 int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n, int index) {
     qore_type_t qore_type = n ? n->getType() : NT_NOTHING;
 
-//     printd(0, "CommonQoreMethod::getScore name=%s; node=%d\n", smoke_type.name, n->getType());
-
     // TODO/FIXME: is it good approach? example class F inherits X { constructor($parent): X($parent)...} and then new F(); will result for NOTHING as parent
     // see e.g. digitalclock.q example
     if (qore_type == NT_NOTHING) return 0;
 
     int tid = smoke_type.flags & Smoke::tf_elem;
     int flags = smoke_type.flags & 0x30;
+
+    //printd(0, "CommonQoreMethod::getScore smoke_name=%s (flags=0x%x tid=%d); qore_type=%s\n", smoke_type.name, flags, tid, n->getTypeName());
 
     if (flags == Smoke::tf_ref || flags == Smoke::tf_ptr) {
         bool iconst = smoke_type.flags & Smoke::tf_const;
@@ -1075,6 +1075,8 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
         }
         QByteArray bname(name);
 
+	if (tid == Smoke::t_voidp)
+	   return qore_type == NT_OBJECT ? 2 : 0;
         if (isptrtype(name, "int")) {
             if (qore_type == NT_INT)
                 return 2;
