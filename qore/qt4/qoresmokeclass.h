@@ -295,32 +295,52 @@ protected:
     }
 
     DLLLOCAL int getSlotIndex(const QoreObject *receiver, const QByteArray &theSlot, const char *sig, ExceptionSink *xsink) {
+        // get parent meta object
         const QMetaObject *pmo = getParentMetaObject();
-        int slotId = pmo->indexOfSlot(theSlot);
+
+        // see if it's an existing dynamic slot
+        int slotId = slotIndices.value(theSlot, -1);
+        if (slotId >= 0) {
+            //printd(5, "%s:getSlotIndex('%s') is dynamic (%d methodid %d) this=%08p\n", pmo->className(), theSlot.data(), slotId, slotId + pmo->methodCount(), this);
+            return slotId + pmo->methodCount();
+        }
+
+	// see if such a user method exists
+	const char *c = strchr(sig, '(');
+	QoreString tmp;
+	if (c)
+	   tmp.concat(sig, c - sig);
+	else
+	   tmp.concat(sig);
+	tmp.trim();
+
+	const QoreClass *qc = receiver->getClass();
+	bool special_method = !tmp.compare("constructor") || !tmp.compare("destructor") || !tmp.compare("copy");
+	const QoreMethod *meth = findUserMethod(qc, tmp.getBuffer());
+	if (!special_method && meth) {
+	   std::auto_ptr<QoreQtDynamicSlot> ds(new QoreQtDynamicSlot(receiver, meth, sig, xsink));
+	   if (*xsink)
+	      return -1;
+	   slotId = methodList.addMethod(ds.release());
+	   slotIndices[theSlot] = slotId;
+	   //printd(5, "%s::getSlotIndex() this=%08p created new dynamic slot, id=%d method_id=%d: '%s'\n", pmo->className(), this, slotId, slotId + pmo->methodCount(), theSlot.data());
+	   
+	   return slotId + pmo->methodCount();
+	}
+
+	// see if it's a builtin slot
+        slotId = pmo->indexOfSlot(theSlot);
         // see if it's a static slot
         if (slotId >= 0) {
             //printd(5, "%s:getSlotIndex('%s') is static (%d) qo=%08p\n", pmo->className(), theSlot.data(), slotId, m_qobject);
             return slotId;
         }
 
-        // see if it's an existing dynamic slot
-        slotId = slotIndices.value(theSlot, -1);
-        if (slotId >= 0) {
-            //printd(5, "%s:getSlotIndex('%s') is dynamic (%d methodid %d) this=%08p\n", pmo->className(), theSlot.data(), slotId, slotId + pmo->methodCount(), this);
-            return slotId + pmo->methodCount();
-        }
-
-        // create the slot if possible
-        std::auto_ptr<QoreQtDynamicSlot> ds(new QoreQtDynamicSlot(receiver, sig, xsink));
-        if (*xsink)
-            return -1;
-
-        // create slot entry
-        slotId = methodList.addMethod(ds.release());
-        slotIndices[theSlot] = slotId;
-        //printd(5, "%s::getSlotIndex() this=%08p created new dynamic slot, id=%d method_id=%d: '%s'\n", pmo->className(), this, slotId, slotId + pmo->methodCount(), theSlot.data());
-
-        return slotId + pmo->methodCount();
+	if (meth)
+	   xsink->raiseException("QT-CONNECT-ERROR", "cannot connect a signal to special method '%s()' and no such builtin slot exists in parent QT classes", tmp.getBuffer());
+	else
+	   xsink->raiseException("QT-CONNECT-ERROR", "cannot connect to unknown method '%s()'", tmp.getBuffer());
+	return -1;
     }
 
     DLLLOCAL const QMetaObject *getParentMetaObject() const {

@@ -167,7 +167,7 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
     }
 
     const QoreMethod * qoreMethod = o->getClass()->findMethod(mname);
-    printd(0, "QoreSmokeBinding::callMethod() virtual method %s::%s() method=%p (user: %d)\n", o->getClassName(), mname, qoreMethod, qoreMethod ? qoreMethod->isUser() : 0);
+    //printd(0, "QoreSmokeBinding::callMethod() virtual method %s::%s() method=%p (user: %d)\n", o->getClassName(), mname, qoreMethod, qoreMethod ? qoreMethod->isUser() : 0);
     if (!qoreMethod || !qoreMethod->isUser()) {
         //printd(0, "QoreSmokeBinding::callMethod() virtual method %s::%s() not found\n", o->getClassName(), mname);
         if (isAbstract) {

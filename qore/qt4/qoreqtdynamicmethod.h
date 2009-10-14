@@ -122,7 +122,7 @@ public:
 
 class QoreQtDynamicSlot : public QoreQtDynamicMethod {
 public:
-    DLLLOCAL QoreQtDynamicSlot(const QoreObject *qo, const char *sig, ExceptionSink *xsink);
+   DLLLOCAL QoreQtDynamicSlot(const QoreObject *qo, const QoreMethod *meth, const char *sig, ExceptionSink *xsink);
 
     DLLLOCAL virtual ~QoreQtDynamicSlot() {
     }
@@ -138,8 +138,6 @@ public:
     DLLLOCAL void call(QoreObject *self, void **arguments) const;
 
 private:
-    DLLLOCAL const QoreMethod *resolveMethod(const char *name, ExceptionSink *xsink);
-
     Smoke::Type returnType;
     QoreObject *qore_obj;
     const QoreMethod *method;

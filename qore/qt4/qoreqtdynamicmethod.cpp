@@ -274,43 +274,14 @@ void QoreQtDynamicMethod::qoreToQtDirect(const Smoke::Type &qtType, void *&ptr, 
 
 
 
-QoreQtDynamicSlot::QoreQtDynamicSlot(const QoreObject *qo, const char *sig, ExceptionSink *xsink) : qore_obj(const_cast<QoreObject *>(qo)) {
+QoreQtDynamicSlot::QoreQtDynamicSlot(const QoreObject *qo, const QoreMethod *meth, const char *sig, ExceptionSink *xsink) : qore_obj(const_cast<QoreObject *>(qo)), method(meth) {
     returnType.name = 0;
 
-    if (!sig)
-        return;
+    //printd(5, "QoreQtDynamicSlot::QoreQtDynamicSlot() registering method '%s'\n", meth->getName());
 
-    //printd(5, "QoreQtDynamicSlot::QoreQtDynamicSlot() processing signature '%s'\n", sig);
-
-    // process signature
-    const char *p = strchrs(sig, " (");
+    const char *p = strchr(sig, '(');
     if (!p)
-        return;
-    if (*p == '(') {
-        method = resolveMethod(sig, xsink);
-        if (!method)
-            return;
-    } else {
-        const char *p1 = 0;
-        while (p && *p && (*p) != '(') {
-            p1 = p;
-            p = strchrs(p, " (");
-        }
-        if (!p || !*p) {
-            xsink->raiseException("DYNAMIC-SLOT-ERROR", "cannot find slot method name in '%s'", sig);
-            return;
-        }
-
-        // resolve slot signature to method
-        method = resolveMethod(p1, xsink);
-        if (!method)
-            return;
-
-//         const char *tmp = sig;
-
-        // FIXME: add return type detection
-        //return_type = qqt_type_list.identify(tmp);
-    }
+       return;
     ++p;
     while (*p && isblank(*p))
         ++p;
@@ -332,28 +303,6 @@ void QoreQtDynamicSlot::call(QoreObject *self, void **arguments) const {
     // process return value
     if (returnType.name)
         qoreToQtDirect(returnType, arguments[0], *rv);
-}
-
-const QoreMethod * QoreQtDynamicSlot::resolveMethod(const char *name, ExceptionSink *xsink) {
-    const QoreClass *qc = qore_obj->getClass();
-    const char *c = strchr(name, '(');
-    QoreString tmp;
-    if (c)
-        tmp.concat(name, c - name);
-    else
-        tmp.concat(name);
-    // do not allow special methods to be matched
-    if (!tmp.compare("constructor") || !tmp.compare("destructor") || !tmp.compare("copy")) {
-        xsink->raiseException("DYNAMIC-SLOT-ERROR", "cannot assign special method %s::%s() to a Qt slot!", qc->getName(), tmp.getBuffer());
-        return 0;
-    }
-
-    const QoreMethod *meth = findUserMethod(qc, tmp.getBuffer());
-    if (!meth)
-        xsink->raiseException("DYNAMIC-SLOT-ERROR", "method %s::%s() does not exist", qc->getName(), tmp.getBuffer());
-
-    //printd(5, "DynamicSlot::resolveMethod(%08p, '%s') search: %s::%s() resolved to %08p\n", qore_obj, name, qc->getName(), tmp.getBuffer(), meth);
-    return meth;
 }
 
 QoreQtDynamicSignal::QoreQtDynamicSignal(const char *sig, ExceptionSink *xsink) {

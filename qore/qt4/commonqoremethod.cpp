@@ -1169,6 +1169,10 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
             assert(smoke_type.classId);
 //             printd(0, "getScore Q %s\n", smoke_type.name);
             const QoreClass *qc = ClassNamesMap::Instance()->value(smoke_type.classId);
+#ifdef DEBUG
+	    if (!qc)
+	       printd(0, "ERROR can't find class %s: aborting\n", qt_Smoke->classes[smoke_type.classId].className);
+#endif
             Q_ASSERT_X(qc, "getScore ClassNamesMap", "find failed");
             if (qore_type != NT_OBJECT)
                 return 0;
