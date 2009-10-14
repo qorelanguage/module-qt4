@@ -29,11 +29,13 @@ class ClassWizard inherits QWizard
         $.setPixmap(QWizard::BackgroundPixmap, new QPixmap($dir + "images/background.png"));
 
         $.setWindowTitle($.tr("Class Wizard"));
+
+        $.connect($.button(QWizard::FinishButton), SIGNAL("clicked()"),
+                  $self, SLOT("accept()"));
     }
 
     accept()
     {
-            printf("\n\nACCEOPT\n\n\n");
         my $className = $.field("className");
         my $baseClass = $.field("baseClass");
         my $macroName = $.field("macroName");
@@ -42,8 +44,6 @@ class ClassWizard inherits QWizard
         my $outputDir = $.field("outputDir");
         my $header = $.field("header");
         my $implementation = $.field("implementation");
-
-        printf("%N %N %N %N %N %N %N\n", $className, $baseClass, $macroName, $baseInclude, $outputDir, $header, $implementation);
 
         my $block;
 
@@ -97,7 +97,7 @@ class ClassWizard inherits QWizard
         my $filename = $outputDir + "/" + $header;
         my $headerFile = new File();
         if ($headerFile.open($filename, O_CREAT | O_TRUNC | O_WRONLY)) {
-            QMessageBox::warning(0, $.tr("Simple Wizard"),
+            QMessageBox::warning($self, $.tr("Simple Wizard"),
                                 sprintf($.tr("Cannot write file %s:\n%s"), $filename, strerror(errno())));
             return;
         }
@@ -151,7 +151,7 @@ class ClassWizard inherits QWizard
         $filename = $outputDir + "/" + $implementation;
         my $implementationFile = new File();
         if ($implementationFile.open($filename, O_CREAT | O_WRONLY | O_TRUNC)) {
-            QMessageBox::warning(0, $.tr("Simple Wizard"), sprintf($.tr("Cannot write file %s:\n%s"), $filename, strerror(errno())));
+            QMessageBox::warning($self, $.tr("Simple Wizard"), sprintf($.tr("Cannot write file %s:\n%s"), $filename, strerror(errno())));
             return;
         }
         $implementationFile.write($block);
