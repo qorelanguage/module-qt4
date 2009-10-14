@@ -20,7 +20,7 @@ class Dialog inherits QDialog
         reject()
         {
                 printf("reject call\n");
-                QDialog::$.done();
+                QDialog::$.reject();
         }
 
         done($r)
@@ -30,7 +30,7 @@ class Dialog inherits QDialog
         }
 }
 
-my $d = new QDialog();
+my $d = new Dialog();
 printf("dialog: %N\n", $d);
 $d.exec();
 
