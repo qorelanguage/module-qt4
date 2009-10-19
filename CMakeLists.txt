@@ -54,7 +54,7 @@ ENDIF (NOT LIB_SUFFIX)
 FIND_PACKAGE(Perl REQUIRED)
 FIND_PACKAGE (Qt4 REQUIRED)
 INCLUDE( ${QT_USE_FILE} )
-MESSAGE(STATUS Qt4 version: ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH})
+MESSAGE(STATUS "Qt4 version: ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH}")
 #MESSAGE(STATUS "Qt libs ${QT_LIBRARIES}")
 #MESSAGE(STATUS "Qt incl ${QT_INCLUDES}")
 #MESSAGE(STATUS "Qt defs ${QT_DEFINITIONS}")
@@ -83,16 +83,31 @@ OPTION(ENABLE_QTSCRIPT "build qtscript" OFF)
 OPTION(ENABLE_QTTEST "build qttest" OFF)
 OPTION(ENABLE_QIMAGEBLITZ_SMOKE "build qimageblitz smoke" OFF)
 
+
+# additional compiler variables like for MSVC or CYGWIN
+IF (CMAKE_SYSTEM MATCHES "SunOS*")
+    SET(SUN 1)
+    # stlport4 library is mandatory here to simulete gcc extensions
+    SET(CMAKE_CXX_FLAGS_DEBUG "-g -library=stlport4")
+ELSE()
+    SET(SUN 0)
+ENDIF()
+
+
+MESSAGE(STATUS "")
+MESSAGE(STATUS "-----------------------------")
+MESSAGE(STATUS "System: ${CMAKE_SYSTEM}")
+IF (APPLE)
+    MESSAGE(STATUS "Archs: ${CMAKE_OSX_ARCHITECTURES}")
+ENDIF (APPLE)
+MESSAGE(STATUS "Compiler: ${CMAKE_CXX_COMPILER} - ${CMAKE_CXX_COMPILER_ID}")
+MESSAGE(STATUS "FLags deb: ${CMAKE_CXX_FLAGS_DEBUG}")
+MESSAGE(STATUS "FLags rel: ${CMAKE_CXX_FLAGS}")
+MESSAGE(STATUS "-----------------------------")
+
+
 set(kdebindings_SOURCE_DIR ${CMAKE_SOURCE_DIR})
 add_subdirectory(generator)
 add_subdirectory(smoke)
 add_subdirectory(qore)
 
-IF (APPLE)
-MESSAGE(STATUS "______________________________")
-MESSAGE(STATUS "System: ${CMAKE_SYSTEM}")
-MESSAGE(STATUS "Archs: ${CMAKE_OSX_ARCHITECTURES}")
-MESSAGE(STATUS "CXX: ${CMAKE_CXX_COMPILER}")
-MESSAGE(STATUS "FLags: ${CMAKE_CXX_FLAGS_DEBUG}")
-MESSAGE(STATUS "______________________________")
-ENDIF (APPLE)

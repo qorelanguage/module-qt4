@@ -52,7 +52,7 @@ SmokeDataFile::SmokeDataFile()
     
     // if a class is used somewhere but not listed in the class list, mark it external
     for (QHash<QString, Class>::iterator iter = ::classes.begin(); iter != ::classes.end(); iter++) {
-        if (iter.value().isTemplate())
+        if (iter.value().isTemplate() || Options::voidpTypes.contains(iter.key()))
             continue;
         
         if ((isClassUsed(&iter.value()) && iter.value().access() != Access_private) || superClasses.contains(&iter.value())) {
@@ -201,7 +201,7 @@ void SmokeDataFile::write()
             continue;
         if (it.value().parent() && !externalClasses.contains(it.value().parent()) && it.value().access() != Access_private) {
             QString smokeClassName = it.value().parent()->toString();
-            if (enumClassesHandled.contains(smokeClassName))
+            if (enumClassesHandled.contains(smokeClassName) || Options::voidpTypes.contains(smokeClassName))
                 continue;
             enumClassesHandled << smokeClassName;
             smokeClassName.replace("::", "__");
@@ -235,8 +235,6 @@ void SmokeDataFile::write()
             continue;
         
         Class* klass = &classes[iter.key()];
-        if (klass->isTemplate())
-            continue;
         
         if (externalClasses.contains(klass)) {
             out << "    { \""  << iter.key() << "\", true, 0, 0, 0, 0 },\t//" << iter.value() << "\n";

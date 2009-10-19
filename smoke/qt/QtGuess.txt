@@ -100,6 +100,10 @@ if (MSVC)
   list(APPEND qtdefines "Q_CC_MSVC")
 endif (MSVC)
 
+if (SUN)
+  list(APPEND qtdefines "Q_CC_SUN")
+endif (SUN)
+
 foreach(test_entry ${define_tests})
   if(${${test_entry}} GREATER ${qt_test_threshold})
     list(APPEND test_targets ${test_entry})
@@ -113,6 +117,9 @@ set(qtheaders "${qglobal_h}\n${qconfig_h}\n${qfeatures}")
 string(REGEX REPLACE "\n" ";" qtheaders "${qtheaders}")
 
 file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/qtdefines.cpp ${CMAKE_CURRENT_BINARY_DIR}/qtdefines)
+if (SUN)
+  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/qtdefines.cpp "#include <stdio.h>\n")
+endif (SUN)
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/qtdefines.cpp "#include <cstdio>\n#include \"qglobal.h\"\nint main(int argc, char** argv)\n{\n")
 foreach( line ${qtheaders} )
   if(line MATCHES "^#[ ]*define[ ]+(QT_[A-Z_0-9]+)[ ]*$")
@@ -126,6 +133,7 @@ try_run(qtdefines_run qtdefines_compile ${CMAKE_CURRENT_BINARY_DIR}/qtdefines
   ${CMAKE_CURRENT_BINARY_DIR}/qtdefines.cpp
   CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${QT_INCLUDE_DIR};${QT_QTCORE_INCLUDE_DIR};${CMAKE_SYSTEM_INCLUDE_PATH}"
   RUN_OUTPUT_VARIABLE qtdefines_output)
+
 if(${qtdefines_run} EQUAL 0)
   list(REMOVE_DUPLICATES qtdefines_output)
   list(REMOVE_ITEM qtdefines_output "QT_DEBUG")
