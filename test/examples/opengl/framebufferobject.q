@@ -189,7 +189,9 @@ class GLWidget inherits QGLWidget {
     }
 
     mouseMoveEvent($e) {
-        my $diff = $e.pos().subtract($.anchor);
+        my $diff = $e.pos();
+        $diff.setX($diff.x() - $.anchor.x());
+        $diff.setY($diff.y() - $.anchor.y());
         if ($e.buttons() & Qt::LeftButton) {
             $.rot_x += $diff.y
                 ()/5.0;

@@ -710,7 +710,7 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
     case Smoke::t_voidp: {
         QByteArray tname(t.name);
 
-        if (tname == "uchar*")
+        if (tname == "uchar*" || tname == "unsigned char*")
             return new QoreStringNode(*(uchar*)i.s_voidp);
 
         if (tname == "const char*" || tname == "char*")
