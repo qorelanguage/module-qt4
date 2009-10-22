@@ -75,6 +75,34 @@ static void add_args(QoreStringNode &str, const QoreListNode *args) {
     }
 }
 
+/*! Print the "list of candidates" for given method of class */
+static void add_candidates(QoreStringNode &str, const char * cname, const char * mname) {
+    ClassMap::MungledToTypes * mMap = ClassMap::Instance()->availableMethods(cname, mname);
+
+    QList<QByteArray> uniqueList;
+    foreach (QByteArray name, mMap->keys()) {
+        if (uniqueList.contains(name))
+            continue;
+        uniqueList.append(name);
+
+        foreach (ClassMap::TypeHandler th, mMap->values(name)) {
+            str.concat("\n    candidate: ");
+            str.concat(cname);
+            str.concat("::");
+            str.concat(mname);
+            str.concat("(");
+            int i = 0;
+            foreach(Smoke::Type t, th.types) {
+                ++i;
+                str.concat(t.name);
+                if (i < th.types.count())
+                    str.concat(", ");
+            }
+            str.concat(")");
+        }
+    }    
+}
+
 CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
                                    QoreSmokePrivate *n_smc,
                                    const char* className,
@@ -143,8 +171,8 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
         desc->sprintf("no match found for call to %s::%s(", m_className, methodName);
         add_args(*desc, params);
         desc->concat(')');
+        add_candidates(*desc, m_className, methodName);
         xsink->raiseException("QT-NO-METHOD-FOUND", desc);
-        // TODO/FIXME: print mMap candidates
         return;
     }
 
@@ -201,6 +229,7 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
             desc->sprintf("no match found for call to %s::%s(", m_className, methodName);
             add_args(*desc, params);
             desc->concat(')');
+            add_candidates(*desc, m_className, methodName);
             xsink->raiseException("QT-NO-METHOD-FOUND", desc);
             return;
         }

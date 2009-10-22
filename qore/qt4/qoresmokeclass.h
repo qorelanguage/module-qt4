@@ -502,7 +502,6 @@ private:
     void registerMethods();
 };
 
-// TODO/FIXME: rewrite it to use template?
 // Singleton. Everywhere available map Smoke::Class index -> QoreClass*
 // It's used to handle creating Qore objects from Qt ones (returned directly
 // from Qt library.
