@@ -431,11 +431,8 @@ static QoreStringNode *qt_module_init() {
 //     printd(0, "Qt module init\n");
 
     if (!qt_Smoke) {
-//         printd(0, "init smoke...\n");
         init_qt_Smoke();
-//         printd(0, "    done\n");
     } else {
-//         printd(0, "(WW) qt module is initialized already. Something is wrong!\n");
         return 0;
     }
 
@@ -490,7 +487,7 @@ static QoreStringNode *qt_module_init() {
     assert(methodIndex.smoke);
     cm.registerMethod("QApplication", "QApplication", "QApplication?", methodIndex.index, argv_charpp_h);
     cm.registerMethod("QApplication", "QApplication", "QApplication", methodIndex.index, argv_none_h);
-
+    
     // QLayout::addItem() and ::addWidget() handlers
     cm.addArgHandler("QLayout", "addItem", setExternallyOwned_handler);
     cm.addArgHandler("QGridLayout", "addItem", setExternallyOwned_handler);

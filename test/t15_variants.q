@@ -1,6 +1,14 @@
 #!/usr/bin/env qore
 %requires qt4
 
+my $model = new QDirModel();
+my $variant = $model.data($model.index(QDir::currentPath()));
+printf("variant: %N\n", $variant);
+printf("toQore: %N\n", $variant.toQore());
+
+
+# Settings test
+
 my $s = new QSettings("t15_variants.cfg", QSettings::IniFormat);
 
 my $v1 = $s.value("intval", 0);

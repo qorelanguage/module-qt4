@@ -261,7 +261,7 @@ QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) {
 
     // add parents' stuff
     addSuperClasses(m_classId.index, qt_ns);
-
+    
     if (m_namespace) {
         qt_ns.addNamespace(m_namespace);
         m_namespace = 0;
@@ -470,6 +470,11 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 
             m_qoreClass->addMethod2(methodName, (q_method2_t)common_method, isPrivate);
         }
+    }
+    
+    if (!strcmp(m_class.className, "QVariant")) {
+//         printd(0, "registered toQore\n");
+        m_qoreClass->addMethod2("toQore", (q_method2_t)Marshalling::return_qvariant);
     }
 }
 

@@ -600,7 +600,15 @@ QoreObject *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0) {
     return qto.release();
 }
 
-AbstractQoreNode *return_qvariant(QVariant &qv) {
+AbstractQoreNode *return_qvariant(const QoreMethod &method,
+                                 QoreObject *self,
+                                 AbstractPrivateData *apd,
+                                 const QoreListNode *params,
+                                 ExceptionSink *xsink)
+{
+    QoreSmokePrivateData * pd = reinterpret_cast<QoreSmokePrivateData*>(apd);
+    assert(pd);
+    QVariant qv = *reinterpret_cast<QVariant*>(pd->object());
     //printd(0, "return_qvariant() type=%d\n", qv.type());
     switch (qv.type()) {
     case QVariant::Invalid:
@@ -747,8 +755,10 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
         void *origObj = i.s_class;
         Smoke::Index classId = resolveQtClass(origObj, t.classId);
 
-        if (classId == SCI_QVARIANT)
-            return return_qvariant(*(reinterpret_cast<QVariant *>(origObj)));
+        // NOTE: Design change. There will be no default QVariant to
+        // Qore conversion. User should call custom QVariant::toQore() method for it.
+//         if (classId == SCI_QVARIANT)
+//             return return_qvariant(*(reinterpret_cast<QVariant *>(origObj)));
 
         QoreClass * c = ClassNamesMap::Instance()->value(classId);
         if (!c) {

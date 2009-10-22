@@ -179,6 +179,15 @@ Qore (for example QHelpEvent) automatically.
 */
 Smoke::Index resolveQtClass(void * ptr, Smoke::Index classId);
 
+/*! Additional method for QVariant. QVariant::toQore().
+It performs a direct conversion from QVariant to native
+Qore node. */
+AbstractQoreNode *return_qvariant(const QoreMethod &method,
+                                 QoreObject *self,
+                                 AbstractPrivateData *apd,
+                                 const QoreListNode *params,
+                                 ExceptionSink *xsink);
+
 }
 
 #endif
