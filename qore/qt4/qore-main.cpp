@@ -426,7 +426,6 @@ static void setClassInfo(const QoreClass *&qc, Smoke::Index &sci, const char *na
     assert(qc);
 }
 
-// FIXME: handle other QApplication constructors with int &argc, char **argv arguments
 static QoreStringNode *qt_module_init() {
 //     printd(0, "Qt module init\n");
 

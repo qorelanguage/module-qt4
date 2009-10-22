@@ -377,7 +377,6 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
     for (Smoke::Index i = 1; i < qt_Smoke->numMethods; ++i) {
         Smoke::Method method = qt_Smoke->methods[i];
 
-        // TODO/FIXME: better way?
         if (classIx != method.classId)//m_classId.index)
             continue;
 
@@ -497,7 +496,6 @@ void common_constructor(const QoreClass &myclass, QoreObject *self,
 
     // Setup internal object
     QoreSmokePrivate *obj;
-    // TODO/FIXME: setQtObject(false) for inherited objects
 
     if (myclass.getClass(QC_QABSTRACTITEMMODEL->getID())) {
         obj = new QoreSmokePrivateQAbstractItemModelData(cqm.method().classId, (QObject *)qtObj);

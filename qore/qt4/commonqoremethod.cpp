@@ -150,16 +150,13 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
 
     if (candidates.count() == 1) {
 //         printd(0, "CommonQoreMethod::CommonQoreMethod() only one candidate - by args count\n");
-        // TODO/FIXME: handle only this method
         //m_munged = candidates.keys()[0];
         ClassMap::MungledToTypes::iterator i = candidates.begin();
         m_munged = i.key();
         type_handler = i.value();
     } else {
 //         printd(0, "CommonQoreMethod::CommonQoreMethod() more candidates to solve\n");
-        // TODO/FIXME: more searching...
         // leave only one method in candidates on the end of searching
-
         int high_score = 0, perfect = qoreArgCnt * 2;
         for (ClassMap::MungledToTypes::iterator i = candidates.begin(), e = candidates.end(); i != e; ++i) {
             int score = 0, cnt = 0, matches = 0;
@@ -251,7 +248,6 @@ CommonQoreMethod::~CommonQoreMethod() {
 
             // write back values to references here
             if (rf.ref) {
-                // TODO/FIXME: more types? Analyze qt lib...
                 ReferenceHelper ref(rf.ref, vl, m_xsink);
                 switch (rf.type) {
                 case ref_store_s::r_none:
@@ -978,8 +974,6 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
     return -1;
 }
 
-
-// FIXME: avoid string comparisons by setting global values to smoke classIds instead
 int CommonQoreMethod::qoreToStack(Smoke::Type t,
                                   const AbstractQoreNode * node,
                                   int index) {
@@ -1122,9 +1116,7 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
             }
             return 1;
         } else if (isptrtype(name, "QVariant")) {
-            // FIXME: slow - unnecessary allocations, etc
-            std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(smoke_type, n, m_xsink));
-            return variant->status;
+            return Marshalling::qoreToQVariantScore(smoke_type, n, m_xsink);
         } else if (isptrtype(name, "QDateTime")) {
             if (qore_type == NT_DATE)
                 return 1;

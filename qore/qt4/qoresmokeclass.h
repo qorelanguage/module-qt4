@@ -431,7 +431,6 @@ public:
 
 class CommonQoreMethod;
 
-// TODO/FIXME: rewrite it to use template?
 // Singleton. A global structure to simplify Smoke mappings
 // for our usage. See types below.
 // It reduces "full scans" of Smoke lists for searching etc.

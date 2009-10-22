@@ -261,15 +261,6 @@ void QoreQtDynamicMethod::qoreToQtDirect(const Smoke::Type &qtType, void *&ptr, 
     void * save;
     Smoke::StackItem si;
     qoreToQt(qtType, si, ptr, save, val);
-//     if ((qtType.flags & Smoke::tf_elem) == Smoke::t_bool) {
-//         bool *c = (bool *)ptr;
-//         *c = val ? val->getAsBool() : false;
-//     } else if ((qtType.flags & Smoke::tf_elem) == Smoke::t_int) {
-//         int *c = (int *)ptr;
-//         *c = val ? val->getAsInt() : 0;
-//     } else
-//         // TODO/FIXME: it should be done by existing code, shouldn't it?
-//         assert(false);
 }
 
 

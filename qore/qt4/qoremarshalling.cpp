@@ -239,7 +239,7 @@ QtContainerToQore::QtContainerToQore() {
     m_map["QList<QKeySequence>"] = &listToObject<QList<QKeySequence> >;
 //     m_map["QList<QPair<qreal,QPointF> > hellhound
     m_map["QList<QDockWidget*>"] = &listToQObject<QList<QDockWidget*> >;
-    m_map["QList<QVariant>"] = &listToObject<QList<QVariant> >; // TODO/FIXME: check it!
+    m_map["QList<QVariant>"] = &listToObject<QList<QVariant> >;
 //     m_map["QList<QTreeWidgetItem*> ptr to o
 //     m_map["QList<QTextEdit::ExtraSelection> ??? like QTextOption::Tab
     m_map["QList<QObject*>"] = &listToQObject<QList<QObject*> >;
@@ -558,6 +558,38 @@ QoreQVariant *qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * nod
     return ret.release();
 }
 
+QoreQVariant::Status qoreToQVariantScore(const Smoke::Type & t, const AbstractQoreNode * node, ExceptionSink * xsink) {
+    if (node->getType() == NT_QTENUM) {
+        return QoreQVariant::Valid;
+    }
+
+    switch (node->getType()) {
+    case 0: // NOTHING
+    case NT_INT:
+    case NT_FLOAT:
+    case NT_STRING:
+    case NT_BOOLEAN:
+        return QoreQVariant::Valid;
+        break;
+    case NT_OBJECT: {
+        const QoreObject *obj = reinterpret_cast<const QoreObject *>(node);
+        
+        QoreSmokePrivateData * p = dynamic_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QVARIANT->getID(), xsink));
+        if (*xsink) {
+            return QoreQVariant::Invalid;
+        }
+        if (p) {
+            return QoreQVariant::RealQVariant;
+        }
+        return QoreQVariant::Invalid;
+        break;
+    }
+    default:
+        return QoreQVariant::Invalid;
+    } // switch
+    return QoreQVariant::Invalid;
+}
+
 template <typename T>
 QoreObject *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0) {
     QObject* qtObj = reinterpret_cast<QObject *>(origObj);
@@ -731,9 +763,10 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
                 || tname.startsWith("QVector<")
                 || tname == "QStringList") {
             AbstractQoreNode * aqn = QtContainerToQore::Instance()->marshall(t, i.s_voidp, xsink);
-            // TODO/FIXME: how it will raise an exception?
-            if (*xsink || !aqn)
+            if (*xsink || !aqn) {
+                xsink->handleExceptions();
                 return 0;
+            }
             return aqn;
         }
 
@@ -741,14 +774,9 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
             return new QoreBigIntNode( (unsigned long)*reinterpret_cast<WId*>(i.s_voidp));
         }
 
-//         if (tname == "void*") {
-//             printd(0, "Marshalling::stackToQore() handling of void* = %p\n", i.s_voidp);
-//             return 0;
-//         }
-
         printd(0, "Marshalling::stackToQore() unhandled voidp type: '%s'\n", t.name);
         Q_ASSERT_X(0, "unhandled voidp", "Smoke::t_voidp marshalling");
-        // TODO/FIXME: more classes
+        // more missing classes will be catch by assertion.
         return 0;
     }
     case Smoke::t_class: {

@@ -162,8 +162,13 @@ public:
     }
 };
 
-
+//! Convert Qore to QVaraint
 QoreQVariant * qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * node, ExceptionSink * xsink);
+
+/*! Helper function for CommonQoreMethod::getScore().
+It's much more efficient than when there was used qoreToQVariant
+*/
+QoreQVariant::Status qoreToQVariantScore(const Smoke::Type & t, const AbstractQoreNode * node, ExceptionSink * xsink);
 
 AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, ExceptionSink *xsink);
 
