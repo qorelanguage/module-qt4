@@ -188,12 +188,15 @@ class MyWidget inherits QWidget
         converts QVariant into specialized variable type (toBool, toInt, toDate, etc. methods
         are available).</para>
       <para>There is introduced new method:</para>
-      <itemizedlist>
-        <listitem>
-          <para>QVariant::toQore() - it does automatic conversion of QVariant object to native
-            Qore object. It just gues the type using the Qore type weakness.</para>
-        </listitem>
-      </itemizedlist>
+      <variablelist>
+        <varlistentry>
+          <term>QVariant::toQore()</term>
+          <listitem>
+            <para>It does automatic conversion of QVariant object to native
+              Qore object. It just gues the type using the Qore type weakness.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
     </sect1>
 
     <sect1 id="non-members">
@@ -201,8 +204,10 @@ class MyWidget inherits QWidget
       <para>Qt4 contains some functions called “Related Non-Members” mentioned in the
         documentation. These functions are not part of default namespace or class's namespace.
         All these functions are used as static method of class QGlobalSpace.</para>
-      <para>Example:</para>
-      <para>QGlobalSpace::qRed(rgb)</para>
+      <example>
+        <title>QGlobalSpace "namespace" usage</title>
+        <programlisting>QGlobalSpace::qRed($rgb)</programlisting>
+      </example>
     </sect1>
 
     <sect1 id="operators">
