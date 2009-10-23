@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<book lang="en">
+
+  <bookinfo>
+    <title>Qore Qt4 Module Documentation</title>
+    <copyright>
+      <year>2009</year>
+      <holder>Qore Technologies s.r.o</holder>
+    </copyright>
+
+    <abstract>
+      <para>This is documentation for Qore Qt4 module. It should be used as "an errata"
+      for official Qt4 documentation, just because this document only contains Qore related
+      differences.</para>
+    </abstract>
+
+    <keywordset>
+      <keyword>Qore</keyword>
+      <keyword>Qt4</keyword>
+      <keyword>module</keyword>
+      <keyword>development</keyword>
+    </keywordset>
+
+  </bookinfo>
+
+  <chapter id="introduction">
+
+    <title>Qore Qt4 Module</title>
+
+    <para>The qt4 module provides a Qt4 API to Qore. Classes and functions in this
+    module follow the Qt4 C++ API so the Qt4 official documentation is the main source of informations.</para>
+
+    <para>Module is initialized by the following clause in the Qore scipt:</para>
+
+    <example>
+      <title>Requires Clause</title>
+      <programlisting>%requires qt4</programlisting>
+    </example>
+
+    <para>Static methods can be called as regular Qore static method or they can be
+    invoked with object instance too.</para>
+
+  </chapter>
+
+  <chapter id="differences">
+
+    <title>Differences from Qt4 C++ API</title>
+
+    <para>In this part of documentation will be described differences from C++ API.</para>
+
+    <para>Qore Qt4 module is using Smoke libraries as a C++ bridge to the Qt library.
+      When there is any feature missing it's in most cases Smoke design concept – QStrings,
+      QMaps, etc. are missing by design. It's not a bug.</para>
+
+    <para>Qore is weakly typed language so there are no strict rules for variable types
+      as in C++. For example the following code is correct and will work in the Qore Qt4 scripts:</para>
+
+    <example>
+      <title>Weakly typed auto-conversions</title>
+      <programlisting language="qore">
+my $var = 10;
+my $lineEdit = new QLineEdit();
+$lineEdit.setText( $var );
+      </programlisting>
+    </example>
+
+    <para>Method's (function's) input arguments are converted as much as it's possible.</para>
+
+    <sect1 id="qapplication">
+
+      <title>QApplication</title>
+
+      <para>There are more constructors available for QApplication as and addition to
+          the set of standard C++ constructors:</para>
+
+        <variablelist>
+          <varlistentry>
+            <term>QApplication()</term>
+            <listitem>
+              <para>It takes the global $ARGV list. It's a simplified version of QCoreApplication( $ARGV ).</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>QApplication( list )</term>
+            <listitem>
+              <para>It will use the $list variable as a list with arguments.</para>
+            </listitem>
+          </varlistentry>
+
+        </variablelist>
+
+    </sect1>
+
+    <sect1 id="qcoreapplication">
+      <title>QCoreApplication</title>
+      <para>There are more constructors available for QCoreApplication as an addition
+          to the standard C++ constructor:</para>
+
+      <variablelist>
+        <varlistentry>
+          <term>QCoreApplication()</term>
+          <listitem>
+            <para>It takes the global $ARGV list. It's a simplified version
+              of QCoreApplication( $ARGV ).</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>QCoreApplication( list )</term>
+          <listitem>
+            <para>It will use the $list variable as a list with arguments.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+    </sect1>
+
+    <sect1 id="qevent">
+      <title>QEvent</title>
+      <para>Event objects passed into QWidget::event(QEvent*) method as an argument are
+          automatically casted into its real instance. There is no need to “re-cast” it
+          anymore.</para>
+      <para>In the following example you can see that there is used QKeyEvent sepcific
+          method text() despite that the C++ prototype of event() method requires QEvent
+          instance. And $event variable can be used as a QEvent instance as well (parent's
+          event() method call).</para>
+        <example>
+          <title>QEvent automatic "casting"</title>
+          <programlisting lang="qore">
+class MyWidget inherits QWidget
+{
+  event($event)
+  {
+    if ($event.type() == QEvent::KeyPress)
+      printf("key pressed: %s\n", $event.text());
+
+    return QWidget::$.event($event);
+  }
+}
+          </programlisting>
+        </example>
+      <para>if your implementation of MyWidget::event($event) will get a QKeyEvent, the the
+          QKeyEvent will be passed as an argument $event.</para>
+    </sect1>
+
+    <sect1 id="qhash">
+      <title>QHash</title>
+      <para>Qt4 QHash&lt;T1,T2&gt; template class is not implemented in this module.
+          Structures are converted to the Qore hash structure with all its features like
+          keys are strings etc.</para>
+      <para>This part of Qore Qt binding is not finished. Please report any of missing
+          conversions (your script will raise an exception with warning and additional informations.</para>
+    </sect1>
+
+    <sect1 id="qlist">
+      <title>QList</title>
+      <para>Qt4 QList&lt;T&gt; template class is not implemented in this module. QLists are
+          converted to the Qore lists with the same content as original lists.</para>
+    </sect1>
+
+    <sect1 id="qmap">
+      <title>QMap</title>
+      <para>Qt4 QMap&lt;T1, T2&gt; template class is not implemented in this module. Structures
+        are converted to the Qore hash structure with all its features like keys are strings etc.</para>
+      <para>This part of Qore Qt binding is not finished. Please report any of missing conversions
+        (your script will raise an exception with warning and additional informations.</para>
+    </sect1>
+
+    <sect1 id="qmultimap">
+      <title>QMultiMap</title>
+      <para>Is not implemented in this module.</para>
+    </sect1>
+
+    <sect1 id="qstring">
+      <title>QString</title>
+      <para>There is no QString class in this module. Qt4 bindings for Qore have to use Qore strings
+        instead of QStrings. Conversions from QString to Qore and from Qore strings to Qt4 are done
+        automatically when it's required.</para>
+    </sect1>
+
+    <sect1 id="qvariant">
+      <title>QVariant</title>
+      <para>Various type conversions are supported when you are using new QVariant instance with a
+        Qore variable in the constructor.</para>
+      <para>Returning values of methods are kept as QVariant instances. It's up developer how he
+        converts QVariant into specialized variable type (toBool, toInt, toDate, etc. methods
+        are available).</para>
+      <para>There is introduced new method:</para>
+      <itemizedlist>
+        <listitem>
+          <para>QVariant::toQore() - it does automatic conversion of QVariant object to native
+            Qore object. It just gues the type using the Qore type weakness.</para>
+        </listitem>
+      </itemizedlist>
+    </sect1>
+
+    <sect1 id="non-members">
+      <title>Related Non-Members - QGlobalSpace</title>
+      <para>Qt4 contains some functions called “Related Non-Members” mentioned in the
+        documentation. These functions are not part of default namespace or class's namespace.
+        All these functions are used as static method of class QGlobalSpace.</para>
+      <para>Example:</para>
+      <para>QGlobalSpace::qRed(rgb)</para>
+    </sect1>
+
+    <sect1 id="operators">
+      <title>Operators</title>
+      <para>There is no support for C++ operators in Qore yet. You cannot use operators
+        defined in Qt4 C++ API.</para>
+    </sect1>
+
+    <sect1 id="constants">
+      <title>Constants</title>
+      <para>Only these constants from QtGlobal namespace are defined:</para>
+      <variablelist>
+        <varlistentry>
+          <term>QT_VERSION</term>
+          <listitem>
+            <para>Number with Qt version. E.g. 0x040100.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>QT_VERSION_STR</term>
+          <listitem>
+            <para>A string with Qt version. See qVersion().</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Q_WS_X11</term>
+          <listitem>
+            <para>True on X11 environment - UNIXes, except Mac OS X. False in all other cases.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Q_WS_MAC</term>
+          <listitem>
+            <para>True on Mac OS X. False in all other cases.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Q_WS_QWS</term>
+          <listitem>
+            <para>True on Qt Embedded Linux. False in all other cases.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Q_WS_WIN</term>
+          <listitem>
+            <para>True on MS Windows. False in all other cases.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+    </sect1>
+
+    <sect1 id="additional-functions">
+      <title>Additional Functions</title>
+      <variablelist>
+        <varlistentry>
+          <term>qApp()</term>
+          <listitem><para>Qore wrapper for qApp Qt4 pointer, a global and unique application
+              object. It is equivalent to the object returned by the QCoreApplication::instance()
+              function except that, in GUI applications, it is a QApplication instance. Only one
+              application object can be created.</para></listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>qDebug(arg1, arg2, &hellip;, argN)</term>
+          <listitem><para>It's used for writing custom debug output. output of given arguments
+              to stderr. It's a wrapper around extended qDebug() class from C++. Calls like:</para>
+          <example>
+            <title>qDebug differences between C++ and Qore</title>
+            <programlisting lang="c++"> C++: qDebug() &lt;&lt; “string” &lt;&lt; myObj;</programlisting>
+            <programlisting lang="qore">Qore: qDebug(“string”, $myObj);</programlisting>
+          </example>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>qWarning(arg1, arg2, &hellip;, argN)</term>
+          <listitem>
+            <para>It's used to report warnings and recoverable errors in your application. Usage
+              is the same as in qDebug() described above.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>qCritical(arg1, arg2, &hellip;, argN)</term>
+          <listitem>
+            <para>It's used for writing critical error mesages and reporting system errors. Usage
+              is the same as for qDebug().</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>qFatal(arg1, arg2, &hellip;, argN)</term>
+          <listitem>
+            <para>It's used for writing fatal error messages shortly before exiting. This function will
+              exit the application too. Usage is the same as for qDebug().</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>qRound(number)</term>
+          <listitem>
+            <para>It takes any number (bigint, float&hellip;) and rounds it. It returns 0 for
+              unsupported variable types (strings, etc).</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>qsrand(number)</term>
+          <listitem>
+            <para>It initializes random number generator qrand() with seed as argument.</para>
+            <example>
+              <title>Typical qsrand usage</title>
+              <programlisting lang="qore">qsrand( now_ms() );</programlisting>
+            </example>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>qrand()</term>
+          <listitem>
+            <para>It returns a random number. See qsrand().</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>qSwap(ref1, ref2)</term>
+          <listitem>
+            <para>It takes two references and swap their values.</para>
+            <example>
+              <title>qSwap usage</title>
+              <programlisting lang="qore">
+my $ref1 = 10;
+my $ref2 = "foo";
+qSwap(\$ref1, \$ref2);
+printf("ref1: %N ; ref2: %N\n", $ref1, $ref2);
+              </programlisting>
+            </example>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>qVersion()</term>
+          <listitem>
+            <para>It prints Qt version as string in “4.5.2” format. See QT_VERSION and
+              QT_VERSION_STR Qore constants.</para>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+    </sect1>
+
+  </chapter>
+
+  <chapter id="uic-qore">
+    <title>UI Compiler Tool (uic-qore)</title>
+
+    <para>Qore Qt4 module comes with a UI files compiler. It converts Qt4 designer's user interface
+      files into Qore source code.</para>
+    <para>Qore code generated by uic-qore follows standard Qt4 ui workflow:</para>
+    <orderedlist>
+      <listitem>
+        <para>Create a widget, a dialog, or a main window in the designer.</para>
+      </listitem>
+      <listitem>
+        <para>Save it as a *.ui file</para>
+      </listitem>
+      <listitem>
+        <para>run:</para>
+      </listitem>
+    </orderedlist>
+
+    <example>
+      <title>Running ui compiler</title>
+      <programlisting lang="bash">uic-qore myfile.ui &gt; myfile.q</programlisting>
+    </example>
+
+    <para>The file myfile.q now contains a GUI only related class in the Ui namespace without any
+      additional functionality. You should create a instance yourself:</para>
+    <example>
+      <title>Custom dialog construction</title>
+      <programlisting lang="qore">
+# file generated from uic-qore containing a GUI for MyDialog
+%imports myfile.q
+class MyDialog inherits QDialog, Ui::MyDialog
+{
+    constructor($parent) : QDialog($parent)
+    {
+        # setupUi() is a part of the Ui::MyDialog
+        # and it must be called before any GUI related actions
+        $.setupUi($self);
+    }
+}
+      </programlisting>
+    </example>
+
+    <para>Remember, that any additional changes in the generated source files will be lost
+      when you will run uic-qore again.</para>
+  </chapter>
+
+
+</book>
