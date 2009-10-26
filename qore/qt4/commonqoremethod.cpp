@@ -681,7 +681,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                 si.s_voidp = qstr.release();
             }
             return 0;
-        } else if (isptrtype(name, "qreal")) {
+        } else if (isptrtype(name, "qreal") || isptrtype(name, "double")) {
             if (!cqm) {
                 xsink->raiseException("QT-RETURN-ERROR", "cannot return type '%s' to the QT library in call to %s::%s()", name, className, methodName);
                 return -1;
@@ -908,6 +908,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
         } else {
 //             printd(0, "can't handle ref type '%s'\n", t.name);
             xsink->raiseException("QT-ARGUMENT-ERROR", "unable to handle argument of type '%s'", t.name);
+            xsink->handleExceptions();
             assert(0);
             return -1;
         }
