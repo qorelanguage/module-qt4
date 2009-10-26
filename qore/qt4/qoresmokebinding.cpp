@@ -59,7 +59,7 @@ QoreObject *getQoreObject(Smoke::Index classId, void *obj, QoreClass *&qc) {
 
     qc = ClassNamesMap::Instance()->value(classId);
 
-    printd(0, "getQoreObject() qc=%s qobject=%s\n", qc->getName(), qc->getClass(QC_QOBJECT->getID()) ? "true" : "false");
+//     printd(0, "getQoreObject() qc=%s qobject=%s\n", qc->getName(), qc->getClass(QC_QOBJECT->getID()) ? "true" : "false");
 
     assert(qc);
     if (!qc->getClass(QC_QOBJECT->getID()))
@@ -137,8 +137,8 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
     QoreClass *qc;
     QoreObject *o = getQoreObject(meth.classId, obj, qc);
 
-    if (!strcmp(mname, "paintEngine"))
-       printd(0, "QoreSmokeBinding::callMethod() %s::%s() qore object=%p\n", cname, mname, o);
+//     if (!strcmp(mname, "paintEngine"))
+//        printd(0, "QoreSmokeBinding::callMethod() %s::%s() qore object=%p\n", cname, mname, o);
 
     if (!o) {
         // we must have an implementation for abstract methods

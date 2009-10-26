@@ -832,7 +832,9 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
         } else if (name[0] == 'Q') {
             // handle Qt-related exceptions classes first
             QByteArray bname(name);
-            if (bname.startsWith("QList<") || bname.startsWith("QVector<") || bname == "QStringList&") {
+            if (bname.startsWith("QList<") || bname.startsWith("QVector<") || bname == "QStringList&"
+                || bname.startsWith("QMap<") || bname.startsWith("QHash<")
+                ) {
 //                 printd(0, "CommonQoreMethod::qoreToStackStatic handling a list argument %s\n", name);
                 Marshalling::QoreQListBase * list = Marshalling::QoreToQtContainer::Instance()->marshall(t, node, xsink);
                 if (!list) {
@@ -1184,11 +1186,11 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
                 return 2;
             return 0;
         } else if (bname.startsWith("QList<") || bname.startsWith("QVector<")  || bname.startsWith("QStringList")) {
+            // TODO/FIXME: check internal types. In the templates
             return qore_type == NT_LIST ? 2 : 0;
-            // TODO/FIXME: hardcode more automatic conversions (date, time, etc)
-	} else if (bname.startsWith("QMap<")) {
-	   printd(0, "QMap types not yet supported\n");
-	   assert(false);
+        } else if (bname.startsWith("QMap<") || bname.startsWith("QHash<")) {
+            // TODO/FIXME: check internal types. In the templates
+            return (qore_type == NT_HASH) ? 2 : 0;
         } else if (name[0] == 'Q') {
             assert(smoke_type.classId != -1);
 #ifdef DEBUG

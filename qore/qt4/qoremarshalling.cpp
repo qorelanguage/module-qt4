@@ -762,7 +762,10 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
 
         if (tname.startsWith("QList<")
                 || tname.startsWith("QVector<")
-                || tname == "QStringList") {
+                || tname == "QStringList"
+                || tname.startsWith("QMap<")
+                || tname.startsWith("QHash<")
+                ) {
             AbstractQoreNode * aqn = QtContainerToQore::Instance()->marshall(t, i.s_voidp, xsink);
             if (*xsink || !aqn) {
                 xsink->handleExceptions();
