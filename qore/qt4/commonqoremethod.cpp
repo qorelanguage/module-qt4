@@ -1186,8 +1186,14 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
         } else if (bname.startsWith("QList<") || bname.startsWith("QVector<")  || bname.startsWith("QStringList")) {
             return qore_type == NT_LIST ? 2 : 0;
             // TODO/FIXME: hardcode more automatic conversions (date, time, etc)
+	} else if (bname.startsWith("QMap<")) {
+	   printd(0, "QMap types not yet supported\n");
+	   assert(false);
         } else if (name[0] == 'Q') {
             assert(smoke_type.classId != -1);
+#ifdef DEBUG
+	    if (!smoke_type.classId) printd(0, "ERROR %s classId=0\n", name);
+#endif
             assert(smoke_type.classId);
 //             printd(0, "getScore Q %s\n", smoke_type.name);
             const QoreClass *qc = ClassNamesMap::Instance()->value(smoke_type.classId);
