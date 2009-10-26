@@ -501,7 +501,7 @@ QoreQVariant *qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * nod
     std::auto_ptr<QoreQVariant> ret(new QoreQVariant());
 
     // FIXME: implement all conversions
-    if (node == 0) { // NOTHING
+    if (node == 0 || node->getType() == 0) { // NOTHING
         ret->qvariant = QVariant();
         return ret.release();
     }
