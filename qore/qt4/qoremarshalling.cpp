@@ -267,6 +267,7 @@ QtContainerToQore::QtContainerToQore() {
 //     m_map["QVector<QPair<qreal,QColor> >
 //     m_map["QVector<QTextLength>
     m_map["QVector<qreal>"] = &listToSimpleValue<QVector<qreal>, QoreFloatNode>;
+    m_map["QVector<double>"] = &listToSimpleValue<QVector<double>, QoreFloatNode>;
     m_map["QVector<QTextFormat>"] = &listToObject<QVector<QTextFormat> >;
     // maps
 //     m_map["QMap<int,QVariant>"] = &qmapToQore<QMap<int,QVariant>, QoreBigIntNode, QoreObjectNode>;
@@ -490,6 +491,7 @@ QoreToQtContainer::QoreToQtContainer() {
     m_map["QVector<QRect>"] = &listToObject<QVector<QRect>, QRect >;
     m_map["QVector<QRectF>"] = &listToObject<QVector<QRectF>, QRectF >;
     m_map["QVector<qreal>"] = &listToSimpleValue<QVector<qreal> >;
+    m_map["QVector<double>"] = &listToSimpleValue<QVector<double> >;
 //     m_map["QVector<QTextLength>
 }
 
