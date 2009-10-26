@@ -719,7 +719,6 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
     int flags = t.flags & Smoke::tf_ref;
     bool iconst = t.flags & Smoke::tf_const;
 
-
     if (!t.name) {
         return 0;
     }
@@ -808,7 +807,7 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
 //             printd(0, "Marshalling::stackToQore() got QoreObject %p\n", o);
             o->ref();
         } else {
-            QoreSmokePrivate *p;
+            QoreSmokePrivate *p = 0;
             // now it should be real object
             if (c->getClass(QC_QABSTRACTITEMMODEL->getID())) {
                 QoreSmokePrivateQAbstractItemModelData *p1;
@@ -836,7 +835,7 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
                     o = createQoreObjectFromNonQObject(c, classId, origObj, &p);
                 }
             }
-            if (flags == Smoke::tf_ptr)
+            if (p && flags != Smoke::tf_stack)
                 p->setExternallyOwned();
         }
         // it can return already existing object or non-qobject based one

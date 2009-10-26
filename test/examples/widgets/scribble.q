@@ -188,6 +188,10 @@ class ScribbleArea inherits QWidget
         $.myPenColor = Qt::blue;
     }
 
+    destructor() {
+	printf("ScribbleArea::destructor() %N\n", $self);
+    }
+
     isModified()
     { 
         return $.modified; 

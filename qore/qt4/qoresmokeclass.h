@@ -83,7 +83,7 @@ public:
         return m_object;
     }
     DLLLOCAL virtual void clear() {
-        if (save_map)
+        if (save_map && m_object)
             qt_qore_map.del(m_object);
         m_object = 0;
     }
