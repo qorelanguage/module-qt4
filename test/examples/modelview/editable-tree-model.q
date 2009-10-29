@@ -385,9 +385,10 @@ class TreeModel inherits QAbstractItemModel {
     getItem($index) {
         if (exists $index && $index.isValid()) {
             my $item = $index.internalPointer();
-            if (exists $item) return $item;
+            if (exists $item) {
+                    return $item;
+            }
         }
-
         return $.rootItem;
     }
 
@@ -433,9 +434,13 @@ class TreeModel inherits QAbstractItemModel {
         }
 
         my $childItem = $.getItem($index);
+        #printf("childItem %N\n", $childItem);
         my $parentItem = $childItem.parent();
+        #printf("parentItem %N\n", $parentItem);
 
-        return $parentItem == $.rootItem ? new QModelIndex() : $.createIndex($parentItem.childNumber(), 0, $parentItem);
+        return ($parentItem == $.rootItem || $parentItem == NOTHING)
+                ? new QModelIndex()
+                : $.createIndex($parentItem.childNumber(), 0, $parentItem);
     }
 
     removeColumns($position, $columns, $parent) {

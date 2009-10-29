@@ -852,7 +852,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
             } else if (bname.startsWith("QVariant")) {
                 std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(t, node, xsink));
                 if (variant.get()->status == Marshalling::QoreQVariant::Invalid) {
-                    //printd(0, "CommonQoreMethod::qoreToStackStatic() invalid QVariant returned\n");
+//                     printd(0, "CommonQoreMethod::qoreToStackStatic() invalid QVariant returned\n");
                     return -1;
                 }
                 if (cqm) {
@@ -860,9 +860,9 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                     ref_store_s *re = cqm->getRefEntry(index - 1);
                     re->assign(variant.release());
                     si.s_class = re->getPtr();
-                    //printd(0, "CommonQoreMethod::qoreToStackStatic() %s::%s() valid QVariant returned (cqm) si.s_class=%p\n", className, methodName, si.s_class);
+//                     printd(0, "CommonQoreMethod::qoreToStackStatic() %s::%s() valid QVariant returned (cqm) si.s_class=%p\n", className, methodName, si.s_class);
                 } else {
-                    //printd(0, "CommonQoreMethod::qoreToStackStatic() valid QVariant returned (no cqm) variant=%p\n", variant.get());
+//                     printd(0, "CommonQoreMethod::qoreToStackStatic() valid QVariant returned (no cqm) variant=%p\n", variant.get());
                     si.s_class = variant.get()->s_class();
                 }
                 return 0;
@@ -976,7 +976,10 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
         std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(t, node, xsink));
         if (variant->status == Marshalling::QoreQVariant::Invalid)
             return -1;
-        si.s_class = variant.release();
+        // TODO/FIXME: remove this leak!
+        QVariant * var = new QVariant(*(QVariant*)variant->s_class());
+//         si.s_class = variant.release();
+        si.s_class = var;//variant.release()->s_class();
         return 0;
     }
 

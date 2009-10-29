@@ -497,7 +497,7 @@ QoreToQtContainer::QoreToQtContainer() {
 
 
 QoreQVariant *qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * node, ExceptionSink * xsink) {
-//     printd(0, "Marshalling::qoreToQVariant %s\n", t.name);
+//     printd(0, "Marshalling::qoreToQVariant %s %d\n", t.name, node ? node->getType() : 0);
     std::auto_ptr<QoreQVariant> ret(new QoreQVariant());
 
     // FIXME: implement all conversions
