@@ -973,13 +973,11 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
     }
 
     if (!strcmp(t.name, "QVariant")) {
-        std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(t, node, xsink));
+        Marshalling::QoreQVariant * variant = Marshalling::qoreToQVariant(t, node, xsink);
         if (variant->status == Marshalling::QoreQVariant::Invalid)
             return -1;
-        // TODO/FIXME: remove this leak!
-        QVariant * var = new QVariant(*(QVariant*)variant->s_class());
-//         si.s_class = variant.release();
-        si.s_class = var;//variant.release()->s_class();
+        std::auto_ptr<QVariant> value(new QVariant(variant->qvariant));
+        si.s_class = value.release();
         return 0;
     }
 
