@@ -28,6 +28,11 @@
         <signature>.*qFrom.*Endian_helper.*</signature>
         <!-- mac os x special functions -->
         <signature>.*qt_mac_set_cursor.*</signature>
+
+<!-- TODO/FIXME: there are blockers for qt4-mac from macports.
+                 consult it with upstream! -->
+<signature>.*QGraphicsLinearLayout::dump.*</signature>
+<signature>.*operator&lt;&lt;\(QDebug,.*QStyle.*</signature>
     </exclude>
     <functions>
         <!-- include functions starting with 'q' -->
