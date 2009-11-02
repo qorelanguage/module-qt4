@@ -177,11 +177,11 @@ static int createIndex_handler(Smoke::Stack &stack, ClassMap::TypeList &types, c
 
     const AbstractQoreNode *n = get_param(args, 0);
     cqm.qoreToStack(types[0], n, 1);
-    int row = n ? n->getAsInt() : 0;
+    //int row = n ? n->getAsInt() : 0;
 
     n = get_param(args, 1);
     cqm.qoreToStack(types[1], n, 2);
-    int column = n ? n->getAsInt() : 0;
+    //int column = n ? n->getAsInt() : 0;
 
     n = get_param(args, 2);
     Smoke::Type &t = types[2];
@@ -198,13 +198,16 @@ static int createIndex_handler(Smoke::Stack &stack, ClassMap::TypeList &types, c
     ReferenceHolder<QoreSmokePrivateQAbstractItemModelData> data(reinterpret_cast<QoreSmokePrivateQAbstractItemModelData *>(self->getReferencedPrivateData(QC_QABSTRACTITEMMODEL->getID(), xsink)), xsink);
     if (*xsink)
         return -1;
-    data->storeIndex(row, column, n, xsink);
+    data->storeIndex(n, xsink);
 
     return (*xsink) ? -1 : 0;
 }
 
 template <typename T>
 static AbstractQoreNode *rv_handler_internalPointer(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+    if (!Stack.s_voidp)
+        return 0;
+
     QoreSmokePrivate *smc = cqm.getPrivateData();
     assert(smc);
     assert(smc->object());
@@ -221,7 +224,7 @@ static AbstractQoreNode *rv_handler_internalPointer(QoreObject *self, Smoke::Typ
     if (!c)
         return 0;
 
-    return c->isQoreData(qmi->row(), qmi->column(), Stack.s_voidp);
+    return c->isQoreData(Stack.s_voidp);
 }
 
 static AbstractQoreNode *rv_handler_QAbstractItemView_reset(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {

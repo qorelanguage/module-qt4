@@ -32,6 +32,7 @@
 #include <QMetaMethod>
 
 #include <map>
+#include <set>
 
 #include "qoreqtdynamicmethod.h"
 
@@ -365,31 +366,18 @@ protected:
 
 class QoreSmokePrivateQAbstractItemModelData : public QoreSmokePrivateQObjectData {
 protected:
-    typedef std::map<int, AbstractQoreNode *> int_node_map_t;
-    typedef std::map<int, int_node_map_t> node_map_t;
-    node_map_t node_map;
+    typedef std::set<AbstractQoreNode *> node_set_t;
+    node_set_t node_set;
     QoreRWLock rwl;
-
-    // unlocked
-    DLLLOCAL AbstractQoreNode *getData(int row, int column) {
-        node_map_t::iterator ni = node_map.find(row);
-        if (ni == node_map.end())
-            return 0;
-
-        int_node_map_t::iterator i = ni->second.find(column);
-        return (i == ni->second.end() ? 0 : i->second);
-    }
 
     // unlocked
     DLLLOCAL void purgeMapIntern(ExceptionSink *xsink) {
         // dereference all stored ptrs
-        for (node_map_t::iterator i = node_map.begin(), e = node_map.end(); i != e; ++i) {
-            for (int_node_map_t::iterator ii = i->second.begin(), ie = i->second.end(); ii != ie; ++ii) {
-                assert(ii->second);
-                ii->second->deref(xsink);
-            }
-        }
-        node_map.clear();
+        for (node_set_t::iterator i = node_set.begin(), e = node_set.end(); i != e; ++i) {
+	   assert(*i);
+	   (*i)->deref(xsink);
+	}
+        node_set.clear();
     }
 
 public:
@@ -398,34 +386,29 @@ public:
     DLLLOCAL virtual ~QoreSmokePrivateQAbstractItemModelData() {
         // dereference all stored data ptrs
     }
-    DLLLOCAL AbstractQoreNode *isQoreData(int row, int column, void *data) {
+    DLLLOCAL AbstractQoreNode *isQoreData(void *data) {
         assert(data);
         QoreAutoRWReadLocker al(rwl);
         AbstractQoreNode *d = reinterpret_cast<AbstractQoreNode *>(data);
-        d = getData(row, column) == d ? d : 0;
-	printd(0, "QoreSmokePrivateQAbstractItemModelData::isQoreData(%d, %d, %p) returning %p (%s: %s)\n", row, column, data, d, d ? d->getTypeName() : "NOTHING", d && d->getType() == NT_OBJECT ? reinterpret_cast<QoreObject *>(d)->getClassName() : "n/a");
-        return d ? d->refSelf() : 0;
-    }
-    DLLLOCAL void storeIndex(int row, int column, const AbstractQoreNode *data, ExceptionSink *xsink) {
-        QoreAutoRWWriteLocker al(rwl);
-        node_map_t::iterator ni = node_map.find(row);
-        if (ni != node_map.end()) {
-            int_node_map_t::iterator i = ni->second.find(column);
-            if (i != ni->second.end()) {
-                if (i->second)
-                    i->second->deref(xsink);
-                if (data)
-                    i->second = data->refSelf();
-                else
-                    ni->second.erase(i);
-                return;
-            }
-        }
-        if (data)
-            node_map[row][column] = data->refSelf();
 
-	printd(0, "QoreSmokePrivateQAbstractItemModelData::storeIndex(%d, %d, %p) %s: %s\n", row, column, data, data ? data->getTypeName() : "NOTHING", data && data->getType() == NT_OBJECT ? reinterpret_cast<const QoreObject *>(data)->getClassName() : "n/a");
+	d = node_set.find(d) == node_set.end() ? 0 : d->refSelf();
+	//printd(5, "QoreSmokePrivateQAbstractItemModelData::isQoreData(%p) this=%p returning %p (%s: %s)\n", data, this, d, d ? d->getTypeName() : "NOTHING", d && d->getType() == NT_OBJECT ? reinterpret_cast<QoreObject *>(d)->getClassName() : "n/a");
+
+	return d;
     }
+
+    DLLLOCAL void storeIndex(const AbstractQoreNode *data, ExceptionSink *xsink) {
+        assert(data);
+        printd(5, "QoreSmokePrivateQAbstractItemModelData::storeIndex(%p) this=%p %s: %s\n", data, this, data->getTypeName(), data->getType() == NT_OBJECT ? reinterpret_cast<const QoreObject *>(data)->getClassName() : "n/a");
+
+        QoreAutoRWWriteLocker al(rwl);
+        node_set_t::iterator i = node_set.find(const_cast<AbstractQoreNode *>(data));
+	if (i != node_set.end())
+	   return;
+
+	node_set.insert(data->refSelf());
+    }
+
     DLLLOCAL void purgeMap(ExceptionSink *xsink) {
         QoreAutoRWWriteLocker al(rwl);
         purgeMapIntern(xsink);
