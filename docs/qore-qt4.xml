@@ -41,6 +41,118 @@
     <para>Static methods can be called as regular Qore static method or they can be
     invoked with object instance too.</para>
 
+    <sect1>
+      <title>Signals and Slots</title>
+      <para>The mechanism of Qt4 signals and slots is implemented for this module too.
+        Signals and slots used in the SIGNAL and SLOT functions calls have to follow
+        C++ style. See example below.</para>
+      <para>There are some additional methods and functions in this area:</para>
+
+      <variablelist>
+
+        <varlistentry>
+          <term>QObject::createSignal( string )</term>
+          <listitem>
+            <para>This QObject's new method is mandatory when you need to create
+              a new, custom, signal.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>QObject::connect( caller, signal, target, slot)</term>
+          <listitem>
+            <para>Static method. It's a reimplementation of C++ connect method with the same
+              roles of arguments:</para>
+            <para><emphasis>caller</emphasis>: a QObject based instance which will emit the signal</para>
+            <para><emphasis>signal</emphasis>: caller's signal description in C++ style</para>
+            <para><emphasis>target</emphasis>: a QObject based instance which will catch the signal from caller</para>
+            <para><emphasis>signal</emphasis>: target's slot description in C++ style</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>QObject::connect( caller, signal, slot)</term>
+          <listitem>
+            <para>Regular (non-static) method. It's new and additional method for another
+              way how to connect signals and slots of two QObject based objects.
+              It's used as <code>target.connect( caller, signal, slots )</code>
+              with arguments:</para>
+            <para><emphasis>caller</emphasis>: a QObject based instance which will emit the signal</para>
+            <para><emphasis>signal</emphasis>: caller's signal description in C++ style</para>
+            <para><emphasis>target</emphasis>: a QObject based instance which will catch the signal from caller</para>
+            <para><emphasis>signal</emphasis>: target's slot description in C++ style</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>QObject::emit( signal, arguments )</term>
+          <listitem>
+            <para>This QObject's new method is mandatory when you need to emit
+              a signal. The signal is a string self-representation in C++ syntax.
+              Arguments can be 0 or more required arguments for emitted signal.
+              Example: <code>$.emit("mySignal(int, int, int)", 0, 2, 4);</code></para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>SIGNAL( string )</term>
+          <listitem>
+            <para>Qore reimplementation of C++ SIGNAL macro. Its usage in connect methods
+              is the same.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>SLOT( string )</term>
+          <listitem>
+            <para>Qore reimplementation of C++ SLOT macro. Its usage in connect methods
+              is the same.</para>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+      <example>
+        <title>How to set signals and slots</title>
+        <programlisting language="qore">
+class MyClass inherits QObject
+{
+    private $.widget;
+
+    constructor($parent) : QObject($parent)
+    {
+        $.widget = new QLineEdit("foo bar");
+
+        # register custom signal for this class
+        $.createSignal("myTextChanged(QString)");
+
+        # 1st way how to connect signal and slot
+        QObject::connect($.widget, SIGNAL("textChanged(QString)"),
+                         $self, SLOT("handleText(QString)"));
+
+        # 2nd way. Method is the same, except it's called on object instance
+        # $self can be replaced with any other QObject based instance
+        $.connect($.widget, SIGNAL("textChanged(QString)"),
+                  $self, SLOT("handleText(QString)"));
+
+        # 3rd way - the additional connect method ($self.connect can be
+        # used as a $.connect here. But it can be called on any QObject
+        # based instance.)
+        $.connect($widget, SIGNAL("textChanged(QString)"),
+                  SLOT("handleText(QString)"));
+    }
+
+    # our slot
+    handleText($string)
+    {
+        # $string goes as an argument for emit call
+        $.emit("myTextChanged(QString)", $string);
+    }
+}
+        </programlisting>
+      </example>
+    </sect1>
+
   </chapter>
 
   <chapter id="differences">
