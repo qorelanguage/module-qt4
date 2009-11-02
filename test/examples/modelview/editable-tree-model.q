@@ -478,7 +478,7 @@ class TreeModel inherits QAbstractItemModel {
         my $result = $item.setData($index.column(), $value);
         
         if ($result)
-            $.emit("dataChanged(const QModelIndex &, QModelIndex &)");
+            $.emit("dataChanged(const QModelIndex &, const QModelIndex &)");
         
         return $result;
     }
