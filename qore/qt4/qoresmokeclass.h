@@ -403,6 +403,7 @@ public:
         QoreAutoRWReadLocker al(rwl);
         AbstractQoreNode *d = reinterpret_cast<AbstractQoreNode *>(data);
         d = getData(row, column) == d ? d : 0;
+	printd(0, "QoreSmokePrivateQAbstractItemModelData::isQoreData(%d, %d, %p) returning %p (%s: %s)\n", row, column, data, d, d ? d->getTypeName() : "NOTHING", d && d->getType() == NT_OBJECT ? reinterpret_cast<QoreObject *>(d)->getClassName() : "n/a");
         return d ? d->refSelf() : 0;
     }
     DLLLOCAL void storeIndex(int row, int column, const AbstractQoreNode *data, ExceptionSink *xsink) {
@@ -422,6 +423,8 @@ public:
         }
         if (data)
             node_map[row][column] = data->refSelf();
+
+	printd(0, "QoreSmokePrivateQAbstractItemModelData::storeIndex(%d, %d, %p) %s: %s\n", row, column, data, data ? data->getTypeName() : "NOTHING", data && data->getType() == NT_OBJECT ? reinterpret_cast<const QoreObject *>(data)->getClassName() : "n/a");
     }
     DLLLOCAL void purgeMap(ExceptionSink *xsink) {
         QoreAutoRWWriteLocker al(rwl);
