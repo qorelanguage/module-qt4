@@ -497,27 +497,32 @@ void common_constructor(const QoreClass &myclass, QoreObject *self,
     // Setup internal object
     QoreSmokePrivate *obj;
 
-    if (myclass.getClass(QC_QABSTRACTITEMMODEL->getID())) {
-        obj = new QoreSmokePrivateQAbstractItemModelData(cqm.method().classId, (QObject *)qtObj);
-        QoreQtVirtualFlagHelper vfh;
-        QAbstractItemModel *qtBaseObj = static_cast<QAbstractItemModel*>(qtObj);
-        qtBaseObj->setProperty(QORESMOKEPROPERTY, reinterpret_cast<qulonglong>(self));
-    } else if (myclass.getClass(QC_QOBJECT->getID())) {
-        obj = new QoreSmokePrivateQObjectData(cqm.method().classId, (QObject *)qtObj);
-        QoreQtVirtualFlagHelper vfh;
-        QObject * qtBaseObj = static_cast<QObject*>(qtObj);
-//         printd(0, "Set property\n");
-        qtBaseObj->setProperty(QORESMOKEPROPERTY, reinterpret_cast<qulonglong>(self));
+    bool is_qobject = false;
+    if (myclass.getClass(QC_QOBJECT->getID())) {
+       if (myclass.getClass(QC_QABSTRACTITEMMODEL->getID()))
+	  obj = new QoreSmokePrivateQAbstractItemModelData(cqm.method().classId, (QObject *)qtObj);
+       else
+	  obj = new QoreSmokePrivateQObjectData(cqm.method().classId, (QObject *)qtObj);
+
+       is_qobject = true;
     } else {
         obj = new QoreSmokePrivateData(cqm.method().classId, qtObj, self);
         //printd(0, "common_constructor() (EE) is not QObject based: %s\n", className);
     }
 
-//     printd(0, "common_constructor() %s setting private data %p for classid %d objclassid %d self:%p\n",
-//            className, obj, myclass.getID(), self->getClass()->getID(), self);
     self->setPrivate(myclass.getID(), obj);
-
     cqm.postProcessConstructor(obj, cqm.Stack[0]);
+
+    if (is_qobject) {
+       // set the Qt->QoreObject property last in case there are any qt
+       // metacalls before the qt object holder is saved as private data
+       QoreQtVirtualFlagHelper vfh;
+       QObject *qtBaseObj = static_cast<QObject*>(qtObj);
+       qtBaseObj->setProperty(QORESMOKEPROPERTY, reinterpret_cast<qulonglong>(self));
+    }
+
+    //printd(0, "common_constructor() %s setting private data %p for classid %d objclassid %d self:%p\n",
+    //       className, obj, myclass.getID(), self->getClass()->getID(), self);
 }
 
 // a helper function to handle conflicting names

@@ -1,11 +1,11 @@
 #!/usr/bin/env qore
 
 # this is basically a direct port of the QT widget example
-# "tooltips" to Qore using Qore's "qt" module.  
+# "tooltips" to Qore using Qore's "qt4" module.  
 
-# Note that Qore's "qt" module requires QT 4.3 or above 
+# Note that Qore's "qt4" module requires QT 4.3 or above 
 
-# use the "qt-gui" module
+# use the "qt4" module
 %requires qt4
 
 # this is an object-oriented program; the application class is "tooltips_example"
@@ -15,13 +15,11 @@
 # enable all parse warnings
 %enable-all-warnings
 
-class SortingBox inherits QWidget
-{
+class SortingBox inherits QWidget {
     private $.shapeItems, $.circlePath, $.squarePath, $.trianglePath, $.previousPosition,
             $.itemInMotion, $.newCircleButton, $.newSquareButton, $.newTriangleButton;
 
-    constructor()
-    {
+    constructor() {
         $.circlePath = new QPainterPath();
         $.squarePath = new QPainterPath();
         $.trianglePath = new QPainterPath();
@@ -44,8 +42,7 @@ class SortingBox inherits QWidget
         $.squarePath.addRect(new QRectF(0, 0, 100, 100));
 
         my $x = $.trianglePath.currentPosition().x();
-        my $y = $.trianglePath.currentPosition().y
-            ();
+        my $y = $.trianglePath.currentPosition().y();
         $.trianglePath.moveTo($x + 120 / 2, $y);
         $.trianglePath.lineTo(0, 100);
         $.trianglePath.lineTo(120, 100);
@@ -59,8 +56,7 @@ class SortingBox inherits QWidget
         $.createShapeItem($.trianglePath, $.tr("Triangle"), $.initialItemPosition($.trianglePath), $.initialItemColor());
     }
 
-    event($event)
-    {
+    event($event) {
         if ($event.type() == QEvent::ToolTip) {
             my $index = $.itemAt($event.pos());
             if ($index != -1)
@@ -71,8 +67,7 @@ class SortingBox inherits QWidget
         return QWidget::$.event($event);
     }
 
-    resizeEvent($event)
-    {
+    resizeEvent($event) {
         my $margin = $.style().pixelMetric(QStyle::PM_DefaultTopLevelMargin);
         my $x = $.width() - $margin;
         my $y = $.height() - $margin;
@@ -82,8 +77,7 @@ class SortingBox inherits QWidget
         $.updateButtonGeometry($.newTriangleButton, $x, $y);
     }
 
-    paintEvent($event)
-    {
+    paintEvent($event) {
         my $painter = new QPainter($self);
         $painter.setRenderHint(QPainter::Antialiasing);
         foreach my $shapeItem in ($.shapeItems) {
@@ -96,8 +90,7 @@ class SortingBox inherits QWidget
         }
     }
 
-    mousePressEvent($event)
-    {
+    mousePressEvent($event) {
         if ($event.button() == Qt::LeftButton) {
             my $index = $.itemAt($event.pos());
             if ($index != -1) {
@@ -111,40 +104,34 @@ class SortingBox inherits QWidget
         }
     }
 
-    mouseMoveEvent($event)
-    {
+    mouseMoveEvent($event) {
         if (($event.buttons() & Qt::LeftButton) && $.itemInMotion)
             $.moveItemTo($event.pos());
     }
 
-    mouseReleaseEvent($event)
-    {
+    mouseReleaseEvent($event) {
         if ($event.button() == Qt::LeftButton && $.itemInMotion) {
             $.moveItemTo($event.pos());
             $.itemInMotion = 0;
         }
     }
 
-    createNewCircle()
-    {
+    createNewCircle() {
         $.createShapeItem($.circlePath, sprintf($.tr("Circle <%d>"), ++$circle_count),
                           $.randomItemPosition(), $.randomItemColor());
     }
 
-    createNewSquare()
-    {
+    createNewSquare() {
         $.createShapeItem($.squarePath, sprintf($.tr("Square <%d>"), ++$square_count),
                           $.randomItemPosition(), $.randomItemColor());
     }
 
-    createNewTriangle()
-    {
+    createNewTriangle() {
         $.createShapeItem($.trianglePath, sprintf($.tr("Triangle <%d>"), ++$triangle_count),
                           $.randomItemPosition(), $.randomItemColor());
     }
 
-    private itemAt($pos)
-    {
+    private itemAt($pos) {
         for (my $i = (elements $.shapeItems) - 1; $i >= 0; --$i) {
             my $item = $.shapeItems[$i];
             if ($item.path().contains(new QPointF($pos.x() - $item.position().x(), $pos.y
@@ -155,8 +142,7 @@ class SortingBox inherits QWidget
         return -1;
     }
 
-    private moveItemTo($pos)
-    {
+    private moveItemTo($pos) {
         my $offset = new QPoint($pos.x() - $.previousPosition.x(), $pos.y
                                 () - $.previousPosition.y
                                 ());
@@ -167,8 +153,7 @@ class SortingBox inherits QWidget
         $.update();
     }
     
-    private updateButtonGeometry($button, $x, $y)
-    {
+    private updateButtonGeometry($button, $x, $y) {
         my $size = $button.sizeHint();
         $button.setGeometry($x - $size.width(), $y - $size.height(), $size.width(), $size.height());
 
@@ -176,8 +161,7 @@ class SortingBox inherits QWidget
             - $.style().pixelMetric(QStyle::PM_DefaultLayoutSpacing);
     }
 
-    private createShapeItem($path, $toolTip, $pos, $color)
-    {
+    private createShapeItem($path, $toolTip, $pos, $color) {
         my $shapeItem = new ShapeItem();
         $shapeItem.setPath($path);
         $shapeItem.setToolTip($toolTip);
@@ -187,8 +171,7 @@ class SortingBox inherits QWidget
         $.update();
     }
 
-    private createToolButton($toolTip, $icon, $member)
-    {
+    private createToolButton($toolTip, $icon, $member) {
         my $button = new QToolButton($self);
         $button.setToolTip($toolTip);
         $button.setIcon($icon);
@@ -198,8 +181,7 @@ class SortingBox inherits QWidget
         return $button;
     }
 
-    private initialItemPosition($path)
-    {
+    private initialItemPosition($path) {
         my $x;
         my $y = ($.height() - $path.controlPointRect().height()) / 2;
         if (!elements $.shapeItems)
@@ -211,79 +193,64 @@ class SortingBox inherits QWidget
         return new QPoint($x, $y);
     }
     
-    private randomItemPosition()
-    {
+    private randomItemPosition() {
         return new QPoint(qrand() % ($.width() - 120), qrand() % ($.height() - 120));
     }
     
-    private initialItemColor()
-    {
+    private initialItemColor() {
         return QColor::fromHsv((((elements $.shapeItems) + 1) * 85) % 256, 255, 190);
     }
     
-    private randomItemColor()
-    {
+    private randomItemColor() {
         return QColor::fromHsv(qrand() % 256, 255, 190);
     }
 }
 
-class ShapeItem 
-{
+class ShapeItem {
     private $.myPath, $.myPosition, $.myColor, $.myToolTip;
 
-    constructor()
-    {
+    constructor() {
         $.myPath = new QPainterPath();
         $.myPosition = new QPoint();
         $.myColor = new QColor();
         $.myToolTip = "";
     }
 
-    path()
-    {
+    path() {
         return $.myPath;
     }
 
-    position()
-    {
+    position() {
         return $.myPosition;
     }
 
-    color()
-    {
+    color() {
         return $.myColor;
     }
 
-    toolTip()
-    {
+    toolTip() {
         return $.myToolTip;
     }
 
-    setPath($path)
-    {
+    setPath($path) {
         $.myPath = $path;
     }
 
-    setToolTip($toolTip)
-    {
+    setToolTip($toolTip) {
         $.myToolTip = $toolTip;
     }
 
-    setPosition($position)
-    {
+    setPosition($position) {
         $.myPosition = $position;
     }
 
-    setColor($color)
-    {
+    setColor($color) {
         $.myColor = $color;
     }
 }
 
-class tooltips_example inherits QApplication
-{
-    constructor()
-    {
+class tooltips_example inherits QApplication {
+    constructor() {
         our $circle_count = 1;
         our $square_count = 1;
         our $triangle_count = 1;
@@ -291,8 +258,8 @@ class tooltips_example inherits QApplication
         our $dir = get_script_dir();
         
         qsrand(int(now() - get_midnight(now())));
-        my $sortingBox = new SortingBox();
-        $sortingBox.show();
+        $.sortingBox = new SortingBox();
+        $.sortingBox.show();
         $.exec();
     }
 }
