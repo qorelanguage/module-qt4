@@ -44,8 +44,7 @@ namespace TetrixPiece {
         );
 }
 
-class TetrixBoard::TetrixBoard inherits QFrame
-{
+class TetrixBoard::TetrixBoard inherits QFrame {
     private $.timer, $.nextPieceLabel, $.isStarted, $.isPaused, $.isWaitingAfterLine, 
             $.curPiece, $.nextPiece, $.curX, $.curY, $.numLinesRemoved, $.numPiecesDropped,
             $.score, $.level, $.board;

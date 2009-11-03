@@ -161,22 +161,8 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
         smc(n_smc),
         suppress_method(false) {
 
-    /*
-    // find last position with a value
-    if (qoreArgCnt) {
-       ConstListIterator li(params);
-       int lv = -1;
-       while (li.prev()) {
-      if (!is_nothing(li.getValue())) {
-         lv = li.index();
-         break;
-      }
-       }
-       qoreArgCnt = lv + 1;
-    }
-    */
+    //printd(0, "CommonQoreMethod::CommonQoreMethod() %s::%s() %d arg(s)\n", className, methodName, qoreArgCnt);
 
-//     printd(0, "CommonQoreMethod::CommonQoreMethod() %s %s arg(s): %d\n", className, methodName, qoreArgCnt);
     //qDebug() << "new method call" << className << "::" << methodName;
 
     // find "best fit" Qt method to call
@@ -861,10 +847,8 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                 const QoreObject *obj = reinterpret_cast<const QoreObject *>(v);
                 if (obj->getClass(QC_QWIDGET->getID())) {
                     p = static_cast<QPaintDevice *>(reinterpret_cast<QWidget *>(o));
-                    //printd(0, "o=%p p=%p d=0x%x\n", o, p, sizeof(QObject));
-                    //printd(0, "paintingActive=%d\n", p->paintingActive());
-                } else
-                    p = reinterpret_cast<QPaintDevice *>(o);
+		} else
+		    p = reinterpret_cast<QPaintDevice *>(o);
             }
             si.s_class = p;
 
