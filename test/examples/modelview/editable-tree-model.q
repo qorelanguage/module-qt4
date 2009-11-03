@@ -476,9 +476,9 @@ class TreeModel inherits QAbstractItemModel {
 
         my $item = $.getItem($index);
         my $result = $item.setData($index.column(), $value);
-        
+
         if ($result)
-            $.emit("dataChanged(const QModelIndex &, const QModelIndex &)");
+            $.emit("dataChanged(const QModelIndex &, const QModelIndex &)", $index, $index);
         
         return $result;
     }
@@ -490,7 +490,7 @@ class TreeModel inherits QAbstractItemModel {
         my $result = $.rootItem.setData($section, $value);
         
         if ($result)
-            $.emit("headerDataChanged(int, int, int)");
+            $.emit("headerDataChanged(Qt::Orientation, int, int)", $orientation, $section, $section);
         
         return $result;
     }
