@@ -103,6 +103,45 @@ static void add_candidates(QoreStringNode &str, const char * cname, const char *
     }    
 }
 
+CommonQoreMethod::CommonQoreMethod(const char *cname, const char *mname)
+   : Stack(0),
+     m_className(cname),
+     m_methodName(mname),
+     m_xsink(0),
+     m_valid(false),
+     qoreArgCnt(0),
+     ref_store(0),
+     vl(0),
+     tparams(0),
+     self(0),
+     smc(0),
+     suppress_method(false) {
+
+    ClassMap::MungledToTypes *mMap = ClassMap::Instance()->availableMethods(cname, mname);
+
+    foreach (QByteArray name, mMap->keys()) {
+        foreach (ClassMap::TypeHandler th, mMap->values(name)) {
+	   if (!th.types.count()) {
+	      m_munged = name;
+	      type_handler = th;
+	      break;
+	   }
+	}
+	if (m_munged.size())
+	   break;
+    }
+
+    assert(m_munged.size());
+
+    m_valid = true;
+
+    m_method = qt_Smoke->methods[type_handler.method];
+    //printd(0, "CommonQoreMethod::method() '%s' method=%d (%s)\n", m_munged.data(), type_handler.method, qt_Smoke->methodNames[m_method.name]);
+
+    // Create a Smoke stack for return value
+    Stack = new Smoke::StackItem[1];
+}
+
 CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
                                    QoreSmokePrivate *n_smc,
                                    const char* className,
@@ -121,6 +160,7 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
         self(n_self),
         smc(n_smc),
         suppress_method(false) {
+
     /*
     // find last position with a value
     if (qoreArgCnt) {
@@ -147,7 +187,7 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
     foreach (QByteArray name, mMap->keys()) {
         // HACK: this uniqueList check is necessary to
         // reduce duplications. TODO/FIXME: operator == in TypeHandler?
-        // this shoudl simulate "single instance map" in multimap
+        // this should simulate "single instance map" in multimap
         if (uniqueList.contains(name))
             continue;
         uniqueList.append(name);

@@ -192,19 +192,37 @@ void QoreQtDynamicMethod::qtToQore(const Smoke::Type &t, void *arg, QoreListNode
 
 }
 
-void QoreQtDynamicMethod::qoreToQt(const Smoke::Type &qtType, Smoke::StackItem &si, void *&ptr, void *&save, const AbstractQoreNode *val) {
+static void doDefaultValue(const Smoke::Type &t, Smoke::StackItem &si, ExceptionSink *xsink) {
+#ifdef DEBUG
+   int tid = t.flags & Smoke::tf_elem;
+   int flags = t.flags & 0x30;
+   //bool iconst = t.flags & Smoke::tf_const;
+
+   //printd(0, "qtType.flags=%x const=%d tid=%d name=%s\n", flags, iconst, tid, t.name);
+
+   assert(tid == Smoke::t_class);
+   assert(flags == Smoke::tf_stack);
+#endif
+
+   // find and execute constructor
+   CommonQoreMethod cqm(0, 0, t.name, t.name, 0, xsink);
+
+   si.s_class = cqm.callConstructor();
+}
+
+void QoreQtDynamicMethod::qoreToQt(ExceptionSink *xsink, const Smoke::Type &qtType, Smoke::StackItem &si, void *&ptr, void *&save, const AbstractQoreNode *val, const char *cname, const char *mname, int index, bool value_required) {
     save = 0;
     ptr = 0;
 //     printd(0, "qoreToQt() ptr=%p save=%p, val=%p (%s) typename=%s\n", ptr, save, val, val ? val->getTypeName() : "n/a", qtType.name);
 
-    ExceptionSink xsink;
-
-    QByteArray bname(qtType.name);
-    const char * cname = (bname.startsWith("QString")) ? "QString" : qt_Smoke->classes[qtType.classId].className;
-    const char * mname = "//unspecified//";
-    if (CommonQoreMethod::qoreToStackStatic(&xsink, si, cname, mname, qtType, val) == -1) {
-        xsink.handleExceptions();
-        assert(0);
+    //QByteArray bname(qtType.name);
+    if (CommonQoreMethod::qoreToStackStatic(xsink, si, cname, mname, qtType, val, index) == -1) {
+       
+       // setup default value on stack if required (ex: slot return value), otherwise return
+       if (value_required)
+	  doDefaultValue(qtType, si, xsink);
+       else
+	  return;
     }
 
     switch (qtType.flags & Smoke::tf_elem) {
@@ -256,14 +274,13 @@ void QoreQtDynamicMethod::qoreToQt(const Smoke::Type &qtType, Smoke::StackItem &
     ptr = save;
 }
 
-void QoreQtDynamicMethod::qoreToQtDirect(const Smoke::Type &qtType, void *&ptr, const AbstractQoreNode *val) {
+void QoreQtDynamicMethod::qoreToQtDirect(const Smoke::Type &qtType, void *&ptr, const AbstractQoreNode *val, const char *cname, const char *mname) {
     //printd(0, "qoreToQtDirect() ptr=%p val=%p (%s)\n", ptr, val, val ? val->getTypeName() : "n/a");
     void * save;
     Smoke::StackItem si;
-    qoreToQt(qtType, si, ptr, save, val);
+    ExceptionSink xsink;
+    qoreToQt(&xsink, qtType, si, ptr, save, val, cname, mname, -1, true);
 }
-
-
 
 QoreQtDynamicSlot::QoreQtDynamicSlot(const QoreObject *qo, const QoreMethod *meth, const char *sig, ExceptionSink *xsink) : qore_obj(const_cast<QoreObject *>(qo)), method(meth) {
     returnType.name = 0;
@@ -293,7 +310,7 @@ void QoreQtDynamicSlot::call(QoreObject *self, void **arguments) const {
 
     // process return value
     if (returnType.name)
-        qoreToQtDirect(returnType, arguments[0], *rv);
+        qoreToQtDirect(returnType, arguments[0], *rv, qore_obj->getClassName(), method->getName());
 }
 
 QoreQtDynamicSignal::QoreQtDynamicSignal(const char *sig, ExceptionSink *xsink) {
@@ -308,7 +325,7 @@ QoreQtDynamicSignal::QoreQtDynamicSignal(const char *sig, ExceptionSink *xsink) 
     identifyAndAddTypes(sig, p, xsink);
 }
 
-void QoreQtDynamicSignal::emitSignal(QObject *obj, int id, const QoreListNode *args) {
+void QoreQtDynamicSignal::emitSignal(QObject *obj, int id, const QoreListNode *args, ExceptionSink *xsink) {
     int num_args = typeList.size();
     void *sig_args[num_args + 1];
     void *save_args[num_args];
@@ -322,7 +339,9 @@ void QoreQtDynamicSignal::emitSignal(QObject *obj, int id, const QoreListNode *a
         // get argument QoreNode
         const AbstractQoreNode *n = args ? args->retrieve_entry(i + 1) : 0;
 
-        qoreToQt(typeList[i], si[i], sig_args[i + 1], save_args[i], n);
+        qoreToQt(xsink, typeList[i], si[i], sig_args[i + 1], save_args[i], n, "QObject", "emit", i + 1);
+	if (*xsink)
+	   return;
     }
     QMetaObject::activate(obj, id, id, sig_args);
 

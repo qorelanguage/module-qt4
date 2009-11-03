@@ -347,6 +347,11 @@ public:
                      const char* methodName,
                      const QoreListNode* params,
                      ExceptionSink *xsink);
+
+    // variant for constructing default objects with no arguments,
+    // for example, to return to qt code
+    CommonQoreMethod(const char *cName, const char *mName);
+
     ~CommonQoreMethod();
 
     DLLLOCAL QoreObject *getQoreObject() {

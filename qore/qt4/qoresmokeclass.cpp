@@ -624,7 +624,9 @@ void emitStaticSignal(QObject *sender, int signalId, const QMetaMethod &qmm, con
         QoreQtDynamicMethod::addType(tlist, params[i].data(), params[i].size(), qmm.signature(), xsink);
         if (*xsink)
             return;
-        QoreQtDynamicMethod::qoreToQt(tlist[i], si[i], sig_args[i + 1], save_args[i], n);
+        QoreQtDynamicMethod::qoreToQt(xsink, tlist[i], si[i], sig_args[i + 1], save_args[i], n, "QObject", "emit", i + 1);
+	if (*xsink)
+	   return;
     }
 
     QMetaObject::activate(sender, signalId, signalId, sig_args);

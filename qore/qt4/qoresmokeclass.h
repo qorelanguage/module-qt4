@@ -271,7 +271,7 @@ public:
             }
             //printd(0, "emitSignal(%s, %p) dynamic signal %d\n", sig, args, signalId);
             QoreQtDynamicSignal *sp = reinterpret_cast<QoreQtDynamicSignal *>(methodList[signalId]);
-            sp->emitSignal(m_qobject, signalId + mo->methodCount(), args);
+            sp->emitSignal(m_qobject, signalId + mo->methodCount(), args, xsink);
         }
     }
 

@@ -111,10 +111,10 @@ public:
 
     DLLLOCAL static void qtToQore(const Smoke::Type &t, void *arg, QoreListNode *args);
 
-    DLLLOCAL static void qoreToQt(const Smoke::Type &qtType, Smoke::StackItem &si,
-                                  void *&ptr, void *&save, const AbstractQoreNode *val);
+    DLLLOCAL static void qoreToQt(ExceptionSink *xsink, const Smoke::Type &qtType, Smoke::StackItem &si,
+                                  void *&ptr, void *&save, const AbstractQoreNode *val, const char *cname, const char *mname, int index = -1, bool value_required = false);
 
-    DLLLOCAL static void qoreToQtDirect(const Smoke::Type &qtType, void *&ptr, const AbstractQoreNode *val);
+    DLLLOCAL static void qoreToQtDirect(const Smoke::Type &qtType, void *&ptr, const AbstractQoreNode *val, const char *cname, const char *mname);
 
     DLLLOCAL static void cleanup(const Smoke::Type &qtType, void *save) {
     }
@@ -157,7 +157,7 @@ public:
         return false;
     }
 
-    DLLLOCAL void emitSignal(QObject *obj, int id, const QoreListNode *args);
+    DLLLOCAL void emitSignal(QObject *obj, int id, const QoreListNode *args, ExceptionSink *xsink);
 };
 
 typedef std::vector<QoreQtDynamicMethod *> qore_qt_method_list_t;
