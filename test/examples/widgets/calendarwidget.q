@@ -13,10 +13,8 @@
 # enable all parse warnings
 %enable-all-warnings
 
-class Window inherits QWidget
-{
-    constructor()
-    {
+class Window inherits QWidget {
+    constructor() {
         $.createPreviewGroupBox();
         $.createGeneralOptionsGroupBox();
         $.createDatesGroupBox();
@@ -37,51 +35,43 @@ class Window inherits QWidget
     }
 
     localeChanged($index) {
-	$.calendar.setLocale($.localeCombo.itemData($index));
+	$.calendar.setLocale($.localeCombo.itemData($index).toQore());
     }
 
-    firstDayChanged($index)
-    {
-        $.calendar.setFirstDayOfWeek($.firstDayCombo.itemData($index));
+    firstDayChanged($index) {
+        $.calendar.setFirstDayOfWeek($.firstDayCombo.itemData($index).toQore());
     }
 
-    selectionModeChanged($index)
-    {
-        $.calendar.setSelectionMode($.selectionModeCombo.itemData($index));
+    selectionModeChanged($index) {
+        $.calendar.setSelectionMode($.selectionModeCombo.itemData($index).toQore());
     }
 
-    horizontalHeaderChanged($index)
-    {
-        $.calendar.setHorizontalHeaderFormat($.horizontalHeaderCombo.itemData($index));
+    horizontalHeaderChanged($index) {
+        $.calendar.setHorizontalHeaderFormat($.horizontalHeaderCombo.itemData($index).toQore());
     }
 
-    verticalHeaderChanged($index)
-    {
-        $.calendar.setVerticalHeaderFormat($.verticalHeaderCombo.itemData($index));
+    verticalHeaderChanged($index) {
+        $.calendar.setVerticalHeaderFormat($.verticalHeaderCombo.itemData($index).toQore());
     }
 
-    selectedDateChanged()
-    {
+    selectedDateChanged() {
         $.currentDateEdit.setDate($.calendar.selectedDate());
     }
 
-    minimumDateChanged($date)
-    {
+    minimumDateChanged($date) {
         $.calendar.setMinimumDate($date);
         $.maximumDateEdit.setDate($.calendar.maximumDate());
     }
 
-    maximumDateChanged($date)
-    {
+    maximumDateChanged($date) {
         $.calendar.setMaximumDate($date);
         $.minimumDateEdit.setDate($.calendar.minimumDate());
     }
 
-    weekdayFormatChanged()
-    {
+    weekdayFormatChanged() {
         my $format = new QTextCharFormat();
         
-        $format.setForeground(new QBrush($.weekdayColorCombo.itemData($.weekdayColorCombo.currentIndex())));
+        $format.setForeground(new QBrush($.weekdayColorCombo.itemData($.weekdayColorCombo.currentIndex()).toQore()));
         $.calendar.setWeekdayTextFormat(Qt::Monday, $format);
         $.calendar.setWeekdayTextFormat(Qt::Tuesday, $format);
         $.calendar.setWeekdayTextFormat(Qt::Wednesday, $format);
@@ -89,17 +79,15 @@ class Window inherits QWidget
         $.calendar.setWeekdayTextFormat(Qt::Friday, $format);
     }
 
-    weekendFormatChanged()
-    {
+    weekendFormatChanged() {
         my $format = new QTextCharFormat();
         
-        $format.setForeground(new QBrush($.weekendColorCombo.itemData($.weekendColorCombo.currentIndex())));
+        $format.setForeground(new QBrush($.weekendColorCombo.itemData($.weekendColorCombo.currentIndex()).toQore()));
         $.calendar.setWeekdayTextFormat(Qt::Saturday, $format);
         $.calendar.setWeekdayTextFormat(Qt::Sunday, $format);
     }
 
-    reformatHeaders()
-    {
+    reformatHeaders() {
         my $text = $.headerTextFormatCombo.currentText();
         my $format = new QTextCharFormat();
         
@@ -114,8 +102,7 @@ class Window inherits QWidget
         $.calendar.setHeaderTextFormat($format);
     }
 
-    reformatCalendarPage()
-    {
+    reformatCalendarPage() {
         my $mayFirstFormat = new QTextCharFormat();
         if ($.mayFirstCheckBox.isChecked())
             $mayFirstFormat.setForeground(Qt::red);
@@ -134,8 +121,7 @@ class Window inherits QWidget
         $.calendar.setDateTextFormat($date, $firstFridayFormat);
     }
 
-    createPreviewGroupBox()
-    {
+    createPreviewGroupBox() {
         $.previewGroupBox = new QGroupBox($.tr("Preview"));
         
         $.calendar = new QCalendarWidget();
@@ -150,8 +136,7 @@ class Window inherits QWidget
         $.previewGroupBox.setLayout($.previewLayout);
     }
 
-    createGeneralOptionsGroupBox()
-    {
+    createGeneralOptionsGroupBox() {
         $.generalOptionsGroupBox = new QGroupBox($.tr("General Options"));
         
         $.localeCombo = new QComboBox();
@@ -217,7 +202,7 @@ class Window inherits QWidget
         $.verticalHeaderLabel = new QLabel($.tr("&Vertical header:"));
         $.verticalHeaderLabel.setBuddy($.verticalHeaderCombo);
         
-        $.connect($.localeCombo,                 SIGNAL("currentIndexChanged(int)"), SLOT("localeChanged(int)"));
+	$.connect($.localeCombo,                 SIGNAL("currentIndexChanged(int)"), SLOT("localeChanged(int)"));
         $.connect($.firstDayCombo,               SIGNAL("currentIndexChanged(int)"), SLOT("firstDayChanged(int)"));
         $.connect($.selectionModeCombo,          SIGNAL("currentIndexChanged(int)"), SLOT("selectionModeChanged(int)"));
         $.calendar.connect($.gridCheckBox,       SIGNAL("toggled(bool)"),            SLOT("setGridVisible(bool)"));
@@ -250,8 +235,7 @@ class Window inherits QWidget
         $.verticalHeaderChanged($.verticalHeaderCombo.currentIndex());
     }
 
-    createDatesGroupBox()
-    {
+    createDatesGroupBox() {
         $.datesGroupBox = new QGroupBox($.tr("Dates"));
         
         $.minimumDateEdit = new QDateEdit();
@@ -292,8 +276,7 @@ class Window inherits QWidget
         $.datesGroupBox.setLayout($dateBoxLayout);
     }
 
-    createTextFormatsGroupBox()
-    {
+    createTextFormatsGroupBox() {
         $.textFormatsGroupBox = new QGroupBox($.tr("Text Formats"));
         
         $.weekdayColorCombo = $.createColorComboBox();
@@ -347,8 +330,7 @@ class Window inherits QWidget
         $.reformatCalendarPage();
     }
 
-    createColorComboBox()
-    {
+    createColorComboBox() {
         my $comboBox = new QComboBox();
         $comboBox.addItem($.tr("Red"), Qt::red);
         $comboBox.addItem($.tr("Blue"), Qt::blue);
@@ -358,10 +340,8 @@ class Window inherits QWidget
     }
 }
 
-class calendarwidget_example inherits QApplication
-{
-    constructor()
-    {
+class calendarwidget_example inherits QApplication {
+    constructor() {
         my $window = new Window();
         $window.show();
         $.exec();

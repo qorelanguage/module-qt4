@@ -15,16 +15,14 @@
 # enable all parse warnings
 %enable-all-warnings
 
-class Window inherits QWidget
-{
+class Window inherits QWidget {
     private $.iconGroupBox, $.iconLabel, $.iconComboBox, $.showIconCheckBox,
     $.messageGroupBox, $.typeLabel, $.durationLabel, $.durationWarningLabel,
     $.titleLabel, $.bodyLabel, $.typeComboBox, $.durationSpinBox, $.titleEdit,
     $.bodyEdit, $.showMessageButton, $.minimizeAction, $.maximizeAction, 
     $.restoreAction, $.quitAction, $.trayIcon, $.trayIconMenu;
 
-    constructor()
-    {
+    constructor() {
         $.createIconGroupBox();
         $.createMessageGroupBox();
 
@@ -51,16 +49,14 @@ class Window inherits QWidget
         $.resize(400, 300);
     }
 
-    setVisible($visible)
-    {
+    setVisible($visible) {
         $.minimizeAction.setEnabled($visible);
         $.maximizeAction.setEnabled(!$.isMaximized());
         $.restoreAction.setEnabled($.isMaximized() || !$visible);
         QWidget::$.setVisible($visible);
     }
 
-    closeEvent($event)
-    {
+    closeEvent($event) {
         if ($.trayIcon.isVisible()) {
             QMessageBox::information($self, $.tr("Systray"),
                                     $.tr("The program will keep running in the "
@@ -72,8 +68,7 @@ class Window inherits QWidget
         }
     }
 
-    private setIcon($index)
-    {
+    private setIcon($index) {
         my $icon = $.iconComboBox.itemIcon($index);
         $.trayIcon.setIcon($icon);
         $.setWindowIcon($icon);
@@ -81,8 +76,7 @@ class Window inherits QWidget
         $.trayIcon.setToolTip($.iconComboBox.itemText($index));
     }
 
-    private iconActivated($reason)
-    {
+    private iconActivated($reason) {
         switch ($reason) {
             case QSystemTrayIcon::Trigger:
             case QSystemTrayIcon::DoubleClick: {
@@ -98,22 +92,19 @@ class Window inherits QWidget
         }
     }
 
-    private showMessage()
-    {
-        my $icon = $.typeComboBox.itemData($.typeComboBox.currentIndex());
+    private showMessage() {
+        my $icon = $.typeComboBox.itemData($.typeComboBox.currentIndex()).toQore();
         $.trayIcon.showMessage($.titleEdit.text(), $.bodyEdit.toPlainText(), $icon,
                                $.durationSpinBox.value() * 1000);
     }
 
-    private messageClicked()
-    {
+    private messageClicked() {
         QMessageBox::information(NOTHING, $.tr("Systray"),
                                 $.tr("Sorry, I already gave what help I could.\n"
                                    "Maybe you should try asking a human?"));
     }
 
-    private createIconGroupBox()
-    {
+    private createIconGroupBox() {
         $.iconGroupBox = new QGroupBox($.tr("Tray Icon"));
 
         $.iconLabel = new QLabel("Icon:");
@@ -134,8 +125,7 @@ class Window inherits QWidget
         $.iconGroupBox.setLayout($iconLayout);
     }
 
-    private createMessageGroupBox()
-    {
+    private createMessageGroupBox() {
         $.messageGroupBox = new QGroupBox($.tr("Balloon Message"));
 
         $.typeLabel = new QLabel($.tr("Type:"));
@@ -190,8 +180,7 @@ class Window inherits QWidget
         $.messageGroupBox.setLayout($messageLayout);
     }
 
-    private createActions()
-    {
+    private createActions() {
         $.minimizeAction = new QAction($.tr("Mi&nimize"), $self);
         $.connect($.minimizeAction, SIGNAL("triggered()"), SLOT("hide()"));
 
@@ -205,8 +194,7 @@ class Window inherits QWidget
         qApp().connect($.quitAction, SIGNAL("triggered()"), SLOT("quit()"));
     }
 
-    private createTrayIcon()
-    {
+    private createTrayIcon() {
         $.trayIconMenu = new QMenu($self);
         $.trayIconMenu.addAction($.minimizeAction);
         $.trayIconMenu.addAction($.maximizeAction);
@@ -219,10 +207,8 @@ class Window inherits QWidget
     }
 }
 
-class systray_example inherits QApplication
-{
-    constructor()
-    {
+class systray_example inherits QApplication {
+    constructor() {
         our $dir = get_script_dir();
 
         if (!QSystemTrayIcon::isSystemTrayAvailable()) {

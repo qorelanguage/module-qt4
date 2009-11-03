@@ -48,6 +48,7 @@
 #include <QFontDatabase>
 #include <QWizard>
 #include <QLayoutItem>
+#include <QIcon>
 // #include <>
 
 #include "qoresmokeclass.h"
@@ -541,14 +542,29 @@ QoreQVariant *qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * nod
             void *o = p->object();
             ret->qvariant = o ? QVariant(*(reinterpret_cast<QLocale *>(o))) : QVariant();
         } else {
-            // check for QVariant
-            p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QVARIANT->getID(), xsink));
-            if (*xsink) {
-                ret->status = QoreQVariant::Invalid;
-                return 0;
-            }
-            ret->qvariant = p && p->object() ? QVariant( *(QVariant*)(p->object()) ) : QVariant();
-        }
+	    // check for QIcon
+            p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QICON->getID(), xsink));
+	    if (*xsink) {
+	       ret->status = QoreQVariant::Invalid;
+	       return 0;
+	    }
+	    if (p) {
+	       // only call this once because it's a virtual call (slow)
+	       void *o = p->object();
+	       ret->qvariant = o ? QVariant(*(reinterpret_cast<QIcon *>(o))) : QVariant();
+	       
+	       // note: when adding checks for other classes -> QVariant, must add in qoreToQVariant() as well
+	    }
+	    else {
+	       // check for QVariant
+	       p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QVARIANT->getID(), xsink));
+	       if (*xsink) {
+		  ret->status = QoreQVariant::Invalid;
+		  return 0;
+	       }
+	       ret->qvariant = p && p->object() ? QVariant( *(QVariant*)(p->object()) ) : QVariant();
+	    }
+	}
         ret->status = QoreQVariant::RealQVariant;
         break;
     }
@@ -576,13 +592,17 @@ QoreQVariant::Status qoreToQVariantScore(const Smoke::Type & t, const AbstractQo
     case NT_OBJECT: {
         const QoreObject *obj = reinterpret_cast<const QoreObject *>(node);
         
-        QoreSmokePrivateData * p = dynamic_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QVARIANT->getID(), xsink));
-        if (*xsink) {
-            return QoreQVariant::Invalid;
-        }
-        if (p) {
-            return QoreQVariant::RealQVariant;
-        }
+	if (obj->getClass(QC_QVARIANT->getID()))
+	   return QoreQVariant::RealQVariant;
+
+	if (obj->getClass(QC_QLOCALE->getID()))
+	   return QoreQVariant::Valid;
+	
+	if (obj->getClass(QC_QICON->getID()))
+	   return QoreQVariant::Valid;
+	
+	// note: when adding checks for other classes -> QVariant, must add in qoreToQVariant() as well
+
         return QoreQVariant::Invalid;
         break;
     }
@@ -663,6 +683,8 @@ AbstractQoreNode *return_qvariant(const QoreMethod &method,
         return new QoreBigIntNode((int64)qv.toULongLong());
     case QVariant::Locale:
         return createQoreObjectFromNonQObject(QC_QLOCALE, SCI_QLOCALE, new QLocale(qv.toLocale()));
+    case QVariant::Icon:
+        return createQoreObjectFromNonQObject(QC_QICON, SCI_QICON, new QIcon(qVariantValue<QIcon>(qv)));
 
         // FIXME: implement all conversions
     case QVariant::Char:
@@ -690,7 +712,6 @@ AbstractQoreNode *return_qvariant(const QoreMethod &method,
     case QVariant::Brush:
     case QVariant::Color:
     case QVariant::Palette:
-    case QVariant::Icon:
     case QVariant::Image:
     case QVariant::Polygon:
     case QVariant::Region:

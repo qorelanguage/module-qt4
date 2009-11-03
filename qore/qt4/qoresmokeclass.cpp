@@ -540,7 +540,10 @@ AbstractQoreNode * common_method(const QoreMethod &method,
     CommonQoreMethod cqm(self, smc, className, methodName, params, xsink);
 
     Q_ASSERT_X(smc!=0, "cast", "cannot get QoreSmokeClass from QoreObject");
-    Q_ASSERT_X(smc->object()!=0, "cast", "cannot get an object from QoreSmokeClass");
+#ifdef DEBUG
+    if (!smc->object()) printd(0, "QT Object not availble when calling %s::%s()\n", className, methodName);
+#endif
+    Q_ASSERT_X(smc->object()!=0, "cast", "QoreSmokePrivate::object() returned 0");
 // if (QByteArray(methodName) == "setColumnWidths") assert(0);
     return cqm.callMethod();
 }

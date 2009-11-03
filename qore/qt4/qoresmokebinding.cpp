@@ -152,7 +152,7 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
     assert(o->isValid());
 
     if (!strcmp(mname, "qt_metacall")) {
-        //printd(0, "QoreSmokeBinding::callMethod() className: %s::%s obj: %p\n", cname, mname, obj);
+       //printd(0, "QoreSmokeBinding::callMethod() className: %s::%s obj: %p\n", cname, mname, obj);
 
         // get the QoreSmokePrivate info
         ReferenceHolder<QoreSmokePrivateQObjectData> qsp(reinterpret_cast<QoreSmokePrivateQObjectData *>(o->getReferencedPrivateData(QC_QOBJECT->getID(), &xsink)), &xsink);

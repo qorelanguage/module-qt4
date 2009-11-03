@@ -36,10 +36,10 @@
 #define QORESMOKEPROPERTY "qoreptr"
 
 extern const QoreClass *QC_QOBJECT, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT,
-*QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME;
+   *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME, *QC_QICON;
 
 extern Smoke::ModuleIndex SMI_QOBJECT;
-extern Smoke::Index SCI_QVARIANT, SCI_QLOCALE;
+extern Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON;
 
 DLLLOCAL QoreObject *getQoreQObject(const QObject *obj);
 DLLLOCAL QoreObject *getQoreObject(Smoke::Index classId, void *obj, QoreClass *&qc);
