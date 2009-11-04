@@ -33,6 +33,49 @@ IF (QORE_LIBRARY AND QORE_INCLUDE_DIR)
 ENDIF (QORE_LIBRARY AND QORE_INCLUDE_DIR)
 
 
+IF (QORE_MIN_VERSION)
+    #now parse the parts of the user given version string into variables
+    # qore version is taken from qore executable - format major.minor.patch-build
+    STRING(REGEX MATCH "^[0-9]+\\.[0-9]+\\.[0-9]+" req_qore_version "${QORE_MIN_VERSION}")
+    IF (NOT req_qore_version)
+        MESSAGE( FATAL_ERROR "Invalid Qore version string given: \"${QORE_MIN_VERSION}\", expected e.g. \"0.7.3\"")
+    ENDIF (NOT req_qore_version)
+
+    # now parse the parts of the user given version string into variables
+    STRING(REGEX REPLACE "^([0-9]+)\\.[0-9]+\\.[0-9]+" "\\1" req_qore_major_v "${QORE_MIN_VERSION}")
+    STRING(REGEX REPLACE "^[0-9]+\\.([0-9])+\\.[0-9]+" "\\1" req_qore_minor_v "${QORE_MIN_VERSION}")
+    STRING(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" req_qore_patch_v "${QORE_MIN_VERSION}")
+
+    # get Qore version form 'qore --short-version' command
+    FIND_PROGRAM(QORE_EXECUTABLE NAMES qore DOC "Searching for qore executable")
+    IF (NOT QORE_EXECUTABLE)
+        MESSAGE( FATAL_ERROR "Cannot find 'qore' executable. Check if it's in your PATH" )
+    ENDIF (NOT QORE_EXECUTABLE)
+    EXEC_PROGRAM(${QORE_EXECUTABLE} ARGS "--short-version" OUTPUT_VARIABLE QORE_VERSION)
+    IF (NOT QORE_VERSION)
+        MESSAGE( FATAL_ERROR "Unknown Qore version. No data taken from 'qore --short-version'" )
+    ELSE (NOT QORE_VERSION)
+        MESSAGE( STATUS "Qore version: ${QORE_VERSION}" )
+    ENDIF (NOT QORE_VERSION)
+
+    # compare requested version with the one found
+    STRING(REGEX REPLACE "^([0-9]+)\\.[0-9]+\\.[0-9]+\\-[0-9]+" "\\1" qore_major_v "${QORE_VERSION}")
+    STRING(REGEX REPLACE "^[0-9]+\\.([0-9])+\\.[0-9]+\\-[0-9]+" "\\1" qore_minor_v "${QORE_VERSION}")
+    STRING(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+)\\-[0-9]+" "\\1" qore_patch_v "${QORE_VERSION}")
+    # compute an overall version number which can be compared at once
+    MATH(EXPR req_v "${req_qore_major_v}*10000 + ${req_qore_minor_v}*100 + ${req_qore_patch_v}")
+    MATH(EXPR found_v "${qore_major_v}*10000 + ${qore_minor_v}*100 + ${qore_patch_v}")
+    #MESSAGE (STATUS "${req_qore_major_v} ${req_qore_minor_v} ${req_qore_patch_v}")
+    #MESSAGE (STATUS "${qore_major_v} ${qore_minor_v} ${qore_patch_v}")
+    # and decide finally
+    IF (found_v LESS req_v)
+        SET (QORE_FOUND FALSE)
+        MESSAGE (STATUS "Requested Qore version is bigger than found. ${QORE_MIN_VERSION} vs ${QORE_VERSION}" )
+    ENDIF (found_v LESS req_v)
+
+ENDIF (QORE_MIN_VERSION)
+
+
 IF (QORE_FOUND)
     MESSAGE(STATUS "Found Qore lib: ${QORE_LIBRARY}")
     MESSAGE(STATUS "      includes: ${QORE_INCLUDE_DIR}")
