@@ -32,12 +32,13 @@
 
 #include <QtDebug>
 #include <QHash>
+#include <QWidget>
 
 #define QORESMOKEPROPERTY "qoreptr"
 
 extern const QoreClass *QC_QOBJECT, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT,
    *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME, *QC_QICON,
-   *QC_QPIXMAP;
+   *QC_QPIXMAP, *QC_QAPPLICATION;
 
 extern Smoke::ModuleIndex SMI_QOBJECT;
 extern Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON;
@@ -98,6 +99,41 @@ public:
 };
 
 DLLLOCAL extern QtQoreMap qt_qore_map;
+
+// set of all QWidgets without parents (= windows) that must be deleted
+// before QApplication, otherwise a crash will result
+class QoreWidgetManager {
+private:
+   typedef std::set<QWidget *> widget_set_t;
+   DLLLOCAL widget_set_t widget_set;
+   DLLLOCAL QoreThreadLock l;   
+   bool done;
+
+public:
+   DLLLOCAL QoreWidgetManager() : done(false) {}
+   DLLLOCAL ~QoreWidgetManager() {}
+   DLLLOCAL void add(QWidget *w) {
+      assert(!done);
+      AutoLocker al(l);
+      if (widget_set.find(w) == widget_set.end())
+	 widget_set.insert(w);
+   }
+   DLLLOCAL void remove(QWidget *w) {
+      if (done)
+	 return;
+      AutoLocker al(l);
+      widget_set.erase(w);
+   }
+   DLLLOCAL void deleteAll() {
+      done = true;
+      for (widget_set_t::iterator i = widget_set.begin(), e = widget_set.end(); i != e; ++i) {
+	 if (!(*i)->parent())
+	    delete *i;
+      }
+   }
+};
+
+DLLLOCAL extern QoreWidgetManager QWM;
 
 static inline QoreObject *getQoreMappedObject(void *p) {
     return qt_qore_map.get(p);

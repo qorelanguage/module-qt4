@@ -39,6 +39,10 @@ extern Smoke* qt_Smoke;
 
 QtQoreMap qt_qore_map;
 
+// set of all QWidgets without parents (= windows) that must be deleted
+// before QApplication, otherwise a crash will result
+QoreWidgetManager QWM;
+
 ClassNamesMap* ClassNamesMap::m_instance = NULL;
 ClassMap * ClassMap::m_instance = NULL;
 
@@ -490,9 +494,9 @@ void common_constructor(const QoreClass &myclass, QoreObject *self,
     }
     assert(!*xsink);
 
-//     printd(0, "common_constructor() %s set up constructor call, calling constuctor method %d\n", className, cqm.method().method);
+    //printd(0, "common_constructor() %s set up constructor call, calling constuctor method %d\n", className, cqm.method().method);
     void *qtObj = cqm.callConstructor();
-//     printd(0, "common_constructor() %s setting up internal object\n", className);
+    //printd(0, "common_constructor() %s setting up internal object\n", className);
 
     // Setup internal object
     QoreSmokePrivate *obj;
@@ -571,13 +575,15 @@ void common_destructor(const QoreClass &thisclass, QoreObject *self, AbstractPri
 
     QoreSmokePrivate *p = reinterpret_cast<QoreSmokePrivate*>(private_data);
 
-    if (!p->object()) {
+    void *pobj = p->object();
+
+    if (!pobj) {
         //printd(0, "common_destructor (WW) QoreSmokePrivate's Qt object does not exist anymore\n");
         return;
     }
 
-    if (thisclass.getClass(QC_QOBJECT->getID())) {
-        QObject * qtObj = reinterpret_cast<QObject*>(p->object());
+    if (p->isQObject()) {
+        QObject * qtObj = reinterpret_cast<QObject*>(pobj);
         // set property to 0 because QoreObject is being deleted
         {
             QoreQtVirtualFlagHelper vfh;
@@ -585,18 +591,28 @@ void common_destructor(const QoreClass &thisclass, QoreObject *self, AbstractPri
         }
 
         if (qtObj->parent()) {
-            //printd(0, "common_destructor() %s::destructor() object %p not deleted; has parent\n", thisclass.getName(), qtObj);
+	   //printd(0, "common_destructor() %s::destructor() object %p not deleted; has parent\n", thisclass.getName(), qtObj);
             // clear the private data
             p->clear();
             return;
         }
+	else if (qtObj->isWidgetType()) {
+	   // delete from QoreWidgetManager
+	   QWM.remove(reinterpret_cast<QWidget*>(qtObj));
+	}
     }
 
     if (p->externallyOwned()) {
-        //printd(0, "common_destructor() %s::destructor(): QT object %p is externally owned\n", thisclass.getName(), p->object());
+       //printd(0, "common_destructor() %s::destructor(): QT object %p is externally owned\n", thisclass.getName(), p->object());
         p->clear();
         return;
     }
+
+    // if the QApplication object is being deleted, then delete all QWidget objects that still exist
+    // because the QApplication destructor will free windowing resources and subsequently deleting
+    // any QWidget objects will cause a crash
+    if (&thisclass == QC_QAPPLICATION)
+       QWM.deleteAll();
 
     const char * className = qt_Smoke->classes[p->smokeClass()].className;
     QByteArray methodName("~");

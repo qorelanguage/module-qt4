@@ -59,7 +59,7 @@ DLLEXPORT qore_license_t qore_module_license = QL_GPL;
 
 const QoreClass *QC_QOBJECT = 0, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT,
    *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME, *QC_QICON,
-   *QC_QPIXMAP;
+   *QC_QPIXMAP, *QC_QAPPLICATION;
 
 Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON;
 
@@ -226,6 +226,19 @@ static AbstractQoreNode *rv_handler_internalPointer(QoreObject *self, Smoke::Typ
         return 0;
 
     return c->isQoreData(Stack.s_voidp);
+}
+
+static AbstractQoreNode *rv_handler_QWidget_setParent(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+   QWidget *qw = reinterpret_cast<QWidget *>(cqm.getPrivateData()->object());
+   if (!qw)
+      return 0;
+
+   if (qw->parent())
+      QWM.remove(qw);
+   else
+      QWM.add(qw);
+
+   return 0;
 }
 
 static AbstractQoreNode *rv_handler_QAbstractItemView_reset(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
@@ -466,6 +479,7 @@ static QoreStringNode *qt_module_init() {
     setClassInfo(QC_QTIME, "QTime");
     setClassInfo(QC_QICON, SCI_QICON, "QIcon");
     setClassInfo(QC_QPIXMAP, "QPixmap");
+    setClassInfo(QC_QAPPLICATION, "QApplication");
 
     // add alternate method argument handlers
     ClassMap &cm = *(ClassMap::Instance());
@@ -528,6 +542,7 @@ static QoreStringNode *qt_module_init() {
 
     // add return value handlers
     cm.setRVHandler("QLayoutItem", "spacerItem", "spacerItem", rv_handler_spacer_item);
+    cm.setRVHandler("QWidget", "setParent", rv_handler_QWidget_setParent);
 
     cm.addArgHandler("QTimer", "singleShot", arg_handler_QTimer_singleShot);
 
@@ -537,7 +552,7 @@ static QoreStringNode *qt_module_init() {
 
 #ifdef DEBUG
     // TODO/FIXME: remove it after testing!
-    ClassMap::Instance()->printMapToFile("maps.txt");
+    //ClassMap::Instance()->printMapToFile("maps.txt");
 #endif
 
     return 0;

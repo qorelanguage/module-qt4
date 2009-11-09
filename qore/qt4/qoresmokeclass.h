@@ -40,7 +40,7 @@
 // a Qore object private member. See Qore object/classes implementation.
 class QoreSmokePrivate : public AbstractPrivateData {
 public:
-    DLLLOCAL QoreSmokePrivate(Smoke::Index classID) : m_class(classID), externally_owned(false) {}
+   DLLLOCAL QoreSmokePrivate(Smoke::Index classID, bool n_is_qobject = false) : m_class(classID), externally_owned(false), is_qobject(n_is_qobject) {}
     DLLLOCAL virtual ~QoreSmokePrivate() {
     }
     DLLLOCAL virtual void * object() = 0;
@@ -62,9 +62,13 @@ public:
     DLLLOCAL const char *getClassName() const {
         return qt_Smoke->classes[m_class].className;
     }
+    DLLLOCAL bool isQObject() const {
+       return is_qobject;
+    }
 private:
     Smoke::Index m_class;
-    bool externally_owned;
+    bool externally_owned : 1;
+    bool is_qobject : 1;
 };
 
 class QoreSmokePrivateData : public QoreSmokePrivate {
@@ -100,13 +104,22 @@ private:
 
 class QoreSmokePrivateQObjectData : public QoreSmokePrivate {
 public:
-    DLLLOCAL QoreSmokePrivateQObjectData(Smoke::Index classID, QObject *p) : QoreSmokePrivate(classID), m_qobject(p), m_meta(0), obj_ref(false) {
+   DLLLOCAL QoreSmokePrivateQObjectData(Smoke::Index classID, QObject *p) : QoreSmokePrivate(classID, true), m_qobject(p), m_meta(0), obj_ref(false) {
         qt_metaobject_method_count = getParentMetaObject()->methodCount();
         Smoke::ModuleIndex mi = qt_Smoke->findMethod(qt_Smoke->classes[classID].className, "qt_metacall$$?");
         assert(mi.smoke);
         qt_metacall_index = qt_Smoke->methodMaps[mi.index].method;
         assert(qt_metacall_index > 0);
         assert(!strcmp(qt_Smoke->methodNames[qt_Smoke->methods[qt_metacall_index].name], "qt_metacall"));
+
+	if (p->isWidgetType()) {
+	   QWidget *qw = reinterpret_cast<QWidget *>(p);
+	   // add to QoreWidgetManager if it's a window - so it can be deleted if necessary
+	   // when the QApplication object is deleted
+	   if (!qw->parent())
+	      QWM.add(qw);
+	}
+
     }
     DLLLOCAL virtual ~QoreSmokePrivateQObjectData() {
         //printd(0, "QoreSmokePrivateQObjectData::~QoreSmokePrivateQObjectData() this=%p obj=%p (%s)\n", this, m_qobject.data(), getClassName());
@@ -133,15 +146,21 @@ public:
         return false;
     }
     DLLLOCAL void externalDelete(QoreObject *obj, ExceptionSink *xsink) {
+        QObject *qo = m_qobject.data();
+	if (qo && qo->isWidgetType())
+	   QWM.remove(reinterpret_cast<QWidget *>(qo));
+
+	// clear object before running destructor
+        QoreSmokePrivateQObjectData::clear();
         if (obj_ref) {
             //printd(5, "QoreSmokePrivateQObjectData::externalDelete() deleting object of class %s\n", obj->getClassName());
             obj_ref = false;
+	    // FIXME: should doDelete() be called unconditionally?
             // delete the object if necessary (if not already in the destructor)
             if (obj->isValid())
                 obj->doDelete(xsink);
             obj->deref(xsink);
         }
-        clear();
     }
     DLLLOCAL virtual void *object() {
         return m_qobject.data();

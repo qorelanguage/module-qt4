@@ -70,10 +70,12 @@ QoreObject *getQoreObject(Smoke::Index classId, void *obj, QoreClass *&qc) {
 
 void QoreSmokeBinding::deleted(Smoke::Index classId, void *obj) {
     assert(obj);
-    //printd(0, "QoreSmokeBinding::deleted() %s::~%s (%p)\n", className(classId), className(classId), obj);
 
     QoreClass *qc;
     QoreObject *o = getQoreObject(classId, obj, qc);
+
+    //printd(0, "QoreSmokeBinding::deleted() %s::~%s (%p) qore obj=%p\n", className(classId), className(classId), obj, o);
+
     if (o) {
         ExceptionSink xsink;
 
@@ -149,7 +151,6 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
         assert(!isAbstract);
         return false;
     }
-    assert(o->isValid());
 
     if (!strcmp(mname, "qt_metacall")) {
        //printd(0, "QoreSmokeBinding::callMethod() className: %s::%s obj: %p\n", cname, mname, obj);
