@@ -104,7 +104,7 @@ private:
 
 class QoreSmokePrivateQObjectData : public QoreSmokePrivate {
 public:
-   DLLLOCAL QoreSmokePrivateQObjectData(Smoke::Index classID, QObject *p) : QoreSmokePrivate(classID, true), m_qobject(p), m_meta(0), obj_ref(false) {
+   DLLLOCAL QoreSmokePrivateQObjectData(Smoke::Index classID, QObject *p) : QoreSmokePrivate(classID, true), m_qobject(p), obj_ref(false) {
         qt_metaobject_method_count = getParentMetaObject()->methodCount();
         Smoke::ModuleIndex mi = qt_Smoke->findMethod(qt_Smoke->classes[classID].className, "qt_metacall$$?");
         assert(mi.smoke);
@@ -119,7 +119,6 @@ public:
 	   if (!qw->parent())
 	      QWM.add(qw);
 	}
-
     }
     DLLLOCAL virtual ~QoreSmokePrivateQObjectData() {
         //printd(0, "QoreSmokePrivateQObjectData::~QoreSmokePrivateQObjectData() this=%p obj=%p (%s)\n", this, m_qobject.data(), getClassName());
@@ -133,6 +132,7 @@ public:
             delete m_qobject;
         }
     }
+    DLLLOCAL int metacall(Smoke::Stack args);
     DLLLOCAL bool deleteBlocker(QoreObject *self) {
         //printd(0, "QoreSmokePrivateQObjectData::deleteBlocker(%p) %s obj=%p parent=%p eo=%s\n", self, self->getClassName(), m_qobject.data(), m_qobject.data() ? m_qobject->parent() : 0, externallyOwned() ? "true" : "false");
         if (m_qobject.data() && (m_qobject->parent() || externallyOwned())) {
@@ -180,11 +180,6 @@ public:
     DLLLOCAL Smoke::Index getMetacallIndex() const {
         return qt_metacall_index;
     }
-    /*
-    DLLLOCAL const QMetaObject *meta() {
-       return m_meta;
-    }
-    */
     DLLLOCAL int createSignal(const char *signal, ExceptionSink *xsink) {
         QByteArray theSignal = QMetaObject::normalizedSignature(signal);
         int signalId = signalIndices.value(theSignal, -1);
@@ -368,18 +363,12 @@ protected:
         return m_qobject->metaObject();
     }
 
-    DLLLOCAL void setMetaObject(QMetaObject *meta) {
-        assert(!m_meta);
-        m_meta = meta;
-    }
-
     QPointer<QObject> m_qobject;
     Smoke::Index qt_metacall_index;
     int qt_metaobject_method_count;
     QHash<QByteArray, int> slotIndices;    // map slot signatures to indices in the methodList
     QHash<QByteArray, int> signalIndices;  // map signal signatures to signal IDs in the methodList
     DynamicMethodList methodList;          // list of dynamic signals and slots
-    QMetaObject *m_meta;                   // custom metadata for this object
     bool obj_ref;
 };
 

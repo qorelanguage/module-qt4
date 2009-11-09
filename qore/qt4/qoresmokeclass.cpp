@@ -46,6 +46,28 @@ QoreWidgetManager QWM;
 ClassNamesMap* ClassNamesMap::m_instance = NULL;
 ClassMap * ClassMap::m_instance = NULL;
 
+int QoreSmokePrivateQObjectData::metacall(Smoke::Stack args) {
+   Smoke::Method &m = qt_Smoke->methods[qt_metacall_index];
+   Smoke::ClassFn fn = qt_Smoke->classes[m.classId].classFn;
+
+   QoreQtVirtualFlagHelper vfh;
+
+#ifdef DEBUG
+   // FIXME: why does this NOP of a call make signals work again????????  ARRRGGH!!!!
+   m_qobject->metaObject();
+   /*
+     const QMetaObject *mo = m_qobject->metaObject();
+     QMetaMethod mm = mo->method(args[2].s_int);
+     printd(0, "%s::qt_metacall() call=%s, id=%d (%s) %s\n", qt_Smoke->classes[m.classId].className, args[1].s_enum == QMetaObject::InvokeMetaMethod ? "InvokeMetaMethod" : "unknown?", args[2].s_int, mo->className(), mm.signature());
+   */
+#endif
+   (*fn)(m.method, m_qobject.data(), args);
+
+   //printd(0, "%s::qt_metacall() call=%s, orig id=%d, new id=%d\n", qt_Smoke->classes[m.classId].className, args[1].s_enum == QMetaObject::InvokeMetaMethod ? "InvokeMetaMethod" : "unknown?", args[2].s_int, args[0].s_int);
+   
+   return args[0].s_int;
+}
+
 const QoreMethod *findUserMethod(const QoreClass *qc, const char *name) {
     const QoreMethod *m = qc->findMethod(name);
     return m && m->isUser() ? m : 0;

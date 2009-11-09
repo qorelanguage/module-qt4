@@ -92,33 +92,17 @@ void QoreSmokeBinding::deleted(Smoke::Index classId, void *obj) {
 }
 
 // handle qt_metacall() calls
-static bool do_metacall(ExceptionSink *xsink, Smoke::Method &meth, QoreObject *o, QoreSmokePrivateQObjectData &qsp, Smoke::Stack args, QMetaObject::Call call, int id, void **arguments) {
-    // call parent's qt_metacall() first
-    Smoke::Method &m = qt_Smoke->methods[qsp.getMetacallIndex()];
-    Smoke::ClassFn fn = qt_Smoke->classes[m.classId].classFn;
-
-    // set up call to qt_metacall(QMetaObject::Call, int, void**) through Smoke
-    Smoke::StackItem i[4];
-    i[1].s_enum = call;
-    i[2].s_int = id;
-    i[3].s_voidp = args[3].s_voidp;
-    {
-        QoreQtVirtualFlagHelper vfh;
-        (*fn)(m.method, qsp.qobject(), i);
-    }
-
-    //printd(0, "%s::qt_metacall() call=%s, id=%d, new id=%d\n", qt_Smoke->classes[m.classId].className, call == QMetaObject::InvokeMetaMethod ? "InvokeMetaMethod" : "unknown?", id, i[0].s_int);
-    id = i[0].s_int;
+static bool do_metacall(ExceptionSink *xsink, Smoke::Method &meth, QoreObject *o, QoreSmokePrivateQObjectData &qsp, Smoke::Stack args) {
+    int id = qsp.metacall(args);
 
     // check return value: if handled by parent, or there is no more object, or it was the wrong call type, then return the id immediately
-    if (id < 0 || !qsp.qobject() || call != QMetaObject::InvokeMetaMethod) {
-        args[0].s_int = id;
+    if (id < 0 || !qsp.qobject() || args[1].s_enum != QMetaObject::InvokeMetaMethod)
         return true;
-    }
 
     // handle the signal, which is connected to a dynamic method (signal or slot)
-    qsp.handleSignal(0, id, arguments);
+    qsp.handleSignal(0, id, (void**)args[3].s_voidp);
 
+    args[0].s_int = -1;
     return true;
 }
 
@@ -153,7 +137,7 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
     }
 
     if (!strcmp(mname, "qt_metacall")) {
-       //printd(0, "QoreSmokeBinding::callMethod() className: %s::%s obj: %p\n", cname, mname, obj);
+        //printd(0, "QoreSmokeBinding::callMethod() className: %s::%s obj: %p\n", cname, mname, obj);
 
         // get the QoreSmokePrivate info
         ReferenceHolder<QoreSmokePrivateQObjectData> qsp(reinterpret_cast<QoreSmokePrivateQObjectData *>(o->getReferencedPrivateData(QC_QOBJECT->getID(), &xsink)), &xsink);
@@ -168,7 +152,7 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
 
         //printd(0, "QoreSmokeBinding::callMethod() %s::%s() method=%d obj=%p qsp=%p isAbstract=%s\n", smoke->classes[smoke->methods[method].classId].className, smoke->methodNames[smoke->methods[method].name], method, obj, *qsp, isAbstract ? "true" : "false");
 
-        return do_metacall(&xsink, meth, o, *(*qsp), args, (QMetaObject::Call)args[1].s_enum, args[2].s_int, (void**)args[3].s_voidp);
+        return do_metacall(&xsink, meth, o, *(*qsp), args);
     }
 
     const QoreMethod * qoreMethod = o->getClass()->findMethod(mname);
