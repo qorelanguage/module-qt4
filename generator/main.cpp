@@ -158,21 +158,18 @@ int main(int argc, char **argv)
     } else {
         qWarning() << "Couldn't find config file" << configFile.filePath();
     }
-    
-    QString libName("generator_" + generator);
-    QLibrary lib(libName);
+
+    // first try to load plugins from the executable's directory
+    QLibrary lib(app.applicationDirPath() + "/generator_" + generator);
     lib.load();
     if (!lib.isLoaded()) {
-        // failback 'unsecure' load for initial cmake build - without install phase performed
-        QDir d;
-        lib.setFileName(d.absoluteFilePath("../../generator/bin/" + libName));
+        lib.unload();
+        lib.setFileName("generator_" + generator);
         lib.load();
-        if (!lib.isLoaded()) {
-            qCritical() << lib.errorString() << lib.fileName();
-            return EXIT_FAILURE;
-        }
-        else
-            qWarning() << "Loaded library from failback directory:"  << lib.fileName();
+    }
+    if (!lib.isLoaded()) {
+        qCritical() << lib.errorString();
+        return EXIT_FAILURE;
     }
     qDebug() << "using generator" << lib.fileName();
     GenerateFn generate = (GenerateFn) lib.resolve("generate");

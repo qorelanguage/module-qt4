@@ -1,7 +1,8 @@
 #ifndef SMOKE_H
 #define SMOKE_H
 
-#include <string.h>
+#include <cstddef>
+#include <cstring>
 #include <string>
 #include <map>
 
@@ -38,32 +39,38 @@
 */
 
 #ifdef WIN32
+  // Define this when building a smoke lib that doesn't have any parents - else Smoke::classMap is not exported.
+  #ifdef BASE_SMOKE_BUILDING
+    #define BASE_SMOKE_EXPORT __declspec(dllexport)
+  #else
+    #define BASE_SMOKE_EXPORT __declspec(dllimport)
+  #endif
+  // Define this when building a smoke lib.
+  #ifdef SMOKE_BUILDING
+    #define SMOKE_EXPORT __declspec(dllexport)
+  #else
+    #define SMOKE_EXPORT __declspec(dllimport)
+  #endif
   #define SMOKE_IMPORT __declspec(dllimport)
-  #define SMOKE_EXPORT __declspec(dllexport)
-  #define SMOKE_DLLLOCAL
-  #define SMOKE_DLLPUBLIC
 #else
   #ifdef GCC_VISIBILITY
-    #define SMOKE_IMPORT __attribute__ ((visibility("default")))
     #define SMOKE_EXPORT __attribute__ ((visibility("default")))
-    #define SMOKE_DLLLOCAL __attribute__ ((visibility("hidden")))
-    #define SMOKE_DLLPUBLIC __attribute__ ((visibility("default")))
+    #define BASE_SMOKE_EXPORT __attribute__ ((visibility("default")))
   #else
-    #define SMOKE_IMPORT
     #define SMOKE_EXPORT
-    #define SMOKE_DLLLOCAL
-    #define SMOKE_DLLPUBLIC
+    #define BASE_SMOKE_EXPORT
   #endif
+  #define SMOKE_IMPORT
 #endif
 
 class SmokeBinding;
 
-class SMOKE_EXPORT Smoke {
+class BASE_SMOKE_EXPORT Smoke {
 private:
     const char *module_name;
 
 public:
-    static SMOKE_EXPORT std::map<std::string, Smoke*> classMap;
+    static std::map<std::string, Smoke*> classMap;
 
     union StackItem; // defined below
     /**
@@ -111,6 +118,7 @@ public:
 	ClassFn classFn;	// Calls any method in the class
 	EnumFn enumFn;		// Handles enum pointers
         unsigned short flags;   // ClassFlags
+        unsigned int size;
     };
 
     enum MethodFlags {
@@ -121,7 +129,9 @@ public:
         mf_enum = 0x10,   // An enum value
         mf_ctor = 0x20,
         mf_dtor = 0x40,
-        mf_protected = 0x80
+        mf_protected = 0x80,
+        mf_attribute = 0x100,
+        mf_property = 0x200
     };
     /**
      * Describe one method of one class.
@@ -131,7 +141,7 @@ public:
 	Index name;		// Index into methodNames; real name
 	Index args;		// Index into argumentList
 	unsigned char numArgs;	// Number of arguments
-	unsigned char flags;	// MethodFlags (const/static/etc...)
+	unsigned short flags;	// MethodFlags (const/static/etc...)
 	Index ret;		// Index into types for the return type
 	Index method;		// Passed to Class.classFn, to call method
     };
@@ -410,7 +420,8 @@ public:
 	    if (!classes[cmi.index].parents) return NullModuleIndex;
 	    for (Index p = classes[cmi.index].parents; inheritanceList[p]; p++) {
 		Index ci = inheritanceList[p];
-		ModuleIndex mi = classMap[className(ci)]->findMethodName(className(ci), m);
+		const char* cName = className(ci);
+		ModuleIndex mi = classMap[cName]->findMethodName(cName, m);
 		if (mi.index) return mi;
 	    }
 	}
@@ -454,9 +465,12 @@ public:
 	if(!classes[c.index].parents) return NullModuleIndex;
 	for(int p = classes[c.index].parents; inheritanceList[p] ; p++) {
 	    Index ci = inheritanceList[p];
-	    Smoke *s = classMap[className(ci)];
-	    ModuleIndex cmi = s->idClass(className(ci));
-	    ModuleIndex nmi = s->findMethodName(className(ci), name.smoke->methodNames[name.index]);
+	    const char* cName = className(ci);
+	    Smoke *s = classMap[cName];
+	    if (!s)
+		return NullModuleIndex;
+	    ModuleIndex cmi = s->idClass(cName);
+	    ModuleIndex nmi = s->findMethodName(cName, name.smoke->methodNames[name.index]);
 	    ModuleIndex mi = s->findMethod(cmi, nmi);
 	    if (mi.index) return mi;
 	}

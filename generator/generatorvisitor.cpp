@@ -75,6 +75,17 @@ BasicTypeDeclaration* GeneratorVisitor::resolveTypeInSuperClasses(const Class* k
     foreach (const Class::BaseClassSpecifier& bclass, klass->baseClasses()) {
         QString _name = bclass.baseClass->toString() + "::" + name;
         returnOnExistence(_name);
+        QStringList nspace = klass->nameSpace().split("::");
+        if (!klass->nameSpace().isEmpty() && nspace != this->nspace) {
+            do {
+                nspace.push_back(name);
+                QString n = nspace.join("::");
+                returnOnExistence(n);
+                nspace.pop_back();
+                if (!nspace.isEmpty())
+                    nspace.pop_back();
+            } while (!nspace.isEmpty());
+        }
         if (!bclass.baseClass->baseClasses().count())
             continue;
         BasicTypeDeclaration* decl = resolveTypeInSuperClasses(bclass.baseClass, name);
@@ -93,15 +104,6 @@ BasicTypeDeclaration* GeneratorVisitor::resolveType(const QString & name)
 // TODO: this might have to be improved for cases like 'Typedef::Nested foo'
 BasicTypeDeclaration* GeneratorVisitor::resolveType(QString & name)
 {
-    // check for nested classes
-    for (int i = klass.count() - 1; i >= 0; i--) {
-        QString _name = klass[i]->toString() + "::" + name;
-        returnOnExistence(_name);
-        BasicTypeDeclaration* decl = resolveTypeInSuperClasses(klass[i], name);
-        if (decl)
-            return decl;
-    }
-    
     // check for 'using type;'
     // if we use 'type', we can also access type::nested, take care of that
     int index = name.indexOf("::");
@@ -129,6 +131,15 @@ BasicTypeDeclaration* GeneratorVisitor::resolveType(QString & name)
         if (!nspace.isEmpty())
             nspace.pop_back();
     } while (!nspace.isEmpty());
+
+    // check for nested classes
+    for (int i = klass.count() - 1; i >= 0; i--) {
+        QString _name = klass[i]->toString() + "::" + name;
+        returnOnExistence(_name);
+        BasicTypeDeclaration* decl = resolveTypeInSuperClasses(klass[i], name);
+        if (decl)
+            return decl;
+    }
 
     // maybe it's just 'there'
     returnOnExistence(name);
@@ -328,6 +339,9 @@ void GeneratorVisitor::visitClassSpecifier(ClassSpecifierAST* node)
     inClass--;
 }
 
+// defined later on
+static bool operator==(const Method& rhs, const Method& lhs);
+
 void GeneratorVisitor::visitDeclarator(DeclaratorAST* node)
 {
     // TODO: get rid of this and add a proper typdef
@@ -379,6 +393,7 @@ void GeneratorVisitor::visitDeclarator(DeclaratorAST* node)
     // only run this if we're not in a method. only checking for parameter_declaration_clause
     // won't be enough because function pointer types also have that.
     if (node->parameter_declaration_clause && !inMethod && inClass) {
+        // detect Q_PROPERTIES
         if (ParserOptions::qtMode && declName == "__q_property") {
             // this should _always_ work
             PrimaryExpressionAST* primary = ast_cast<PrimaryExpressionAST*>(node->parameter_declaration_clause->parameter_declarations->at(0)->element->expression);
@@ -425,6 +440,15 @@ void GeneratorVisitor::visitDeclarator(DeclaratorAST* node)
         // const & volatile modifiers
         currentMethod.setIsConst(cv.first);
         
+        if (isVirtual) currentMethod.setFlag(Method::Virtual);
+        if (hasInitializer) currentMethod.setFlag(Method::PureVirtual);
+        if (isStatic) currentMethod.setFlag(Method::Static);
+
+        // the class already contains the method (probably imported by a 'using' statement)
+        if (klass.top()->methods().contains(currentMethod)) {
+            return;
+        }
+
         // Q_PROPERTY accessor?
         if (ParserOptions::qtMode) {
             foreach (const QProperty& prop, q_properties) {
@@ -438,10 +462,7 @@ void GeneratorVisitor::visitDeclarator(DeclaratorAST* node)
                 }
             }
         }
-        
-        if (isVirtual) currentMethod.setFlag(Method::Virtual);
-        if (hasInitializer) currentMethod.setFlag(Method::PureVirtual);
-        if (isStatic) currentMethod.setFlag(Method::Static);
+
         klass.top()->appendMethod(currentMethod);
         return;
     }
@@ -727,6 +748,8 @@ void GeneratorVisitor::visitSimpleTypeSpecifier(SimpleTypeSpecifierAST* node)
 
 void GeneratorVisitor::visitTemplateDeclaration(TemplateDeclarationAST* node)
 {
+    if (!node->declaration)
+        return;
     int kind = token(node->declaration->start_token).kind;
     if (kind == Token_class || kind == Token_struct) {
         inTemplate = true;

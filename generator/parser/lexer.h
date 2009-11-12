@@ -24,9 +24,6 @@
 #include "symbol.h"
 #include <QtCore/QString>
 #include <cstdlib>
-#ifdef Q_CC_SUN
-    #include <stdlib.h>
-#endif
 #include "indexedstring.h"
 #include "problem.h"
 
