@@ -41,6 +41,8 @@
         <!-- mac os x special functions -->
         <signature>.*qt_mac_set_cursor.*</signature>
         <signature>.*QPixmapData.*</signature>
+        <signature>.*operator.*\(QDebug,.*QStyle.*</signature>
+        <signature>.*QGraphicsLinearLayout::dump\(.*\).*</signature>
     </exclude>
     <functions>
         <!-- include functions starting with 'q' -->
