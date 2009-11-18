@@ -91,21 +91,6 @@ void QoreSmokeBinding::deleted(Smoke::Index classId, void *obj) {
     }
 }
 
-// handle qt_metacall() calls
-static bool do_metacall(ExceptionSink *xsink, Smoke::Method &meth, QoreObject *o, QoreSmokePrivateQObjectData &qsp, Smoke::Stack args) {
-    int id = qsp.metacall(args);
-
-    // check return value: if handled by parent, or there is no more object, or it was the wrong call type, then return the id immediately
-    if (id < 0 || !qsp.qobject() || args[1].s_enum != QMetaObject::InvokeMetaMethod)
-        return true;
-
-    // handle the signal, which is connected to a dynamic method (signal or slot)
-    qsp.handleSignal(0, id, (void**)args[3].s_voidp);
-
-    args[0].s_int = -1;
-    return true;
-}
-
 bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack args, bool isAbstract) {
     //printd(0, "QoreSmokeBinding::callMethod() %s::%s() method=%d obj=%p isAbstract=%s (virt=%s)\n", smoke->classes[smoke->methods[method].classId].className, smoke->methodNames[smoke->methods[method].name], method, obj, isAbstract ? "true" : "false", qore_smoke_is_virtual() ? "true" : "false");
 
@@ -146,13 +131,25 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
             return false;
         }
 
-        // if the object has been deleted, then return false
-        if (!qsp->qobject())
+        // if the object has been deleted, or is not a signal/slot invokation, then return false
+        if (!qsp->qobject() || args[1].s_enum != QMetaObject::InvokeMetaMethod)
             return false;
+
+	int mc = qsp->getParentMethodCount();
+	// see if call is for a method in a parent class
+	if (args[2].s_int < mc)
+	   return false;
+
+	// get method offset in this class
+	args[2].s_int -= mc;
 
         //printd(0, "QoreSmokeBinding::callMethod() %s::%s() method=%d obj=%p qsp=%p isAbstract=%s\n", smoke->classes[smoke->methods[method].classId].className, smoke->methodNames[smoke->methods[method].name], method, obj, *qsp, isAbstract ? "true" : "false");
 
-        return do_metacall(&xsink, meth, o, *(*qsp), args);
+	// handle the signal, which is connected to a dynamic method (signal or slot)
+	qsp->handleSignal(0, args[2].s_int, (void**)args[3].s_voidp);
+
+	args[0].s_int = -1;
+	return true;
     }
 
     const QoreMethod * qoreMethod = o->getClass()->findMethod(mname);

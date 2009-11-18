@@ -46,28 +46,6 @@ QoreWidgetManager QWM;
 ClassNamesMap* ClassNamesMap::m_instance = NULL;
 ClassMap * ClassMap::m_instance = NULL;
 
-int QoreSmokePrivateQObjectData::metacall(Smoke::Stack args) {
-   Smoke::Method &m = qt_Smoke->methods[qt_metacall_index];
-   Smoke::ClassFn fn = qt_Smoke->classes[m.classId].classFn;
-
-   QoreQtVirtualFlagHelper vfh;
-
-#ifdef DEBUG
-   // FIXME: why does this NOP of a call make signals work again????????  ARRRGGH!!!!
-   m_qobject->metaObject();
-   /*
-     const QMetaObject *mo = m_qobject->metaObject();
-     QMetaMethod mm = mo->method(args[2].s_int);
-     printd(0, "%s::qt_metacall() call=%s, id=%d (%s) %s\n", qt_Smoke->classes[m.classId].className, args[1].s_enum == QMetaObject::InvokeMetaMethod ? "InvokeMetaMethod" : "unknown?", args[2].s_int, mo->className(), mm.signature());
-   */
-#endif
-   (*fn)(m.method, m_qobject.data(), args);
-
-   //printd(0, "%s::qt_metacall() call=%s, orig id=%d, new id=%d\n", qt_Smoke->classes[m.classId].className, args[1].s_enum == QMetaObject::InvokeMetaMethod ? "InvokeMetaMethod" : "unknown?", args[2].s_int, args[0].s_int);
-   
-   return args[0].s_int;
-}
-
 const QoreMethod *findUserMethod(const QoreClass *qc, const char *name) {
     const QoreMethod *m = qc->findMethod(name);
     return m && m->isUser() ? m : 0;
@@ -518,7 +496,12 @@ void common_constructor(const QoreClass &myclass, QoreObject *self,
 
     //printd(0, "common_constructor() %s set up constructor call, calling constuctor method %d\n", className, cqm.method().method);
     void *qtObj = cqm.callConstructor();
-    //printd(0, "common_constructor() %s setting up internal object\n", className);
+    //printd(0, "common_constructor() %s setting up internal object %p\n", className, qtObj);
+
+    if (!qtObj) {
+       assert(*xsink);
+       return;
+    }
 
     // Setup internal object
     QoreSmokePrivate *obj;
@@ -546,6 +529,8 @@ void common_constructor(const QoreClass &myclass, QoreObject *self,
        QObject *qtBaseObj = static_cast<QObject*>(qtObj);
        qtBaseObj->setProperty(QORESMOKEPROPERTY, reinterpret_cast<qulonglong>(self));
     }
+
+    assert(!*xsink);
 
     //printd(0, "common_constructor() %s setting private data %p for classid %d objclassid %d self:%p\n",
     //       className, obj, myclass.getID(), self->getClass()->getID(), self);

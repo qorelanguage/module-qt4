@@ -122,17 +122,20 @@ public:
     }
     DLLLOCAL virtual ~QoreSmokePrivateQObjectData() {
         //printd(0, "QoreSmokePrivateQObjectData::~QoreSmokePrivateQObjectData() this=%p obj=%p (%s)\n", this, m_qobject.data(), getClassName());
-        if (m_qobject.data() && !externallyOwned() && !m_qobject->parent()) {
-            // set property to 0 because QoreObject is being deleted
-            {
-                QoreQtVirtualFlagHelper vfh;
-                m_qobject->setProperty(QORESMOKEPROPERTY, (qulonglong)0);
-            }
+       // set property to 0 because QoreObject is being deleted
+        if (m_qobject.data()) {
+	    {
+	        QoreQtVirtualFlagHelper vfh;
+		m_qobject->setProperty(QORESMOKEPROPERTY, (qulonglong)0);
+	    }
 
-            delete m_qobject;
-        }
+	    if (!externallyOwned() && !m_qobject->parent()) {
+	       delete m_qobject;
+	    }
+	}
+
     }
-    DLLLOCAL int metacall(Smoke::Stack args);
+    //DLLLOCAL int metacall(Smoke::Stack args);
     DLLLOCAL bool deleteBlocker(QoreObject *self) {
         //printd(0, "QoreSmokePrivateQObjectData::deleteBlocker(%p) %s obj=%p parent=%p eo=%s\n", self, self->getClassName(), m_qobject.data(), m_qobject.data() ? m_qobject->parent() : 0, externallyOwned() ? "true" : "false");
         if (m_qobject.data() && (m_qobject->parent() || externallyOwned())) {
@@ -287,6 +290,10 @@ public:
             QoreQtDynamicSignal *sp = reinterpret_cast<QoreQtDynamicSignal *>(methodList[signalId]);
             sp->emitSignal(m_qobject, signalId + mo->methodCount(), args, xsink);
         }
+    }
+
+    DLLLOCAL int getParentMethodCount() const {
+       return qt_metaobject_method_count;
     }
 
 protected:
