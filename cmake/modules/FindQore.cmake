@@ -33,6 +33,13 @@ IF (QORE_LIBRARY AND QORE_INCLUDE_DIR)
 ENDIF (QORE_LIBRARY AND QORE_INCLUDE_DIR)
 
 
+# get Qore version form 'qore --short-version' command etc
+FIND_PROGRAM(QORE_EXECUTABLE NAMES qore DOC "Searching for qore executable")
+IF (NOT QORE_EXECUTABLE)
+    MESSAGE( FATAL_ERROR "Cannot find 'qore' executable. Check if it's in your PATH" )
+ENDIF (NOT QORE_EXECUTABLE)
+
+
 IF (QORE_MIN_VERSION)
     #now parse the parts of the user given version string into variables
     # qore version is taken from qore executable - format major.minor.patch-build
@@ -46,11 +53,6 @@ IF (QORE_MIN_VERSION)
     STRING(REGEX REPLACE "^[0-9]+\\.([0-9])+\\.[0-9]+" "\\1" req_qore_minor_v "${QORE_MIN_VERSION}")
     STRING(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" req_qore_patch_v "${QORE_MIN_VERSION}")
 
-    # get Qore version form 'qore --short-version' command
-    FIND_PROGRAM(QORE_EXECUTABLE NAMES qore DOC "Searching for qore executable")
-    IF (NOT QORE_EXECUTABLE)
-        MESSAGE( FATAL_ERROR "Cannot find 'qore' executable. Check if it's in your PATH" )
-    ENDIF (NOT QORE_EXECUTABLE)
     EXEC_PROGRAM(${QORE_EXECUTABLE} ARGS "--short-version" OUTPUT_VARIABLE QORE_VERSION)
     IF (NOT QORE_VERSION)
         MESSAGE( FATAL_ERROR "Unknown Qore version. No data taken from 'qore --short-version'" )
@@ -74,6 +76,14 @@ IF (QORE_MIN_VERSION)
     ENDIF (found_v LESS req_v)
 
 ENDIF (QORE_MIN_VERSION)
+
+# module install dir
+EXEC_PROGRAM(${QORE_EXECUTABLE} ARGS "--module-dir" OUTPUT_VARIABLE QORE_MODULES_DIR)
+IF (NOT QORE_MODULES_DIR)
+    MESSAGE( FATAL_ERROR "Unknown Qore modules location. No data taken from 'qore --module-dir'" )
+ELSE (NOT QORE_MODULES_DIR)
+    MESSAGE( STATUS "Qore modules dir: ${QORE_MODULES_DIR}" )
+ENDIF (NOT QORE_MODULES_DIR)
 
 
 IF (QORE_FOUND)
