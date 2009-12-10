@@ -115,7 +115,8 @@ CommonQoreMethod::CommonQoreMethod(const char *cname, const char *mname)
      tparams(0),
      self(0),
      smc(0),
-     suppress_method(false) {
+     suppress_method(false),
+     args (0) {
 
     ClassMap::MungledToTypes *mMap = ClassMap::Instance()->availableMethods(cname, mname);
 
@@ -159,7 +160,8 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
         tparams(0),
         self(n_self),
         smc(n_smc),
-        suppress_method(false) {
+	suppress_method(false),
+	args(params) {
 
     //printd(0, "CommonQoreMethod::CommonQoreMethod() %s::%s() %d arg(s)\n", className, methodName, qoreArgCnt);
 
@@ -323,7 +325,7 @@ CommonQoreMethod::~CommonQoreMethod() {
                     break;
                 case ref_store_s::r_qreal:
                     ref.assign(new QoreFloatNode(rf.data.q_qreal), m_xsink);
-                    break;
+                    break;		    
                 default:
                     m_xsink->raiseException("QT-REFERENCE-BIND", "Unhandled refrence type %s", rf.type);
                 }
@@ -605,8 +607,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
     bool iconst = t.flags & Smoke::tf_const;
     ref_store_s *rf = 0;
 
-//     printd(0, "CommonQoreMethod::qoreToStackStatic() %s::%s --- index %d cqm=%p '%s' classId=%d const=%s flags=0x%x (ptr=%s ref=%s) type=%d qore='%s' (%p)\n",
-//            className, methodName, index, cqm, t.name, (int)t.classId, iconst ? "true" : "false", flags, flags == Smoke::tf_ptr ? "true" : "false", flags == Smoke::tf_ref ? "true" : "false", tid, node ? node->getTypeName() : "n/a", node);
+    //printd(0, "CommonQoreMethod::qoreToStackStatic() %s::%s --- index %d cqm=%p '%s' classId=%d const=%s flags=0x%x (ptr=%s ref=%s) type=%d qore='%s' (%p)\n", className, methodName, index, cqm, t.name, (int)t.classId, iconst ? "true" : "false", flags, flags == Smoke::tf_ptr ? "true" : "false", flags == Smoke::tf_ref ? "true" : "false", tid, node ? node->getTypeName() : "n/a", node);
 
     // handle references and pointers
     if (flags == Smoke::tf_ref || flags == Smoke::tf_ptr) {
@@ -1293,18 +1294,18 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
 AbstractQoreNode *CommonQoreMethod::returnValue() {
     Smoke::Type t = qt_Smoke->types[m_method.ret];
     if (type_handler.return_value_handler)
-        return type_handler.return_value_handler(self, t, Stack[0], *this, m_xsink);
+        return type_handler.return_value_handler(self, t, Stack, *this, m_xsink);
     assert(!tparams);
     return Marshalling::stackToQore(t, Stack[0], m_xsink);
 }
 
-void CommonQoreMethod::postProcessConstructor(QoreSmokePrivate *n_smc, Smoke::StackItem rv) {
+void CommonQoreMethod::postProcessConstructor(QoreSmokePrivate *n_smc) {
     if (type_handler.return_value_handler) {
         assert(n_smc);
         assert(!smc);
         smc = n_smc;
         Smoke::Type t = type_handler.types[0];
-        type_handler.return_value_handler(self, t, rv, *this, m_xsink);
+        type_handler.return_value_handler(self, t, Stack, *this, m_xsink);
         return;
     }
     assert(!tparams);

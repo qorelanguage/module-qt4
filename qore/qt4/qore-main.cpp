@@ -205,8 +205,8 @@ static int createIndex_handler(Smoke::Stack &stack, ClassMap::TypeList &types, c
 }
 
 template <typename T>
-static AbstractQoreNode *rv_handler_internalPointer(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
-    if (!Stack.s_voidp)
+static AbstractQoreNode *rv_handler_internalPointer(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+    if (!Stack[0].s_voidp)
         return 0;
 
     QoreSmokePrivate *smc = cqm.getPrivateData();
@@ -225,10 +225,10 @@ static AbstractQoreNode *rv_handler_internalPointer(QoreObject *self, Smoke::Typ
     if (!c)
         return 0;
 
-    return c->isQoreData(Stack.s_voidp);
+    return c->isQoreData(Stack[0].s_voidp);
 }
 
-static AbstractQoreNode *rv_handler_QWidget_setParent(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static AbstractQoreNode *rv_handler_QWidget_setParent(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
    QWidget *qw = reinterpret_cast<QWidget *>(cqm.getPrivateData()->object());
    if (!qw)
       return 0;
@@ -241,7 +241,7 @@ static AbstractQoreNode *rv_handler_QWidget_setParent(QoreObject *self, Smoke::T
    return 0;
 }
 
-static AbstractQoreNode *rv_handler_QAbstractItemView_reset(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static AbstractQoreNode *rv_handler_QAbstractItemView_reset(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     QoreSmokePrivateQAbstractItemModelData *smc = reinterpret_cast<QoreSmokePrivateQAbstractItemModelData *>(cqm.getPrivateData());
     assert(smc);
     smc->purgeMap(xsink);
@@ -392,7 +392,7 @@ static int arg_handler_QShortcut(Smoke::Stack &stack, ClassMap::TypeList &types,
     return 0;
 }
 
-static AbstractQoreNode *rv_handler_QShortcut(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static AbstractQoreNode *rv_handler_QShortcut(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     ReferenceHolder<QoreSmokePrivateQObjectData> shortcut(reinterpret_cast<QoreSmokePrivateQObjectData *>(self->getReferencedPrivateData(QC_QOBJECT->getID(), xsink)), xsink);
     if (*xsink)
         return 0;
@@ -426,7 +426,45 @@ static AbstractQoreNode *rv_handler_QShortcut(QoreObject *self, Smoke::Type t, S
     return 0;
 }
 
-static AbstractQoreNode *rv_handler_spacer_item(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static int arg_handler_QPixmapCache_find(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+    stack = new Smoke::StackItem[3];
+
+    const AbstractQoreNode *n = get_param(args, 0);
+    cqm.qoreToStack(types[0], n, 1);
+
+    const ReferenceNode *r = test_reference_param(args, 1);
+    if (!r) {
+       xsink->raiseException("QPIXMAPCACHE-FIND-ERROR", "expecting a reference as the second argument to QPixmapCache::find()");
+       return -1;
+    }
+
+    AutoVLock vl(xsink);
+    ReferenceHelper rh(r, vl, xsink);
+    if (!rh)
+       return -1;
+
+    cqm.qoreToStack(types[1], rh.getValue(), 2);
+
+    return 0;
+}
+
+static AbstractQoreNode *rv_handler_QPixmapCache_find(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+   bool b = Stack[0].s_bool;
+   if (b) {
+      // write back pixmap
+      const ReferenceNode *r = reinterpret_cast<const ReferenceNode *>(cqm.getArg(1));
+      AutoVLock vl(xsink);
+      ReferenceHelper rh(r, vl, xsink);
+      if (rh) {
+	 AbstractQoreNode *qpm = Marshalling::stackToQore(cqm.getTypeHandler().types[1], Stack[2], xsink);
+	 if (qpm)
+	    rh.assign(qpm, xsink);
+      }
+   }
+   return get_bool_node(b);
+}
+
+static AbstractQoreNode *rv_handler_spacer_item(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     return self ? self->refSelf() : 0;
 }
 
@@ -545,6 +583,9 @@ static QoreStringNode *qt_module_init() {
     cm.setRVHandler("QWidget", "setParent", rv_handler_QWidget_setParent);
 
     cm.addArgHandler("QTimer", "singleShot", arg_handler_QTimer_singleShot);
+
+    cm.addArgHandler("QPixmapCache", "find", arg_handler_QPixmapCache_find);
+    cm.setRVHandler("QPixmapCache", "find", rv_handler_QPixmapCache_find);
 
     // initialize global constants
     QT_METACALL_ID = qt_Smoke->idMethodName("qt_metacall$$?");

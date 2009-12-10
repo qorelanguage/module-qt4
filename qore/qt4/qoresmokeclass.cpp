@@ -520,7 +520,7 @@ void common_constructor(const QoreClass &myclass, QoreObject *self,
     }
 
     self->setPrivate(myclass.getID(), obj);
-    cqm.postProcessConstructor(obj, cqm.Stack[0]);
+    cqm.postProcessConstructor(obj);
 
     if (is_qobject) {
        // set the Qt->QoreObject property last in case there are any qt

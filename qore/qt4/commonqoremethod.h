@@ -387,7 +387,7 @@ public:
     DLLLOCAL int getObject(Smoke::Index classId, const AbstractQoreNode *v, ReferenceHolder<QoreSmokePrivate> &c, int index, bool nullOk = false);
 
     DLLLOCAL AbstractQoreNode *returnValue();
-    DLLLOCAL void postProcessConstructor(QoreSmokePrivate *n_smc, Smoke::StackItem rv);
+    DLLLOCAL void postProcessConstructor(QoreSmokePrivate *n_smc);
     DLLLOCAL int getArgCount() const {
         return qoreArgCnt;
     }
@@ -429,6 +429,13 @@ public:
 
     DLLLOCAL static int returnQtObjectOnStack(Smoke::StackItem &si, const char *cname, const char *mname, const AbstractQoreNode *v, Smoke::Type &t, int index, ExceptionSink *xsink, bool temp = false);
 
+    DLLLOCAL const QoreListNode *getArgs() const {
+       return args;
+    }
+    DLLLOCAL const AbstractQoreNode *getArg(qore_size_t i) const {
+       return get_param(args, i);
+    }
+
     Smoke::Stack Stack;
 
 private:
@@ -448,6 +455,7 @@ private:
     QoreObject *self;
     QoreSmokePrivate *smc;
     bool suppress_method;
+    const QoreListNode *args;
 
     DLLLOCAL void checkRefStore() {
         if (!ref_store)

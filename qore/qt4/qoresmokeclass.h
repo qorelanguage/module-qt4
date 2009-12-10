@@ -440,7 +440,7 @@ class ClassMap {
 public:
     typedef QList<Smoke::Type> TypeList;
     typedef int (*arg_handler_t)(Smoke::Stack &stack, TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink);
-    typedef AbstractQoreNode *(*return_value_handler_t)(QoreObject *self, Smoke::Type t, Smoke::StackItem &Stack, CommonQoreMethod &cqm, ExceptionSink *xsink);
+    typedef AbstractQoreNode *(*return_value_handler_t)(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink);
     typedef struct type_handler_s {
         TypeList types;
         arg_handler_t arg_handler;
