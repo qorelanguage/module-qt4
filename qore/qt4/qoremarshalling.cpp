@@ -530,6 +530,7 @@ QoreQVariant *qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * nod
     case NT_BINARY: {
         const BinaryNode *b = reinterpret_cast<const BinaryNode *>(node);
         ret->qvariant = QVariant( QByteArray((const char *) b->getPtr(), b->size()) );
+        break;
     }
     case NT_OBJECT: {
         const QoreObject *obj = reinterpret_cast<const QoreObject *>(node);
