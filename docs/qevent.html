@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>QEvent</title><link rel="stylesheet" href="qore.css" type="text/css" /><meta name="generator" content="DocBook XSL-NS Stylesheets V1.74.0" /><meta name="keywords" content="Qore, Qt4, module, development" /><link rel="home" href="index.html" title="Qore Qt4 Module Documentation" /><link rel="up" href="differences.html" title="Chapter 2. Differences from Qt4 C++ API" /><link rel="prev" href="qcoreapplication.html" title="QCoreApplication" /><link rel="next" href="qhash.html" title="QHash" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">QEvent</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="qcoreapplication.html">Prev</a> </td><th width="60%" align="center">Chapter 2. Differences from Qt4 C++ API</th><td width="20%" align="right"> <a accesskey="n" href="qhash.html">Next</a></td></tr></table><hr /></div><div class="sect1" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="qevent"></a>QEvent</h2></div></div></div>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>QEvent</title><link rel="stylesheet" href="qore.css" type="text/css" /><meta name="generator" content="DocBook XSL-NS Stylesheets V1.75.1" /><meta name="keywords" content="Qore, Qt4, module, development" /><link rel="home" href="index.html" title="Qore Qt4 Module Documentation" /><link rel="up" href="differences.html" title="Chapter 2. Differences from Qt4 C++ API" /><link rel="prev" href="qcoreapplication.html" title="QCoreApplication" /><link rel="next" href="qhash.html" title="QHash" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">QEvent</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="qcoreapplication.html">Prev</a> </td><th width="60%" align="center">Chapter 2. Differences from Qt4 C++ API</th><td width="20%" align="right"> <a accesskey="n" href="qhash.html">Next</a></td></tr></table><hr /></div><div class="sect1" title="QEvent"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="qevent"></a>QEvent</h2></div></div></div>
       
       <p>Event objects passed into QWidget::event(QEvent*) method as an argument are
           automatically casted into its real instance. There is no need to “re-cast” it
@@ -9,9 +9,9 @@
           method text() despite that the C++ prototype of event() method requires QEvent
           instance. And $event variable can be used as a QEvent instance as well (parent's
           event() method call).</p>
-        <div class="example"><a id="id1158455"></a><p class="title"><b>Example 2.2. QEvent automatic "casting"</b></p><div class="example-contents">
+        <div class="example"><a id="id3414714"></a><p class="title"><b>Example 2.3. QEvent automatic "casting"</b></p><div class="example-contents">
           
-          <pre class="programlisting">
+          <pre xml:lang="qore" class="programlisting" lang="qore">
 class MyWidget inherits QWidget
 {
   event($event)

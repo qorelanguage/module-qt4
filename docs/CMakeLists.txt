@@ -29,9 +29,9 @@ ENDIF (XSLTPROC_EXECUTABLE)
 
 if (DOCS)
 
-    SET(xslstyle "/usr/share/xml/docbook/stylesheet/nwalsh5/1.74.0/xhtml/chunk.xsl")
+    SET(xslstyle "/usr/share/xml/docbook/stylesheet/nwalsh5/current/xhtml/chunk.xsl")
     SET(cssstyle "qore.css")
-    SET(xsltparams "/usr/share/xml/docbook/stylesheet/nwalsh5/1.74.0/xhtml/param.xsl")
+    SET(xsltparams "/usr/share/xml/docbook/stylesheet/nwalsh5/current/xhtml/param.xsl")
 
     SET(docbook_index "qore-qt4.xml")
 

@@ -179,6 +179,47 @@ $lineEdit.setText( $var );
 
     <para>Method's (function's) input arguments are converted as much as it's possible.</para>
 
+    <sect1 id="enums">
+      <title>C++ Enum Types</title>
+
+      <para>C++ enums are handled by special Qore QtEnum type. There are
+          no special requirements how to deal with enums except some special cases.</para>
+
+      <sect2>
+        <title>Comparations (switch/case)</title>
+
+        <para>Qore uses <emphasis>hard comparation</emphasis> method for <code>switch case</code>
+            construct so using QtEnum with eg. Type::Int won't work in this case.</para>
+
+        <para>Read Qore documentation, chapter <emphasis>switch Statements</emphasis> for
+            more information.</para>
+
+        <example>
+            <title>QtEnum and Type::Int handling</title>
+            <programlisting language="qore">
+# reimplementation of QAbstractItemModel::data(QModelIndex, int)
+MyModel::data ( $index, $role )
+{
+    if (!$index.isValid())
+        return;
+
+    switch ($role)
+    {
+        # wrong
+        case Qt::DisplayRole :
+            printf("This is wrong. QtEnum and Type::Int are not comparable with hard-comparation\n");
+            return "this will be never called";
+        # good
+        case == Qt::ToolTipRole :
+            printf("This is correct. Comparation is enforced to use soft-comparation\n");
+            return "some data to display in tool tip";
+    }
+}
+            </programlisting>
+        </example>
+      </sect2>
+    </sect1>
+
     <sect1 id="qapplication">
 
       <title>QApplication</title>

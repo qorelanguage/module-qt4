@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Additional Functions</title><link rel="stylesheet" href="qore.css" type="text/css" /><meta name="generator" content="DocBook XSL-NS Stylesheets V1.74.0" /><meta name="keywords" content="Qore, Qt4, module, development" /><link rel="home" href="index.html" title="Qore Qt4 Module Documentation" /><link rel="up" href="differences.html" title="Chapter 2. Differences from Qt4 C++ API" /><link rel="prev" href="constants.html" title="Constants" /><link rel="next" href="uic-qore.html" title="Chapter 3. UI Compiler Tool (uic-qore)" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Additional Functions</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="constants.html">Prev</a> </td><th width="60%" align="center">Chapter 2. Differences from Qt4 C++ API</th><td width="20%" align="right"> <a accesskey="n" href="uic-qore.html">Next</a></td></tr></table><hr /></div><div class="sect1" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="additional-functions"></a>Additional Functions</h2></div></div></div>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Additional Functions</title><link rel="stylesheet" href="qore.css" type="text/css" /><meta name="generator" content="DocBook XSL-NS Stylesheets V1.75.1" /><meta name="keywords" content="Qore, Qt4, module, development" /><link rel="home" href="index.html" title="Qore Qt4 Module Documentation" /><link rel="up" href="differences.html" title="Chapter 2. Differences from Qt4 C++ API" /><link rel="prev" href="constants.html" title="Constants" /><link rel="next" href="uic-qore.html" title="Chapter 3. UI Compiler Tool (uic-qore)" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Additional Functions</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="constants.html">Prev</a> </td><th width="60%" align="center">Chapter 2. Differences from Qt4 C++ API</th><td width="20%" align="right"> <a accesskey="n" href="uic-qore.html">Next</a></td></tr></table><hr /></div><div class="sect1" title="Additional Functions"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="additional-functions"></a>Additional Functions</h2></div></div></div>
       
       <div class="variablelist"><dl><dt><span class="term">qApp()</span></dt><dd><p>Qore wrapper for qApp Qt4 pointer, a global and unique application
               object. It is equivalent to the object returned by the QCoreApplication::instance()
               function except that, in GUI applications, it is a QApplication instance. Only one
               application object can be created.</p></dd><dt><span class="term">qDebug(arg1, arg2, …, argN)</span></dt><dd><p>It's used for writing custom debug output. output of given arguments
               to stderr. It's a wrapper around extended qDebug() class from C++. Calls like:</p>
-          <div class="example"><a id="id1158801"></a><p class="title"><b>Example 2.4. qDebug differences between C++ and Qore</b></p><div class="example-contents">
+          <div class="example"><a id="id3415086"></a><p class="title"><b>Example 2.5. qDebug differences between C++ and Qore</b></p><div class="example-contents">
             
-            <pre class="programlisting"> C++: qDebug() &lt;&lt; “string” &lt;&lt; myObj;</pre>
-            <pre class="programlisting">Qore: qDebug(“string”, $myObj);</pre>
+            <pre xml:lang="c++" class="programlisting" lang="c++"> C++: qDebug() &lt;&lt; “string” &lt;&lt; myObj;</pre>
+            <pre xml:lang="qore" class="programlisting" lang="qore">Qore: qDebug(“string”, $myObj);</pre>
           </div></div><br class="example-break" />
           </dd><dt><span class="term">qWarning(arg1, arg2, …, argN)</span></dt><dd>
             <p>It's used to report warnings and recoverable errors in your application. Usage
@@ -26,17 +26,17 @@
               unsupported variable types (strings, etc).</p>
           </dd><dt><span class="term">qsrand(number)</span></dt><dd>
             <p>It initializes random number generator qrand() with seed as argument.</p>
-            <div class="example"><a id="id1158904"></a><p class="title"><b>Example 2.5. Typical qsrand usage</b></p><div class="example-contents">
+            <div class="example"><a id="id3415197"></a><p class="title"><b>Example 2.6. Typical qsrand usage</b></p><div class="example-contents">
               
-              <pre class="programlisting">qsrand( now_ms() );</pre>
+              <pre xml:lang="qore" class="programlisting" lang="qore">qsrand( now_ms() );</pre>
             </div></div><br class="example-break" />
           </dd><dt><span class="term">qrand()</span></dt><dd>
             <p>It returns a random number. See qsrand().</p>
           </dd><dt><span class="term">qSwap(ref1, ref2)</span></dt><dd>
             <p>It takes two references and swap their values.</p>
-            <div class="example"><a id="id1158951"></a><p class="title"><b>Example 2.6. qSwap usage</b></p><div class="example-contents">
+            <div class="example"><a id="id3415245"></a><p class="title"><b>Example 2.7. qSwap usage</b></p><div class="example-contents">
               
-              <pre class="programlisting">
+              <pre xml:lang="qore" class="programlisting" lang="qore">
 my $ref1 = 10;
 my $ref2 = "foo";
 qSwap(\$ref1, \$ref2);

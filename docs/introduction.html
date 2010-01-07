@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Chapter 1. Qore Qt4 Module</title><link rel="stylesheet" href="qore.css" type="text/css" /><meta name="generator" content="DocBook XSL-NS Stylesheets V1.74.0" /><meta name="keywords" content="Qore, Qt4, module, development" /><link rel="home" href="index.html" title="Qore Qt4 Module Documentation" /><link rel="up" href="index.html" title="Qore Qt4 Module Documentation" /><link rel="prev" href="index.html" title="Qore Qt4 Module Documentation" /><link rel="next" href="differences.html" title="Chapter 2. Differences from Qt4 C++ API" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 1. Qore Qt4 Module</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">Prev</a> </td><th width="60%" align="center"> </th><td width="20%" align="right"> <a accesskey="n" href="differences.html">Next</a></td></tr></table><hr /></div><div class="chapter" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title"><a id="introduction"></a>Chapter 1. Qore Qt4 Module</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="introduction.html#id1158118">Signals and Slots</a></span></dt></dl></div>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Chapter 1. Qore Qt4 Module</title><link rel="stylesheet" href="qore.css" type="text/css" /><meta name="generator" content="DocBook XSL-NS Stylesheets V1.75.1" /><meta name="keywords" content="Qore, Qt4, module, development" /><link rel="home" href="index.html" title="Qore Qt4 Module Documentation" /><link rel="up" href="index.html" title="Qore Qt4 Module Documentation" /><link rel="prev" href="index.html" title="Qore Qt4 Module Documentation" /><link rel="next" href="differences.html" title="Chapter 2. Differences from Qt4 C++ API" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 1. Qore Qt4 Module</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="index.html">Prev</a> </td><th width="60%" align="center"> </th><td width="20%" align="right"> <a accesskey="n" href="differences.html">Next</a></td></tr></table><hr /></div><div class="chapter" title="Chapter 1. Qore Qt4 Module"><div class="titlepage"><div><div><h2 class="title"><a id="introduction"></a>Chapter 1. Qore Qt4 Module</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="introduction.html#id3414275">Signals and Slots</a></span></dt></dl></div>
 
     
 
@@ -9,7 +9,7 @@
 
     <p>Module is initialized by the following clause in the Qore scipt:</p>
 
-    <div class="example"><a id="id1157904"></a><p class="title"><b>Example 1.1. Requires Clause</b></p><div class="example-contents">
+    <div class="example"><a id="id3414219"></a><p class="title"><b>Example 1.1. Requires Clause</b></p><div class="example-contents">
       
       <pre class="programlisting">%requires qt4</pre>
     </div></div><br class="example-break" />
@@ -17,7 +17,7 @@
     <p>Static methods can be called as regular Qore static method or they can be
     invoked with object instance too.</p>
 
-    <div class="sect1" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id1158118"></a>Signals and Slots</h2></div></div></div>
+    <div class="sect1" title="Signals and Slots"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id3414275"></a>Signals and Slots</h2></div></div></div>
       
       <p>The mechanism of Qt4 signals and slots is implemented for this module too.
         Signals and slots used in the SIGNAL and SLOT functions calls have to follow
@@ -56,7 +56,7 @@
               is the same.</p>
           </dd></dl></div>
 
-      <div class="example"><a id="id1158267"></a><p class="title"><b>Example 1.2. How to set signals and slots</b></p><div class="example-contents">
+      <div class="example"><a id="id3414434"></a><p class="title"><b>Example 1.2. How to set signals and slots</b></p><div class="example-contents">
         
         <pre class="programlisting">
 class MyClass inherits QObject
