@@ -1738,7 +1738,7 @@ void WriteInitialization::initializeQ3IconView(DomWidget *w)
         if (!(text || pixmap))
             continue;
 
-        QString itemName = m_driver->unique(QLatin1String("__item"));
+        QString itemName = "$" + m_driver->unique(QLatin1String("tmp__item"));
         m_refreshOut << "\n";
         m_refreshOut << m_option.indent << itemName << " = new Q3IconViewItem(" << varName << ");\n";
 
@@ -1802,7 +1802,7 @@ void WriteInitialization::initializeQ3ListViewItems(const QString &className, co
     for (int i=0; i<items.size(); ++i) {
         DomItem *item = items.at(i);
 
-        QString itemName = m_driver->unique(QLatin1String("__item"));
+        QString itemName = "$" + m_driver->unique(QLatin1String("tmp__item"));
         m_refreshOut << "\n";
         m_refreshOut << m_option.indent << itemName << " = new Qt3::ListViewItem.new(" << varName << ")\n";
 
@@ -2001,11 +2001,11 @@ QString WriteInitialization::disableSorting(DomWidget *w, const QString &varName
     // turn off sortingEnabled to force programmatic item order (setItem())
     QString tempName;
     if (!w->elementItem().isEmpty()) {
-        tempName = m_driver->unique(QLatin1String("__sortingEnabled"));
-        m_refreshOut << "\n";
-        m_refreshOut << m_option.indent << tempName
-            << " = " << varName << ".sortingEnabled?\n";
-        m_refreshOut << m_option.indent << varName << ".sortingEnabled = false\n";
+        tempName = "$" + m_driver->unique(QLatin1String("tmp__sortingEnabled"));
+        m_refreshOut << "\n" << m_option.indent << "# disable sorting for designer's items inserting. It will be reset later\n";
+        m_refreshOut << m_option.indent << "my " << tempName
+            << " = " << varName << ".isSortingEnabled();\n";
+        m_refreshOut << m_option.indent << varName << ".setSortingEnabled(False);\n";
     }
     return tempName;
 }
@@ -2014,7 +2014,7 @@ void WriteInitialization::enableSorting(DomWidget *w, const QString &varName, co
 {
     if (!w->elementItem().isEmpty()) {
         m_refreshOut << "\n";
-        m_refreshOut << m_option.indent << varName << ".sortingEnabled = " << tempName << "\n";
+        m_refreshOut << m_option.indent << varName << ".setSortingEnabled(" << tempName << ");\n";
     }
 }
 
@@ -2040,7 +2040,7 @@ void WriteInitialization::initializeListWidget(DomWidget *w)
         QString itemCreation = QLatin1String("new QListWidgetItem(") + varName + QLatin1String(");\n");
         if (icon) {
             const QString iconValue = iconCall(icon);
-            const QString itemName = m_driver->unique(QLatin1String("__listItem"));
+            const QString itemName = "$" + m_driver->unique(QLatin1String("tmp__listItem"));
             m_output << m_option.indent << itemName << " = " << itemCreation;
             m_output << m_option.indent << itemName << ".setIcon( " << iconValue << ");\n";
         } else {
@@ -2121,7 +2121,7 @@ void WriteInitialization::initializeTreeWidgetItems(const QString &className, co
         if (icons.isEmpty() && (item->elementItem().size() == 0)) {
             m_output << m_option.indent << "new QTreeWidgetItem(" << varName << ");\n";
         } else {
-            const QString itemName = m_driver->unique(QLatin1String("__treeItem"));
+            const QString itemName = "$" + m_driver->unique(QLatin1String("tmp__treeItem"));
             m_output << m_option.indent << itemName << " = new QTreeWidgetItem(" << varName << ");\n";
 
             QStringListIterator it(icons);
@@ -2147,7 +2147,7 @@ void WriteInitialization::initializeTableWidget(DomWidget *w)
     QList<DomColumn *> columns = w->elementColumn();
 
     if (columns.size() != 0) {
-        m_refreshOut << m_option.indent << "if (" << varName << ".columnCount < " << columns.size() << ") {\n"
+        m_refreshOut << m_option.indent << "if (" << varName << ".columnCount() < " << columns.size() << ") {\n"
             << m_option.indent << m_option.indent << varName << ".setColumnCount(" << columns.size() << ");\n"
             << m_option.indent << "}\n";
     }
@@ -2159,7 +2159,7 @@ void WriteInitialization::initializeTableWidget(DomWidget *w)
         DomProperty *text = properties.value(QLatin1String("text"));
         DomProperty *icon = properties.value(QLatin1String("icon"));
         if (text || icon) {
-            QString itemName = m_driver->unique(QLatin1String("__colItem"));
+            QString itemName = "$" + m_driver->unique(QLatin1String("tmp__colItem"));
             m_refreshOut << "\n";
             m_refreshOut << m_option.indent 
                            << itemName << " = new QTableWidgetItem\n";
@@ -2180,9 +2180,8 @@ void WriteInitialization::initializeTableWidget(DomWidget *w)
     QList<DomRow *> rows = w->elementRow();
 
     if (rows.size() != 0) {
-        m_refreshOut << m_option.indent << "if " << varName << ".rowCount < " << rows.size() << "\n"
-            << m_option.indent << m_option.indent << varName << ".rowCount = " << rows.size() << "\n"
-            << m_option.indent << "end\n";
+        m_refreshOut << m_option.indent << "if (" << varName << ".rowCount() < " << rows.size() << ")\n"
+            << m_option.indent << m_option.indent << varName << ".setRowCount(" << rows.size() << ");\n";
     }
 
     for (int i = 0; i < rows.size(); ++i) {
@@ -2192,7 +2191,7 @@ void WriteInitialization::initializeTableWidget(DomWidget *w)
         DomProperty *text = properties.value(QLatin1String("text"));
         DomProperty *icon = properties.value(QLatin1String("icon"));
         if (text || icon) {
-            QString itemName = m_driver->unique(QLatin1String("__rowItem"));
+            QString itemName = m_driver->unique(QLatin1String("tmp__rowItem"));
             m_refreshOut << "\n";
             m_refreshOut << m_option.indent
                            << itemName << " = new QTableWidgetItem();\n";
@@ -2218,7 +2217,7 @@ void WriteInitialization::initializeTableWidget(DomWidget *w)
             DomProperty *text = properties.value(QLatin1String("text"));
             DomProperty *icon = properties.value(QLatin1String("icon"));
             if (text || icon) {
-                QString itemName = m_driver->unique(QLatin1String("__item"));
+                QString itemName = "$" + m_driver->unique(QLatin1String("tmp__item"));
                 m_refreshOut << "\n";
                 m_refreshOut << m_option.indent
                     << itemName << " = new QTableWidgetItem();\n";
