@@ -34,6 +34,7 @@
 #include <QAbstractItemModel>
 #include <QDesktopWidget>
 #include <QTimer>
+#include <QTreeWidgetItem>
 
 static QoreStringNode *qt_module_init();
 static void qt_module_ns_init(QoreNamespace *rns, QoreNamespace *qns);
@@ -59,7 +60,7 @@ DLLEXPORT qore_license_t qore_module_license = QL_GPL;
 
 const QoreClass *QC_QOBJECT = 0, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT,
    *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME, *QC_QICON,
-   *QC_QPIXMAP, *QC_QAPPLICATION;
+   *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QTREEWIDGETITEM;
 
 Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON;
 
@@ -248,29 +249,33 @@ static AbstractQoreNode *rv_handler_QAbstractItemView_reset(QoreObject *self, Sm
     return 0;
 }
 
+static int do_externally_owned(const Smoke::Type &t, CommonQoreMethod &cqm, const AbstractQoreNode *n, int index, Smoke::Stack &stack, ExceptionSink *xsink) {
+   // get QoreSmokePrivate object
+   ReferenceHolder<QoreSmokePrivate> c(xsink);
+   if (cqm.getObject(t.classId, n, c, index))
+      return -1;
+
+   // set object externally owned flag
+   c->setExternallyOwned();
+   
+   // assign to argument stack
+   stack[index + 1].s_class = c->object();
+   return 0;
+}
+
 static int setExternallyOwned_handler(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     // Create a Smoke stack from params
     stack = new Smoke::StackItem[types.size() + 1];
     //printd(0, "setExternallyOwned_handler() %s::%s() allocated stack of size %d\n", cqm.getClassName(), cqm.getMethodName(), types.size() + 1);
 
     for (int i = 0, e = types.size(); i < e; ++i) {
-        Smoke::Type &t = types[i];
+        const Smoke::Type &t = types[i];
         const AbstractQoreNode *n = get_param(args, i);
 
-        //printd(0, "setExternallyOwned_handler() %s::%s() type=%s (%d) arg=%s (%s)\n", cqm.getClassName(), cqm.getMethodName(), t.name, t.classId, n ? n->getTypeName() : "NOTHING", t.classId > 0 && !(t.flags & Smoke::tf_const) ? "true" : "false");
-        if (t.classId > 0 && !(t.flags & Smoke::tf_const)) {
-            // get QoreSmokePrivate object
-            ReferenceHolder<QoreSmokePrivate> c(xsink);
-            if (cqm.getObject(t.classId, n, c, i))
-                return -1;
-
-            // set object externally owned flag
-            c->setExternallyOwned();
-
-            // assign to argument stack
-            stack[i + 1].s_class = c->object();
-        } else
-            cqm.qoreToStack(t, n, i + 1);
+	if (t.classId > 0 && !(t.flags & Smoke::tf_const))
+	   do_externally_owned(t, cqm, n, i, stack, xsink);
+	else
+	   cqm.qoreToStack(t, n, i + 1);
     }
     return 0;
 }
@@ -388,6 +393,17 @@ static int arg_handler_QShortcut(Smoke::Stack &stack, ClassMap::TypeList &types,
     }
     if (cqm.getParams())
         cqm.saveParam("parent", w);
+
+    return 0;
+}
+
+static AbstractQoreNode *rv_handler_QTreeWidgetItem(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+    ReferenceHolder<QoreSmokePrivateData> pd(reinterpret_cast<QoreSmokePrivateData *>(self->getReferencedPrivateData(QC_QTREEWIDGETITEM->getID(), xsink)), xsink);
+    if (pd) {
+       QTreeWidgetItem *qtwi = pd->getObject<QTreeWidgetItem>();
+       if (qtwi->parent() || qtwi->treeWidget())
+	  pd->setExternallyOwned();
+    }
 
     return 0;
 }
@@ -518,6 +534,7 @@ static QoreStringNode *qt_module_init() {
     setClassInfo(QC_QICON, SCI_QICON, "QIcon");
     setClassInfo(QC_QPIXMAP, "QPixmap");
     setClassInfo(QC_QAPPLICATION, "QApplication");
+    setClassInfo(QC_QTREEWIDGETITEM, "QTreeWidgetItem");
 
     // add alternate method argument handlers
     ClassMap &cm = *(ClassMap::Instance());
@@ -560,6 +577,8 @@ static QoreStringNode *qt_module_init() {
     cm.addArgHandler("QGridLayout", "addWidget", setExternallyOwned_handler);
     cm.addArgHandler("QStackedLayout", "addWidget", setExternallyOwned_handler);
     cm.addArgHandler("QWidgetItem", "QWidgetItem", setExternallyOwned_handler);
+    cm.addArgHandler("QTreeWidget", "addTopLevelItem", setExternallyOwned_handler);
+    cm.addArgHandler("QTreeWidget", "insertTopLevelItem", setExternallyOwned_handler);
 
     // QShortcut handlers
     cm.addArgHandler("QShortcut", "QShortcut", arg_handler_QShortcut);
@@ -581,6 +600,7 @@ static QoreStringNode *qt_module_init() {
     // add return value handlers
     cm.setRVHandler("QLayoutItem", "spacerItem", "spacerItem", rv_handler_spacer_item);
     cm.setRVHandler("QWidget", "setParent", rv_handler_QWidget_setParent);
+    cm.setRVHandler("QTreeWidgetItem", "QTreeWidgetItem", rv_handler_QTreeWidgetItem);
 
     cm.addArgHandler("QTimer", "singleShot", arg_handler_QTimer_singleShot);
 

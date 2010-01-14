@@ -8,7 +8,7 @@ my $l = new QTreeWidget();
 
 sub foo() {
 	my $i = new QTreeWidgetItem($l, ("foo") );
-	$l.addTopLevelItem($i);
+	#$l.addTopLevelItem($i);
 }
 
 foo();

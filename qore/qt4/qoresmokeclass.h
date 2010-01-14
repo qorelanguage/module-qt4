@@ -97,6 +97,11 @@ public:
         QoreSmokePrivateData::clear();
         return p;
     }
+    // non-virtual method for getting the object
+    template <class T>
+    DLLLOCAL T *getObject() {
+        return reinterpret_cast<T *>(m_object);
+    }
 
 private:
     void * m_object;

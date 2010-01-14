@@ -131,7 +131,11 @@ void ClassMap::addArgHandler(const char *cls, const char *meth, const char *mung
 
 // add an argument handler to all versions of a method
 void ClassMap::addArgHandler(const char *cls, const char *meth, arg_handler_t arg_handler) {
+#ifdef DEBUG
+    if (!m_map[cls][meth].count())
+        printd(0, "ERROR: %s::%s() does not exist\n", cls, meth);
     assert(m_map[cls][meth].count());
+#endif
 
     for (MungledToTypes::iterator i = m_map[cls][meth].begin(), e = m_map[cls][meth].end(); i != e; ++i)
         i.value().arg_handler = arg_handler;
