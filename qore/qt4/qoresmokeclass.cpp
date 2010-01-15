@@ -46,6 +46,9 @@ QoreWidgetManager QWM;
 ClassNamesMap* ClassNamesMap::m_instance = NULL;
 ClassMap * ClassMap::m_instance = NULL;
 
+static AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const QoreListNode *params, ExceptionSink *xsink);
+static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink);
+
 const QoreMethod *findUserMethod(const QoreClass *qc, const char *name) {
     const QoreMethod *m = qc->findMethod(name);
     return m && m->isUser() ? m : 0;
@@ -236,7 +239,7 @@ static bool qobject_delete_blocker(QoreObject *self, QoreSmokePrivateQObjectData
     return data->deleteBlocker(self);
 }
 
-QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) {
+QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) : m_qoreClass(0) {
     m_classId = qt_Smoke->findClass(className);
     // if the class is already registered, skip
     if (ClassNamesMap::Instance()->value(m_classId.index)) {
@@ -283,93 +286,16 @@ QoreSmokeClass::~QoreSmokeClass() {
 //         assert(!m_namespace);
 }
 
-AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const QoreListNode *params, ExceptionSink *xsink) {
-    const QoreObject *p = test_object_param(params, 0);
-
-    ReferenceHolder<QoreSmokePrivateQObjectData> sender(reinterpret_cast<QoreSmokePrivateQObjectData *>(p ? p->getReferencedPrivateData(QC_QOBJECT->getID(), xsink) : 0), xsink);
-    if (!sender) {
-        if (!*xsink)
-            xsink->raiseException("QOBJECT-CONNECT-ERROR", "first argument is not a QObject");
-        return 0;
-    }
-
-    const QoreStringNode *str = test_string_param(params, 1);
-    if (!str) {
-        xsink->raiseException("QOBJECT-CONNECT-ERROR", "missing signal string as second argument");
-        return 0;
-    }
-    const char *signal = str->getBuffer();
-
-    p = test_object_param(params, 2);
-    ReferenceHolder<QoreSmokePrivateQObjectData> receiver(reinterpret_cast<QoreSmokePrivateQObjectData *>(p ? p->getReferencedPrivateData(QC_QOBJECT->getID(), xsink) : 0), xsink);
-
-    if (!p) {
-        if (!*xsink)
-            xsink->raiseException("QOBJECT-CONNECT-ERROR", "missing receiving object as third argument");
-        return 0;
-    }
-
-    // get member/slot name
-    str = test_string_param(params, 3);
-    if (!str) {
-        xsink->raiseException("QOBJECT-CONNECT-ERROR", "missing slot as fourth argument");
-        return 0;
-    }
-    const char *member = str->getBuffer();
-
-    /*
-    p = get_param(params, 4);
-    int conn_type = is_nothing(p) ? Qt::AutoConnection : p->getAsInt();
-
-    bool b = QObject::connect(sender->getQObject(), signal, receiver->getQObject(), member, (enum Qt::ConnectionType)conn_type);
-    return get_bool_node(b);
-    */
-    receiver->connectDynamic(*sender, signal, p, member, xsink);
-    return 0;
-}
-
-AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink) {
-    // HACK: workaround for $.connect(o, sig, o, slot) call type
-    if (num_params(params) == 4)
-        return f_QOBJECT_connect(method, params, xsink);
-
-    QoreObject *p = test_object_param(params, 0);
-    ReferenceHolder<QoreSmokePrivateQObjectData> sender(p ? (QoreSmokePrivateQObjectData *)p->getReferencedPrivateData(QC_QOBJECT->getID(), xsink) : 0, xsink);
-
-    if (!sender) {
-        if (!xsink->isException())
-            xsink->raiseException("QOBJECT-CONNECT-PARAM-ERROR", "expecting a QObject object as first argument to QObject::connect()");
-        return 0;
-    }
-
-    const QoreStringNode *pstr = test_string_param(params, 1);
-    if (!pstr) {
-        xsink->raiseException("QOBJECT-CONNECT-PARAM-ERROR", "expecting a string as second argument to QObject::connect()");
-        return 0;
-    }
-    const char *signal = pstr->getBuffer();
-
-    pstr = test_string_param(params, 2);
-    if (!pstr) {
-        xsink->raiseException("QOBJECT-CONNECT-PARAM-ERROR", "expecting a string as third argument to QObject::connect()");
-        return 0;
-    }
-    const char *meth = pstr->getBuffer();
-
-    //p = get_param(params, 3);
-    //Qt::ConnectionType type = (Qt::ConnectionType)(p ? p->getAsInt() : 0);
-    //return get_bool_node(qo->getQObject()->connect(sender->getQObject(), signal, method, type));
-
-    apd->connectDynamic(*sender, signal, self, meth, xsink);
-    return 0;
-}
-
 void QoreSmokeClass::addSuperClasses(Smoke::Index ix, QoreNamespace &qt_ns) {
     Smoke::Class c = qt_Smoke->classes[ix];
-    for (Smoke::Index *i = qt_Smoke->inheritanceList + c.parents; *i; i++) {
-        QoreClass *parent = ClassNamesMap::Instance()->value(*i);
+    for (Smoke::Index *i = qt_Smoke->inheritanceList + c.parents; *i; ++i) {
+        QoreClass *parent = ClassNamesMap::Instance()->value(*i);	
         if (!parent) {
             QoreSmokeClass qsc(qt_Smoke->classes[(*i)].className, qt_ns);
+	    if (!qsc.m_qoreClass) {
+	       printd(0, "QoreSmokeClass::addSuperClasses() cannot add %s as base class of %s (class not found)\n", qt_Smoke->classes[(*i)].className, m_qoreClass->getName());
+	       continue;
+	    }
             parent = qsc.m_qoreClass;
         }
         if (QC_QOBJECT && parent == QC_QOBJECT) {
@@ -483,6 +409,87 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 //         printd(0, "registered toQore\n");
         m_qoreClass->addMethod2("toQore", (q_method2_t)Marshalling::return_qvariant);
     }
+}
+
+static AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const QoreListNode *params, ExceptionSink *xsink) {
+    const QoreObject *p = test_object_param(params, 0);
+
+    ReferenceHolder<QoreSmokePrivateQObjectData> sender(reinterpret_cast<QoreSmokePrivateQObjectData *>(p ? p->getReferencedPrivateData(QC_QOBJECT->getID(), xsink) : 0), xsink);
+    if (!sender) {
+        if (!*xsink)
+            xsink->raiseException("QOBJECT-CONNECT-ERROR", "first argument is not a QObject");
+        return 0;
+    }
+
+    const QoreStringNode *str = test_string_param(params, 1);
+    if (!str) {
+        xsink->raiseException("QOBJECT-CONNECT-ERROR", "missing signal string as second argument");
+        return 0;
+    }
+    const char *signal = str->getBuffer();
+
+    p = test_object_param(params, 2);
+    ReferenceHolder<QoreSmokePrivateQObjectData> receiver(reinterpret_cast<QoreSmokePrivateQObjectData *>(p ? p->getReferencedPrivateData(QC_QOBJECT->getID(), xsink) : 0), xsink);
+
+    if (!p) {
+        if (!*xsink)
+            xsink->raiseException("QOBJECT-CONNECT-ERROR", "missing receiving object as third argument");
+        return 0;
+    }
+
+    // get member/slot name
+    str = test_string_param(params, 3);
+    if (!str) {
+        xsink->raiseException("QOBJECT-CONNECT-ERROR", "missing slot as fourth argument");
+        return 0;
+    }
+    const char *member = str->getBuffer();
+
+    /*
+    p = get_param(params, 4);
+    int conn_type = is_nothing(p) ? Qt::AutoConnection : p->getAsInt();
+
+    bool b = QObject::connect(sender->getQObject(), signal, receiver->getQObject(), member, (enum Qt::ConnectionType)conn_type);
+    return get_bool_node(b);
+    */
+    receiver->connectDynamic(*sender, signal, p, member, xsink);
+    return 0;
+}
+
+static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink) {
+    // HACK: workaround for $.connect(o, sig, o, slot) call type
+    if (num_params(params) == 4)
+        return f_QOBJECT_connect(method, params, xsink);
+
+    QoreObject *p = test_object_param(params, 0);
+    ReferenceHolder<QoreSmokePrivateQObjectData> sender(p ? (QoreSmokePrivateQObjectData *)p->getReferencedPrivateData(QC_QOBJECT->getID(), xsink) : 0, xsink);
+
+    if (!sender) {
+        if (!xsink->isException())
+            xsink->raiseException("QOBJECT-CONNECT-PARAM-ERROR", "expecting a QObject object as first argument to QObject::connect()");
+        return 0;
+    }
+
+    const QoreStringNode *pstr = test_string_param(params, 1);
+    if (!pstr) {
+        xsink->raiseException("QOBJECT-CONNECT-PARAM-ERROR", "expecting a string as second argument to QObject::connect()");
+        return 0;
+    }
+    const char *signal = pstr->getBuffer();
+
+    pstr = test_string_param(params, 2);
+    if (!pstr) {
+        xsink->raiseException("QOBJECT-CONNECT-PARAM-ERROR", "expecting a string as third argument to QObject::connect()");
+        return 0;
+    }
+    const char *meth = pstr->getBuffer();
+
+    //p = get_param(params, 3);
+    //Qt::ConnectionType type = (Qt::ConnectionType)(p ? p->getAsInt() : 0);
+    //return get_bool_node(qo->getQObject()->connect(sender->getQObject(), signal, method, type));
+
+    apd->connectDynamic(*sender, signal, self, meth, xsink);
+    return 0;
 }
 
 void common_constructor(const QoreClass &myclass, QoreObject *self,
