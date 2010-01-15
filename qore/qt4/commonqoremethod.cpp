@@ -205,7 +205,7 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
     }
 
     if (candidates.count() == 1) {
-//         printd(0, "CommonQoreMethod::CommonQoreMethod() only one candidate - by args count\n");
+       //printd(0, "CommonQoreMethod::CommonQoreMethod() only one candidate - by args count\n");
         //m_munged = candidates.keys()[0];
         ClassMap::MungledToTypes::iterator i = candidates.begin();
         m_munged = i.key();
@@ -228,7 +228,7 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
                 score += rc;
             }
 
-#ifdef DEBUG
+#ifdef DEBUG_0
             QoreString tmp("getScore() ");
             tmp.sprintf("%s::%s(", className, methodName);
             foreach (Smoke::Type t, i.value().types)
@@ -236,7 +236,7 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
             tmp.terminate(tmp.strlen() - 2);
             tmp.sprintf("): matches=%d, score=%d, high score=%d, argcnt=%d, perfect=%d\n",
                         matches, score, high_score, qoreArgCnt, perfect);
-//             printd(0, tmp.getBuffer());
+	    //printd(0, tmp.getBuffer());
 #endif
 
             // skip variants where not every argument has a match

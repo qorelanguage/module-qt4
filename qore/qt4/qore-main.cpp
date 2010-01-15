@@ -35,6 +35,7 @@
 #include <QDesktopWidget>
 #include <QTimer>
 #include <QTreeWidgetItem>
+#include <QListWidgetItem>
 
 static QoreStringNode *qt_module_init();
 static void qt_module_ns_init(QoreNamespace *rns, QoreNamespace *qns);
@@ -60,7 +61,7 @@ DLLEXPORT qore_license_t qore_module_license = QL_GPL;
 
 const QoreClass *QC_QOBJECT = 0, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT,
    *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME, *QC_QICON,
-   *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QTREEWIDGETITEM;
+   *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QTREEWIDGETITEM, *QC_QLISTWIDGETITEM;
 
 Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON;
 
@@ -408,6 +409,17 @@ static AbstractQoreNode *rv_handler_QTreeWidgetItem(QoreObject *self, Smoke::Typ
     return 0;
 }
 
+static AbstractQoreNode *rv_handler_QListWidgetItem(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+    ReferenceHolder<QoreSmokePrivateData> pd(reinterpret_cast<QoreSmokePrivateData *>(self->getReferencedPrivateData(QC_QLISTWIDGETITEM->getID(), xsink)), xsink);
+    if (pd) {
+       QListWidgetItem *qlwi = pd->getObject<QListWidgetItem>();
+       if (qlwi->listWidget())
+	  pd->setExternallyOwned();
+    }
+
+    return 0;
+}
+
 static AbstractQoreNode *rv_handler_QShortcut(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     ReferenceHolder<QoreSmokePrivateQObjectData> shortcut(reinterpret_cast<QoreSmokePrivateQObjectData *>(self->getReferencedPrivateData(QC_QOBJECT->getID(), xsink)), xsink);
     if (*xsink)
@@ -535,6 +547,7 @@ static QoreStringNode *qt_module_init() {
     setClassInfo(QC_QPIXMAP, "QPixmap");
     setClassInfo(QC_QAPPLICATION, "QApplication");
     setClassInfo(QC_QTREEWIDGETITEM, "QTreeWidgetItem");
+    setClassInfo(QC_QLISTWIDGETITEM, "QListWidgetItem");
 
     // add alternate method argument handlers
     ClassMap &cm = *(ClassMap::Instance());
@@ -601,6 +614,7 @@ static QoreStringNode *qt_module_init() {
     cm.setRVHandler("QLayoutItem", "spacerItem", "spacerItem", rv_handler_spacer_item);
     cm.setRVHandler("QWidget", "setParent", rv_handler_QWidget_setParent);
     cm.setRVHandler("QTreeWidgetItem", "QTreeWidgetItem", rv_handler_QTreeWidgetItem);
+    cm.setRVHandler("QListWidgetItem", "QListWidgetItem", rv_handler_QListWidgetItem);
 
     cm.addArgHandler("QTimer", "singleShot", arg_handler_QTimer_singleShot);
 

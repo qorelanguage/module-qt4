@@ -15,11 +15,7 @@ foo();
 
 printf("items (should be 1): %N (%s)\n", $l.topLevelItemCount(), $l.topLevelItemCount() == 1 ? "success" : "ERROR");
 
-
-
-
-class MyClass inherits QWidget
-{
+class MyClass inherits QWidget {
 	private $.w;
 
 	constructor() {
@@ -27,10 +23,9 @@ class MyClass inherits QWidget
 		$.w.addItem("foo");
 		$.w.addItem("bar");
 
-		$.connect($.w, SIGNAL("currentItemChanged(QListWidgetItem *,QListWidgetItem *)"),
-			  SLOT("w_currentItemChanged(QListWidgetItem *, QListWidgetItem *)"));
+		$.connect($.w, SIGNAL("currentItemChanged(QListWidgetItem *,QListWidgetItem *)"), SLOT("w_currentItemChanged(QListWidgetItem *, QListWidgetItem *)"));
 
-		$.w.setCurrentRow(1);
+		$.w.setCurrentRow(0);
 	}
 
 	w_currentItemChanged($curr, $prev) {

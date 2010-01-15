@@ -49,6 +49,7 @@
 #include <QWizard>
 #include <QLayoutItem>
 #include <QIcon>
+#include <QListWidgetItem>
 // #include <>
 
 #include "qoresmokeclass.h"
@@ -156,6 +157,18 @@ QoreObject *createQoreObjectFromNonQObject(const QoreClass *theclass, Smoke::Ind
     assert(!theclass->getClass(QC_QOBJECT->getID()));
     QoreObject *o = new QoreObject(theclass, getProgram());
     QoreSmokePrivateData *data = new QoreSmokePrivateData(classId, ptr, o);
+    o->setPrivate(theclass->getID(), data);
+    if (p)
+        *p = data;
+    return o;
+}
+
+QoreObject *createQoreObjectFromNonQObjectExternallyOwned(const QoreClass *theclass, Smoke::Index classId, void *ptr, QoreSmokePrivate **p = 0) {
+    // ensure this is not a QObject
+    assert(!theclass->getClass(QC_QOBJECT->getID()));
+    QoreObject *o = new QoreObject(theclass, getProgram());
+    QoreSmokePrivateData *data = new QoreSmokePrivateData(classId, ptr, o);
+    data->setExternallyOwned();
     o->setPrivate(theclass->getID(), data);
     if (p)
         *p = data;
@@ -635,10 +648,10 @@ QoreObject *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0) {
         cname = meta->className();
         qc = ClassNamesMap::Instance()->value(cname);
         if (qc) {
-            printd(0, "doQObject<>(%p) found Qore class %s\n", qtObj, cname);
+	    //printd(0, "doQObject<>(%p) found Qore class %s\n", qtObj, cname);
             break;
         }
-        printd(0, "doQObject<>(%p) cannot find Qore class %s, checking parent class\n", qtObj, cname);
+        //printd(0, "doQObject<>(%p) cannot find Qore class %s, checking parent class\n", qtObj, cname);
         meta = meta->superClass();
         assert(meta);
     }
@@ -833,8 +846,8 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
         QoreClass *qc;
         ReferenceHolder<QoreObject> o(getQoreObject(classId, origObj, qc), xsink);
         if (o) {
-//             printd(0, "Marshalling::stackToQore() got QoreObject %p\n", o);
-            o->ref();
+	   //printd(0, "Marshalling::stackToQore() got QoreObject %p\n", *o);
+	   o->ref();
         } else {
             QoreSmokePrivate *p = 0;
             // now it should be real object
@@ -851,17 +864,19 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
                 if (o) {
                     o->ref();
                 } else {
-                    // it's not QObject based, just use copy constructor
+                    // it's not QObject based, just use the object and set that it's externally owned
                     const char * className = qt_Smoke->classes[classId].className;
 
                     //printd(0, "Marshalling::stackToQore() %s: origObj=%p qcid=%d (%s) scid=%d ref=%d ptr=%d stack=%d\n", t.name, origObj, c->getID(), c->getName(), t.classId, flags == Smoke::tf_ref, flags == Smoke::tf_ptr, flags == Smoke::tf_stack);
 
+		    /*
                     if (iconst && flags == Smoke::tf_ref) {
                         origObj = Marshalling::constructCopy(origObj, className, xsink);
                         if (*xsink)
                             return 0;
                     }
-                    o = createQoreObjectFromNonQObject(c, classId, origObj, &p);
+		    */
+                    o = createQoreObjectFromNonQObjectExternallyOwned(c, classId, origObj, &p);
                 }
             }
             if (p && flags != Smoke::tf_stack)
@@ -882,8 +897,7 @@ void * constructCopy(void * obj, const char * className, ExceptionSink *xsink) {
     QByteArray copyName(className);
     QByteArray mungedName(copyName + "#");
     QByteArray argName("const " + copyName + "&");
-//     printd(0, "Marshalling::constructCopy %s::%s %s %s obj=%p\n", realClassName.constData(),
-//            copyName.constData(), mungedName.constData(), argName.constData(), obj);
+    //printd(0, "Marshalling::constructCopy %s::%s %s %s obj=%p\n", realClassName.constData(), copyName.constData(), mungedName.constData(), argName.constData(), obj);
 
     bool methodFound = false;
     Smoke::Method method;
