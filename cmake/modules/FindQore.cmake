@@ -85,6 +85,16 @@ ELSE (NOT QORE_MODULES_DIR)
     MESSAGE( STATUS "Qore modules dir: ${QORE_MODULES_DIR}" )
 ENDIF (NOT QORE_MODULES_DIR)
 
+# module API version
+IF (NOT QORE_API_VERSION)
+    EXEC_PROGRAM(${QORE_EXECUTABLE} ARGS "--latest-module-api" OUTPUT_VARIABLE QORE_API_VERSION)
+ENDIF (NOT QORE_API_VERSION)
+IF (NOT QORE_API_VERSION)
+    MESSAGE( FATAL_ERROR "Unknown Qore module API version. No data taken from 'qore --latest-module-api'. It can be specified manually with -DQORE_API_VERSION")
+ELSE (NOT QORE_API_VERSION)
+    MESSAGE( STATUS "Qore module API version: ${QORE_API_VERSION}")
+ENDIF (NOT QORE_API_VERSION)
+
 
 IF (QORE_FOUND)
     MESSAGE(STATUS "Found Qore lib: ${QORE_LIBRARY}")
