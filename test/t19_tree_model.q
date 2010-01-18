@@ -6,7 +6,7 @@
 sub indexof($list, $v) {
     for (my $i = 0; $i < elements $list; ++$i) {
         if ($list[$i] == $v) {
-            printf("\n\n    indexof %N\n\n", $i);
+#            printf("\n\n    indexof %N\n\n", $i);
             return $i;
         }
     }
@@ -32,7 +32,7 @@ class Item
             $parent.addChild($self);
 
         $.children = list();
-        printf("Item::constructor() data: %N parent: %N\n", $.data, exists $.parent);
+#        printf("Item::constructor() data: %N parent: %N\n", $.data, exists $.parent);
     }
 
     children()
@@ -42,7 +42,7 @@ class Item
 
     child($row)
     {
-        printf("child(row) %N %N\n", $row, exists $.children[$row]);
+#        printf("child(row) %N %N\n", $row, exists $.children[$row]);
         return $.children[$row];
     }
 
@@ -91,7 +91,7 @@ class Model inherits QAbstractItemModel
         new Item("subchild 2", $c1);
         new Item("subchild 3", $c1);
         new Item("child2", $.rootItem);
-        printf("struct: %N\n", $.rootItem);
+#        printf("struct: %N\n", $.rootItem);
     }
 
     columnCount($index)
@@ -111,7 +111,7 @@ class Model inherits QAbstractItemModel
             $parent = $parentIndex.internalPointer();
 #         if (exists $parent)
 #         {
-            printf("rowCount() c=%N\n", $parent.childrenCount());
+#            printf("rowCount() c=%N\n", $parent.childrenCount());
             return $parent.childrenCount();
 #         }
 #         printf("rowCount() error, item is not found item: %N\nparent: %N\n", $parent, $index);
@@ -120,11 +120,11 @@ class Model inherits QAbstractItemModel
 
     index($row, $column, $parentIndex)
     {
-        printf("index() row: %N column: %N parent: %N (%N, %N)\n", $row, $column,
-                $parentIndex, $parentIndex.row(), $parentIndex.column());
+#        printf("index() row: %N column: %N parent: %N (%N, %N)\n", $row, $column,
+#                $parentIndex, $parentIndex.row(), $parentIndex.column());
         if (!$.hasIndex($row, $column, $parentIndex))
         {
-            printf("index() not hasIndex\n");
+#            printf("index() not hasIndex\n");
             return new QModelIndex();
         }
         
@@ -137,29 +137,29 @@ class Model inherits QAbstractItemModel
         my $child = $parent.child($row);
         if (exists $child)
         {
-            printf("index() creating index for child: %N, %N, %N\n", $row, $parent.data(), $child.data());
+#            printf("index() creating index for child: %N, %N, %N\n", $row, $parent.data(), $child.data());
             return $.createIndex($row, $column, $child);
         }
         else
         {
-            printf("index() child does not exist\n");
+#            printf("index() child does not exist\n");
             return new QModelIndex();
         }
     }
 
     parent($index)
     {
-        printf("parent() start\n");
+#        printf("parent() start\n");
         if (!$index.isValid())
         {
-            printf("parent() invalid index\n");
+#            printf("parent() invalid index\n");
             return new QModelIndex();
         }
 #         printf("parent() index %N internalPointer %N\n", $index, $index.internalPointer());
         my $child = $index.internalPointer();
         if (! exists $child)
         {
-            printf("parent() child object does not exists! QModelIndex( %N, %N )\n", $index.row(), $index.column());
+#            printf("parent() child object does not exists! QModelIndex( %N, %N )\n", $index.row(), $index.column());
 #             return new QModelIndex();
         }
         my $parent = $child.parentItem();
@@ -168,21 +168,26 @@ class Model inherits QAbstractItemModel
             ||
             $parent == $.rootItem)
         {
-            printf("parent() exiting. parent: %N root %N\n", exists $parent, $parent == $.rootItem);
+#            printf("parent() exiting. parent: %N root %N\n", exists $parent, $parent == $.rootItem);
             return new QModelIndex();
         }
 
 #         printf("parent() p=%N\n", $parent);
-        printf("parent() p-------------------\n");
+#        printf("parent() p-------------------\n");
         return $.createIndex($parent.childNumber(), 0, $parent);
     }
 
     data($index, $role)
     {
-        printf("data()\n");
+#        printf("data()\n");
         if ($role == Qt::DisplayRole)
             return $index.internalPointer().data();
         return;
+    }
+
+    do_doubleClicked($item)
+    {
+       printf("do_doubleClicked: %N\n", $item);
     }
 
 }
@@ -192,6 +197,9 @@ class Model inherits QAbstractItemModel
 my $app = new QApplication();
 my $w = new QTreeView();
 my $m = new Model($w);
+
+$w.connect($w, SIGNAL("doubleClicked(const QModelIndex &)"), $m, SLOT("do_doubleClicked(const QModelIndex &)"));
+
 $w.setModel($m);
 $w.show();
 $app.exec();
