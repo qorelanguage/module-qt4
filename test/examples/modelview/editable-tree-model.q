@@ -335,6 +335,8 @@ class TreeItem {
         if ($column < 0 || $column >= elements $.itemData)
             return False;
 
+	if ($value instanceof QVariant)
+	    $value = $value.toString();
         $.itemData[$column] = $value;
         return True;
     }
