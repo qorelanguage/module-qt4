@@ -756,7 +756,7 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
 
     int tid = t.flags & Smoke::tf_elem;
     int flags = t.flags & Smoke::tf_ref;
-    bool iconst = t.flags & Smoke::tf_const;
+    //bool iconst = t.flags & Smoke::tf_const;
 
     if (!t.name) {
         return 0;
@@ -865,7 +865,7 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
                     o->ref();
                 } else {
                     // it's not QObject based, just use the object and set that it's externally owned
-                    const char * className = qt_Smoke->classes[classId].className;
+                    //const char * className = qt_Smoke->classes[classId].className;
 
                     //printd(0, "Marshalling::stackToQore() %s: origObj=%p qcid=%d (%s) scid=%d ref=%d ptr=%d stack=%d\n", t.name, origObj, c->getID(), c->getName(), t.classId, flags == Smoke::tf_ref, flags == Smoke::tf_ptr, flags == Smoke::tf_stack);
 
