@@ -412,7 +412,7 @@ public:
         AbstractQoreNode *d = reinterpret_cast<AbstractQoreNode *>(data);
 
 	d = node_set.find(d) == node_set.end() ? 0 : d->refSelf();
-	//printd(5, "QoreSmokePrivateQAbstractItemModelData::isQoreData(%p) this=%p returning %p (%s: %s)\n", data, this, d, d ? d->getTypeName() : "NOTHING", d && d->getType() == NT_OBJECT ? reinterpret_cast<QoreObject *>(d)->getClassName() : "n/a");
+	printd(5, "QoreSmokePrivateQAbstractItemModelData::isQoreData(%p) this=%p returning %p (%s: %s)\n", data, this, d, d ? d->getTypeName() : "NOTHING", d && d->getType() == NT_OBJECT ? reinterpret_cast<QoreObject *>(d)->getClassName() : "n/a");
 
 	return d;
     }

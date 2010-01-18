@@ -132,6 +132,7 @@ void QoreQtDynamicMethod::qtToQore(const Smoke::Type &t, void *arg, QoreListNode
     Smoke::StackItem si;
 
     int typ = t.flags & Smoke::tf_ref;
+    assert(typ);
 
     if (typ == Smoke::tf_ref && !strcmp(t.name, "QString&"))
         si.s_voidp = arg;
@@ -165,11 +166,13 @@ void QoreQtDynamicMethod::qtToQore(const Smoke::Type &t, void *arg, QoreListNode
             si.s_enum = * reinterpret_cast<int*>(arg);
             break;
         case Smoke::t_class:
-	    si.s_class = *((void **)arg);
+	   //printd(0, "QoreQtDynamicMethod::qtToQore() type=%s flags=0x%x, const=%s type=0x%x arg=%p\n", t.name, t.flags, t.flags & 0x40 ? "true" : "false", t.flags & 0x30, arg);
+	   si.s_class = t.flags & Smoke::tf_ptr ? *((void **)arg) : arg;
+	   //si.s_class = arg;
             break;
 
         default:
-            printd(0, "QoreQtDynamicMethod::qtToQore type=%s flags=%d\n", t.name, t.flags);
+	   //printd(0, "QoreQtDynamicMethod::qtToQore type=%s flags=%d\n", t.name, t.flags);
             Q_ASSERT_X(false, "sig/slot", "missing qt to qore handling");
         }
 
@@ -184,6 +187,7 @@ void QoreQtDynamicMethod::qtToQore(const Smoke::Type &t, void *arg, QoreListNode
 
     ExceptionSink xsink;
     AbstractQoreNode *newNode = Marshalling::stackToQore(t, si, &xsink);
+    printd(0, "QoreQtDynamicMethod::qtToQore() type: %s s_class=%p rv=%p\n", t.name, si.s_class, newNode);
     if (!newNode)
         xsink.handleExceptions();
     args->push(newNode);
@@ -301,7 +305,7 @@ void QoreQtDynamicSlot::call(QoreObject *self, void **arguments) const {
     // create Qore argument list
     ReferenceHolder<QoreListNode> args(typeList.empty() ? 0 : new QoreListNode, &xsink);
     for (int i = 0, e = typeList.size(); i < e; ++i) {
-       //printd(0, "%s() arg %d: %s %p\n", method->getName(), i + 1, typeList[i].name, arguments[i + 1]);
+       printd(0, "%s() arg %d: %s %p\n", method->getName(), i + 1, typeList[i].name, arguments[i + 1]);
        qtToQore(typeList[i], arguments[i + 1], *args);
     }
 

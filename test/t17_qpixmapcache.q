@@ -4,15 +4,15 @@
 my $a = new QApplication();
 
 sub getPM($name) {
-    my $pm = new QPixmap();
-#my $pm; # it doesn't work
+    #my $pm = new QPixmap();
+    my $pm; # it doesn't work
     if (!QPixmapCache::find($name, \$pm)) {
         printf("Creating new pixmap %s.png\n", $name);
         $pm = new QPixmap(sprintf("examples/widgets/images/%s.png", $name));
         QPixmapCache::insert($name, $pm);
     }
     else
-        printf("Cached pixmap %s.png\n", $name);
+        printf("Cached pixmap %s.png: %N\n", $name, $pm);
     return $pm;
 }
 

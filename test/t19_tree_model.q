@@ -25,13 +25,11 @@ class Item
     {
         $.data = $data;
         $.parent = $parent;
-#         if (! exists $.parent)
-#             $.parent = $self;
 
         if (exists $parent)
             $parent.addChild($self);
 
-        $.children = list();
+        $.children = ();
 #        printf("Item::constructor() data: %N parent: %N\n", $.data, exists $.parent);
     }
 
@@ -42,7 +40,7 @@ class Item
 
     child($row)
     {
-#        printf("child(row) %N %N\n", $row, exists $.children[$row]);
+        #printf("child(row) %N %N\n", $row, exists $.children[$row]);
         return $.children[$row];
     }
 
@@ -101,38 +99,20 @@ class Model inherits QAbstractItemModel
 
     rowCount($parentIndex)
     {
-        my $parent;
-        if (!$parentIndex.isValid())
-        {
-#             printf("rowCount() index is not valid\n");
-            $parent = $.rootItem;
-        }
-        else
-            $parent = $parentIndex.internalPointer();
-#         if (exists $parent)
-#         {
-#            printf("rowCount() c=%N\n", $parent.childrenCount());
-            return $parent.childrenCount();
-#         }
-#         printf("rowCount() error, item is not found item: %N\nparent: %N\n", $parent, $index);
-#         return 0;
+        my $parent = !$parentIndex.isValid() ? $.rootItem : $parentIndex.internalPointer();
+	return $parent.childrenCount();
     }
 
     index($row, $column, $parentIndex)
     {
-#        printf("index() row: %N column: %N parent: %N (%N, %N)\n", $row, $column,
-#                $parentIndex, $parentIndex.row(), $parentIndex.column());
+        #printf("index() row: %N column: %N parent: %N (%N, %N)\n", $row, $column, $parentIndex, $parentIndex.row(), $parentIndex.column());
         if (!$.hasIndex($row, $column, $parentIndex))
         {
 #            printf("index() not hasIndex\n");
             return new QModelIndex();
         }
-        
-        my $parent;
-        if (!$parentIndex.isValid())
-            $parent = $.rootItem;
-        else
-            $parent = $parentIndex.internalPointer();
+
+        my $parent = !$parentIndex.isValid() ? $.rootItem : $parentIndex.internalPointer();
 
         my $child = $parent.child($row);
         if (exists $child)
@@ -159,8 +139,8 @@ class Model inherits QAbstractItemModel
         my $child = $index.internalPointer();
         if (! exists $child)
         {
-#            printf("parent() child object does not exists! QModelIndex( %N, %N )\n", $index.row(), $index.column());
-#             return new QModelIndex();
+            printf("parent() child object does not exists! QModelIndex( %N, %N )\n", $index.row(), $index.column());
+            return new QModelIndex();
         }
         my $parent = $child.parentItem();
 #         printf("parent() %N\n%N\n\n", $child, $parent);
