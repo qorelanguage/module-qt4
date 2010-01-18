@@ -65,6 +65,7 @@ public:
     DLLLOCAL bool isQObject() const {
        return is_qobject;
     }
+
 private:
     Smoke::Index m_class;
     bool externally_owned : 1;
@@ -104,7 +105,7 @@ public:
     }
 
 private:
-    void * m_object;
+   void * m_object;
 };
 
 class QoreSmokePrivateQObjectData : public QoreSmokePrivate {
@@ -153,23 +154,6 @@ public:
         }
         return false;
     }
-    DLLLOCAL void externalDelete(QoreObject *obj, ExceptionSink *xsink) {
-        QObject *qo = m_qobject.data();
-	if (qo && qo->isWidgetType())
-	   QWM.remove(reinterpret_cast<QWidget *>(qo));
-
-	// clear object before running destructor
-        QoreSmokePrivateQObjectData::clear();
-        if (obj_ref) {
-            //printd(5, "QoreSmokePrivateQObjectData::externalDelete() deleting object of class %s\n", obj->getClassName());
-            obj_ref = false;
-	    // FIXME: should doDelete() be called unconditionally?
-            // delete the object if necessary (if not already in the destructor)
-            if (obj->isValid())
-                obj->doDelete(xsink);
-            obj->deref(xsink);
-        }
-    }
     DLLLOCAL virtual void *object() {
         return m_qobject.data();
     }
@@ -188,6 +172,7 @@ public:
     DLLLOCAL Smoke::Index getMetacallIndex() const {
         return qt_metacall_index;
     }
+
     DLLLOCAL int createSignal(const char *signal, ExceptionSink *xsink) {
         QByteArray theSignal = QMetaObject::normalizedSignature(signal);
         int signalId = signalIndices.value(theSignal, -1);
@@ -299,6 +284,23 @@ public:
 
     DLLLOCAL int getParentMethodCount() const {
        return qt_metaobject_method_count;
+    }
+
+    DLLLOCAL void externalDelete(QoreObject *obj, ExceptionSink *xsink) {
+       QObject *qo = m_qobject.data();
+       if (qo && qo->isWidgetType())
+	  QWM.remove(reinterpret_cast<QWidget *>(qo));
+
+       // clear object before running destructor
+       clear();
+       if (obj_ref) {
+	  //printd(5, "QoreSmokePrivateQObjectData::externalDelete() deleting object of class %s\n", obj->getClassName());
+	  obj_ref = false;
+	  // delete the object if necessary (if not already in the destructor)
+	  if (obj->isValid())
+	     obj->doDelete(xsink);
+	  obj->deref(xsink);
+       }
     }
 
 protected:

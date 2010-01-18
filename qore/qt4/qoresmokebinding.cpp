@@ -80,14 +80,15 @@ void QoreSmokeBinding::deleted(Smoke::Index classId, void *obj) {
         ExceptionSink xsink;
 
         // mark private data as cleared
-        ReferenceHolder<QoreSmokePrivateQObjectData> qsd(reinterpret_cast<QoreSmokePrivateQObjectData *>(o->getReferencedPrivateData(qc->getID(), &xsink)), &xsink);
+	PrivateDataRefHolder<QoreSmokePrivate> qsd(o, qc->getID(), &xsink);
 //         printd(0, "QoreSmokeBinding::deleted() external delete Qore class %s (Qt class %s) (qsd=%p)\n", o->getClassName(), className(classId), *qsd);
 
-        if (qsd)
-            qsd->externalDelete(o, &xsink);
+        if (qsd && qsd->isQObject()) {
+	   reinterpret_cast<QoreSmokePrivateQObjectData *>(*qsd)->externalDelete(o, &xsink);
+	}
         else
-            // mark qore object as externally deleted
-            o->externalDelete(qc->getID(), &xsink);
+	   // mark qore object as externally deleted
+	   o->externalDelete(qc->getID(), &xsink);
     }
 }
 

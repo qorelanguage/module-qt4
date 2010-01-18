@@ -752,11 +752,11 @@ AbstractQoreNode *return_qvariant(const QoreMethod &method,
 }
 
 AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, ExceptionSink *xsink) {
-//     printd(0, "Marshalling::stackToQore() type: %s, %d\n", t.name, t.flags & Smoke::tf_elem);
+   int tid = t.flags & Smoke::tf_elem;
+   int flags = t.flags & Smoke::tf_ref;
+   //bool iconst = t.flags & Smoke::tf_const;
 
-    int tid = t.flags & Smoke::tf_elem;
-    int flags = t.flags & Smoke::tf_ref;
-    //bool iconst = t.flags & Smoke::tf_const;
+   //printd(0, "Marshalling::stackToQore() type: %s tid: %d flags: %d ptr: %p\n", t.name, tid, flags, i.s_voidp);
 
     if (!t.name) {
         return 0;
@@ -790,11 +790,15 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
     case Smoke::t_voidp: {
         QByteArray tname(t.name);
 
-        if (tname == "uchar*" || tname == "unsigned char*")
-            return new QoreStringNode(*(uchar*)i.s_voidp);
+        if (tname == "uchar*" || tname == "unsigned char*") {
+	   //printd(0, "stackToQore() tname=%s %p='%s'\n", t.name, i.s_voidp, (const char*)i.s_voidp);
+            return new QoreStringNode((uchar*)i.s_voidp);
+	}
 
-        if (tname == "const char*" || tname == "char*")
-            return new QoreStringNode(*(char*)i.s_voidp);
+        if (tname == "const char*" || tname == "char*") {
+	   //printd(0, "stackToQore() tname=%s %p='%s'\n", t.name, i.s_voidp, (const char*)i.s_voidp);
+            return new QoreStringNode((const char*)i.s_voidp);
+	}
 
         if (tname == "QString" || tname == "QString&")
             return new QoreStringNode(reinterpret_cast<QString*>(i.s_voidp)->toUtf8().data(), QCS_UTF8);
