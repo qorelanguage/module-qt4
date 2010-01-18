@@ -166,8 +166,8 @@ void QoreQtDynamicMethod::qtToQore(const Smoke::Type &t, void *arg, QoreListNode
             si.s_enum = * reinterpret_cast<int*>(arg);
             break;
         case Smoke::t_class:
-	   //printd(0, "QoreQtDynamicMethod::qtToQore() type=%s flags=0x%x, const=%s type=0x%x arg=%p\n", t.name, t.flags, t.flags & 0x40 ? "true" : "false", t.flags & 0x30, arg);
-	   si.s_class = t.flags & Smoke::tf_ptr ? *((void **)arg) : arg;
+	   printd(0, "QoreQtDynamicMethod::qtToQore() type=%s flags=0x%x, const=%s type=0x%x arg=%p\n", t.name, t.flags, t.flags & 0x40 ? "true" : "false", t.flags & 0x30, arg);
+	   si.s_class = typ == Smoke::tf_ptr ? *((void **)arg) : arg;
 	   //si.s_class = arg;
             break;
 
