@@ -559,31 +559,46 @@ QoreQVariant *qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * nod
             // only call this once because it's a virtual call (slow)
             void *o = p->object();
             ret->qvariant = o ? QVariant(*(reinterpret_cast<QLocale *>(o))) : QVariant();
+            // end of QLocale
         } else {
-	    // check for QIcon
+            // check for QIcon
             p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QICON->getID(), xsink));
-	    if (*xsink) {
-	       ret->status = QoreQVariant::Invalid;
-	       return 0;
-	    }
-	    if (p) {
-	       // only call this once because it's a virtual call (slow)
-	       void *o = p->object();
-	       ret->qvariant = o ? QVariant(*(reinterpret_cast<QIcon *>(o))) : QVariant();
-	       
-	       // note: when adding checks for other classes -> QVariant, must add in qoreToQVariant() as well
-	    }
-	    else {
-	       // check for QVariant
-	       p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QVARIANT->getID(), xsink));
-	       if (*xsink) {
-		  ret->status = QoreQVariant::Invalid;
-		  return 0;
-	       }
-	       ret->qvariant = p && p->object() ? QVariant( *(QVariant*)(p->object()) ) : QVariant();
-	    }
-	}
-        ret->status = QoreQVariant::RealQVariant;
+            if (*xsink) {
+                ret->status = QoreQVariant::Invalid;
+                return 0;
+            }
+            if (p) {
+                // only call this once because it's a virtual call (slow)
+                void *o = p->object();
+                ret->qvariant = o ? QVariant(*(reinterpret_cast<QIcon *>(o))) : QVariant();
+
+                // note: when adding checks for other classes -> QVariant, must add in qoreToQVariantScore() as well
+            } // end of QIcon check
+            else {
+                // QByteArray
+                p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QBYTEARRAY->getID(), xsink));
+                if (*xsink) {
+                    ret->status = QoreQVariant::Invalid;
+                    return 0;
+                }
+                if (p) {
+                    // only call this once because it's a virtual call (slow)
+                    void *o = p->object();
+                    ret->qvariant = o ? QVariant(*(reinterpret_cast<QByteArray *>(o))) : QVariant();
+                    // note: when adding checks for other classes -> QVariant, must add in qoreToQVariant() as well
+                } // end of QByteArray check
+                else {
+                    // check for QVariant
+                    p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QVARIANT->getID(), xsink));
+                    if (*xsink) {
+                        ret->status = QoreQVariant::Invalid;
+                        return 0;
+                    }
+                    ret->qvariant = p && p->object() ? QVariant( *(QVariant*)(p->object()) ) : QVariant();
+                    ret->status = QoreQVariant::RealQVariant;
+                }
+            }
+        }
         break;
     }
     default:
@@ -610,17 +625,15 @@ QoreQVariant::Status qoreToQVariantScore(const Smoke::Type & t, const AbstractQo
     case NT_OBJECT: {
         const QoreObject *obj = reinterpret_cast<const QoreObject *>(node);
         
-	if (obj->getClass(QC_QVARIANT->getID()))
-	   return QoreQVariant::RealQVariant;
-
-	if (obj->getClass(QC_QLOCALE->getID()))
-	   return QoreQVariant::Valid;
-	
-	if (obj->getClass(QC_QICON->getID()))
-	   return QoreQVariant::Valid;
-	
-	// note: when adding checks for other classes -> QVariant, must add in qoreToQVariant() as well
-
+        if (obj->getClass(QC_QVARIANT->getID()))
+            return QoreQVariant::RealQVariant;
+        else if (obj->getClass(QC_QLOCALE->getID()))
+            return QoreQVariant::Valid;
+        else if (obj->getClass(QC_QICON->getID()))
+            return QoreQVariant::Valid;
+        else if (obj->getClass(QC_QBYTEARRAY->getID()))
+            return QoreQVariant::Valid;
+        // note: when adding checks for other classes -> QVariant, must add in qoreToQVariant() as well
         return QoreQVariant::Invalid;
         break;
     }
@@ -648,7 +661,7 @@ QoreObject *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0) {
         cname = meta->className();
         qc = ClassNamesMap::Instance()->value(cname);
         if (qc) {
-	    //printd(0, "doQObject<>(%p) found Qore class %s\n", qtObj, cname);
+        //printd(0, "doQObject<>(%p) found Qore class %s\n", qtObj, cname);
             break;
         }
         //printd(0, "doQObject<>(%p) cannot find Qore class %s, checking parent class\n", qtObj, cname);
@@ -791,14 +804,14 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
         QByteArray tname(t.name);
 
         if (tname == "uchar*" || tname == "unsigned char*") {
-	   //printd(0, "stackToQore() tname=%s %p='%s'\n", t.name, i.s_voidp, (const char*)i.s_voidp);
+       //printd(0, "stackToQore() tname=%s %p='%s'\n", t.name, i.s_voidp, (const char*)i.s_voidp);
             return new QoreStringNode((uchar*)i.s_voidp);
-	}
+    }
 
         if (tname == "const char*" || tname == "char*") {
-	   //printd(0, "stackToQore() tname=%s %p='%s'\n", t.name, i.s_voidp, (const char*)i.s_voidp);
+       //printd(0, "stackToQore() tname=%s %p='%s'\n", t.name, i.s_voidp, (const char*)i.s_voidp);
             return new QoreStringNode((const char*)i.s_voidp);
-	}
+    }
 
         if (tname == "QString" || tname == "QString&")
             return new QoreStringNode(reinterpret_cast<QString*>(i.s_voidp)->toUtf8().data(), QCS_UTF8);
@@ -850,8 +863,8 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
         QoreClass *qc;
         ReferenceHolder<QoreObject> o(getQoreObject(classId, origObj, qc), xsink);
         if (o) {
-	   //printd(0, "Marshalling::stackToQore() got QoreObject %p\n", *o);
-	   o->ref();
+       //printd(0, "Marshalling::stackToQore() got QoreObject %p\n", *o);
+       o->ref();
         } else {
             QoreSmokePrivate *p = 0;
             // now it should be real object
@@ -873,13 +886,13 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
 
                     //printd(0, "Marshalling::stackToQore() %s: origObj=%p qcid=%d (%s) scid=%d ref=%d ptr=%d stack=%d\n", t.name, origObj, c->getID(), c->getName(), t.classId, flags == Smoke::tf_ref, flags == Smoke::tf_ptr, flags == Smoke::tf_stack);
 
-		    /*
+            /*
                     if (iconst && flags == Smoke::tf_ref) {
                         origObj = Marshalling::constructCopy(origObj, className, xsink);
                         if (*xsink)
                             return 0;
                     }
-		    */
+            */
                     o = createQoreObjectFromNonQObjectExternallyOwned(c, classId, origObj, &p);
                 }
             }

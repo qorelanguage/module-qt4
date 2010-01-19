@@ -61,7 +61,7 @@ DLLEXPORT qore_license_t qore_module_license = QL_GPL;
 
 const QoreClass *QC_QOBJECT = 0, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT,
    *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME, *QC_QICON,
-   *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QTREEWIDGETITEM, *QC_QLISTWIDGETITEM;
+   *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QTREEWIDGETITEM, *QC_QLISTWIDGETITEM, *QC_QBYTEARRAY;
 
 Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON;
 
@@ -548,6 +548,7 @@ static QoreStringNode *qt_module_init() {
     setClassInfo(QC_QAPPLICATION, "QApplication");
     setClassInfo(QC_QTREEWIDGETITEM, "QTreeWidgetItem");
     setClassInfo(QC_QLISTWIDGETITEM, "QListWidgetItem");
+    setClassInfo(QC_QBYTEARRAY, "QByteArray");
 
     // add alternate method argument handlers
     ClassMap &cm = *(ClassMap::Instance());
