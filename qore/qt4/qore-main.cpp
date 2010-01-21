@@ -273,7 +273,7 @@ static int setExternallyOwned_handler(Smoke::Stack &stack, ClassMap::TypeList &t
         const Smoke::Type &t = types[i];
         const AbstractQoreNode *n = get_param(args, i);
 
-	if (t.classId > 0 && !(t.flags & Smoke::tf_const))
+	if (t.classId > 0 && !(t.flags & Smoke::tf_const) && t.flags & Smoke::tf_ptr)
 	   do_externally_owned(t, cqm, n, i, stack, xsink);
 	else
 	   cqm.qoreToStack(t, n, i + 1);
@@ -585,6 +585,9 @@ static QoreStringNode *qt_module_init() {
     cm.addArgHandler("QGraphicsScene", "addItem", setExternallyOwned_handler);
     cm.addArgHandler("QListWidget", "addItem", setExternallyOwned_handler);
     cm.addArgHandler("QStackedLayout", "addItem", setExternallyOwned_handler);
+    cm.addArgHandler("QBoxLayout", "addItem", setExternallyOwned_handler);
+    cm.addArgHandler("QBoxLayout", "addSpacerItem", setExternallyOwned_handler);
+    cm.addArgHandler("QBoxLayout", "insertSpacerItem", setExternallyOwned_handler);
 
     cm.addArgHandler("QLayout", "addWidget", setExternallyOwned_handler);
     cm.addArgHandler("QBoxLayout", "addWidget", setExternallyOwned_handler);
