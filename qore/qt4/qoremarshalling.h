@@ -62,8 +62,13 @@ private:
     template<class QLISTT>
     static AbstractQoreNode * listToQObject(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
 
+    //! QList<Foo>
     template<class QLISTT>
     static AbstractQoreNode * listToObject(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+
+    //! QList<Foo*>
+    template<class QLISTT>
+    static AbstractQoreNode * listToObjectPtr(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
 
     QMap<QByteArray,qlist_handler_t> m_map;
     static QtContainerToQore * m_instance;

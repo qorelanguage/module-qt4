@@ -50,6 +50,8 @@
 #include <QLayoutItem>
 #include <QIcon>
 #include <QListWidgetItem>
+#include <QStandardItem>
+#include <QTreeWidgetItem>
 // #include <>
 
 #include "qoresmokeclass.h"
@@ -213,6 +215,46 @@ AbstractQoreNode * QtContainerToQore::listToObject(const Smoke::Type &t, void* p
     return retList.release();
 }
 
+// TODO/FIXME: merge this one with QtContainerToQore::listToObject() above
+template<class QLISTT>
+AbstractQoreNode * QtContainerToQore::listToObjectPtr(const Smoke::Type &t, void* ptr, ExceptionSink *xsink) {
+    ReferenceHolder<QoreListNode> retList(new QoreListNode(), xsink);
+    QLISTT* l = static_cast<QLISTT*>(ptr);
+    QByteArray tt(getSubType(t.name));
+
+    QoreClass *qc = ClassNamesMap::Instance()->value(tt.constData());
+    if (!qc) {
+        return xsink->raiseException("QLIST-MARSHALL-QT", "Unknown QoreClass for QList< ??? > for %s", t.name);
+    }
+    if (qc->getClass(QC_QOBJECT->getID())) {
+        return xsink->raiseException("QLIST-MARSHALL-QT", "QList< ??? > argument %s is QObject based", t.name);
+    }
+
+    Smoke::ModuleIndex cls = qt_Smoke->findClass(tt.constData());
+    if (!cls.smoke) {
+        return xsink->raiseException("QLIST-MARSHALL-QT", "Class %s cannot be found in library map", tt.constData());
+    }
+
+    bool has_virtual = qt_Smoke->classes[cls.index].flags & Smoke::cf_virtual;
+    for (int i = 0; i < l->count(); ++i) {
+        // HACK: this line contains only one difference comparing to QtContainerToQore::listToObject()
+        void *qto = (void *)l->at(i);
+        QoreObject *o = has_virtual ? getQoreMappedObject(qto) : 0;
+        if (o) {
+            o->ref();
+        } else {
+            qto = Marshalling::constructCopy(qto, tt.constData(), xsink);
+            if (*xsink)
+                return 0;
+
+            o = createQoreObjectFromNonQObject(qc, cls.index, qto);
+        }
+        retList->push(o);
+    }
+
+    return retList.release();
+}
+
 
 //     template<class QMAPT, class QORETKEY, class QORETVAL>
 //     static AbstractQoreNode * qmapToQore(const Smoke::Type &t, void* ptr, ExceptionSink *xsink) {
@@ -239,29 +281,29 @@ QtContainerToQore::QtContainerToQore() {
     m_map["QList<QModelIndex>"] = &listToObject<QList<QModelIndex> >;
     m_map["QList<QFileInfo>"] = &listToObject<QList<QFileInfo> >;
 //     m_map["QList<QPair<qreal,qreal> > hellhound
-//     m_map["QList<QTableWidgetItem*> ptr to o
+    m_map["QList<QTableWidgetItem*>"] = &listToObjectPtr<QList<QTableWidgetItem*> >;
 //     m_map["QList<QPrinter::PageSize> enum?
     m_map["QList<QTextFrame*>"] = &listToQObject<QList<QTextFrame*> >;
     m_map["QList<QUrl>"] = &listToObject<QList<QUrl> >;
     m_map["QList<QMdiSubWindow*>"] = &listToQObject<QList<QMdiSubWindow*> >;
     m_map["QList<QNetworkInterface>"] = &listToObject<QList<QNetworkInterface> >;
-//     m_map["QList<QStandardItem*> ptr to o
+    m_map["QList<QStandardItem*>"] = &listToObjectPtr<QList<QStandardItem*> >;
     m_map["QList<QLocale::Country>"] = &listToEnum<QList<QLocale::Country> >;
-//     m_map["QList<QGraphicsItem*> ptr to o
+    m_map["QList<QGraphicsItem*>"] = &listToObjectPtr<QList<QGraphicsItem*> >;
     m_map["QList<QGraphicsWidget*>"] = &listToQObject<QList<QGraphicsWidget*> >;
     m_map["QList<QAction*>"] = &listToQObject<QList<QAction*> >;
     m_map["QList<QKeySequence>"] = &listToObject<QList<QKeySequence> >;
 //     m_map["QList<QPair<qreal,QPointF> > hellhound
     m_map["QList<QDockWidget*>"] = &listToQObject<QList<QDockWidget*> >;
     m_map["QList<QVariant>"] = &listToObject<QList<QVariant> >;
-//     m_map["QList<QTreeWidgetItem*> ptr to o
+    m_map["QList<QTreeWidgetItem*>"] = &listToObjectPtr<QList<QTreeWidgetItem*> >;
 //     m_map["QList<QTextEdit::ExtraSelection> ??? like QTextOption::Tab
     m_map["QList<QObject*>"] = &listToQObject<QList<QObject*> >;
 //     m_map["QList<QSize> ??? new standalone class
 //     m_map["QList<QPair<int,int> > hellhound
     m_map["QList<QByteArray>"] = &listToQByteArray;
 //     m_map["QList<QImageTextKeyLang>
-//     m_map["QList<QListWidgetItem*>
+    m_map["QList<QListWidgetItem*>"] = &listToObjectPtr<QList<QListWidgetItem*> >;
     m_map["QList<QTextBlock>"] = &listToObject<QList<QTextBlock> >;
     m_map["QList<QPolygonF>"] = &listToObject<QList<QPolygonF> >;
 //     m_map["QList<QPair<QByteArray,QByteArray> >
