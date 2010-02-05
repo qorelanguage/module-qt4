@@ -59,6 +59,9 @@ DLLEXPORT qore_license_t qore_module_license = QL_LGPL;
 DLLEXPORT qore_license_t qore_module_license = QL_GPL;
 #endif
 
+static QoreTypeInfoHelper enumTypeInfoHelper(QoreQtEnumNode::getStaticTypeName());
+const QoreTypeInfo *enumTypeInfo;
+
 const QoreClass *QC_QOBJECT = 0, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT,
    *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME, *QC_QICON,
    *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QTREEWIDGETITEM, *QC_QLISTWIDGETITEM, *QC_QBYTEARRAY;
@@ -520,6 +523,8 @@ static QoreStringNode *qt_module_init() {
 
     // register special nodes
     QoreQtEnumNode::registerType();
+    enumTypeInfoHelper.assign(NT_QTENUM);
+    enumTypeInfo = enumTypeInfoHelper.getTypeInfo();
 
     // register all classes and methods
     Smoke::Class cls;
@@ -527,6 +532,9 @@ static QoreStringNode *qt_module_init() {
         cls = qt_Smoke->classes[i];
         QoreSmokeClass c(cls.className, qt_ns);
     }
+
+    assert(parse_class_map.empty());
+
     // register qt "addons"
     registerQtFunctions(qt_ns);
 

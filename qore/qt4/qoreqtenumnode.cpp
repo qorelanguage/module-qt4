@@ -20,9 +20,7 @@
 
 #include "qoreqtenumnode.h"
 
-
 qore_type_t NT_QTENUM = -1;
-
 
 QoreString * QoreQtEnumNode::getStringRepresentation(bool &del) const {
     del = true;

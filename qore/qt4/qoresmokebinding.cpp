@@ -123,7 +123,7 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
     }
 
     if (!strcmp(mname, "qt_metacall")) {
-        //printd(0, "QoreSmokeBinding::callMethod() className: %s::%s obj: %p\n", cname, mname, obj);
+        printd(5, "QoreSmokeBinding::callMethod() className: %s::%s obj: %p\n", cname, mname, obj);
 
         // get the QoreSmokePrivate info
         ReferenceHolder<QoreSmokePrivateQObjectData> qsp(reinterpret_cast<QoreSmokePrivateQObjectData *>(o->getReferencedPrivateData(QC_QOBJECT->getID(), &xsink)), &xsink);
@@ -144,7 +144,7 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
 	// get method offset in this class
 	args[2].s_int -= mc;
 
-        //printd(0, "QoreSmokeBinding::callMethod() %s::%s() method=%d obj=%p qsp=%p isAbstract=%s\n", smoke->classes[smoke->methods[method].classId].className, smoke->methodNames[smoke->methods[method].name], method, obj, *qsp, isAbstract ? "true" : "false");
+        printd(5, "QoreSmokeBinding::callMethod() %s::%s() method=%d obj=%p qsp=%p isAbstract=%s\n", smoke->classes[smoke->methods[method].classId].className, smoke->methodNames[smoke->methods[method].name], method, obj, *qsp, isAbstract ? "true" : "false");
 
 	// handle the signal, which is connected to a dynamic method (signal or slot)
 	qsp->handleSignal(0, args[2].s_int, (void**)args[3].s_voidp);
@@ -154,13 +154,13 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
     }
 
     const QoreMethod * qoreMethod = o->getClass()->findMethod(mname);
-    //printd(0, "QoreSmokeBinding::callMethod() virtual method %s::%s() method=%p (user: %d)\n", o->getClassName(), mname, qoreMethod, qoreMethod ? qoreMethod->isUser() : 0);
+    printd(5, "QoreSmokeBinding::callMethod() virtual method %s::%s() method=%p (user: %d)\n", o->getClassName(), mname, qoreMethod, qoreMethod ? qoreMethod->isUser() : 0);
     if (!qoreMethod || !qoreMethod->isUser()) {
         //printd(0, "QoreSmokeBinding::callMethod() virtual method %s::%s() not found\n", o->getClassName(), mname);
         if (isAbstract) {
             xsink.raiseException("QT-ABSTRACT-METHOD-ERROR", "The Qt library tried to execute pure virtual %s::%s(), but this method is not implemented in the %s class", o->getClassName(), mname, o->getClassName());
             xsink.handleExceptions();
-            assert(0); // TODO/FIXME: propably won't crash here...
+            assert(0); // TODO/FIXME: probably won't crash here...
         }
         return false;
     }

@@ -34,22 +34,26 @@
 #include <QHash>
 #include <QWidget>
 
+#include <string>
+
 #define QORESMOKEPROPERTY "qoreptr"
 
-extern const QoreClass *QC_QOBJECT, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT,
+DLLLOCAL extern const QoreClass *QC_QOBJECT, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT,
    *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME, *QC_QICON,
    *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QBYTEARRAY;
 
-extern Smoke::ModuleIndex SMI_QOBJECT;
-extern Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON;
+DLLLOCAL extern const QoreTypeInfo *enumTypeInfo;
+
+DLLLOCAL extern Smoke::ModuleIndex SMI_QOBJECT;
+DLLLOCAL extern Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON;
 
 DLLLOCAL QoreObject *getQoreQObject(const QObject *obj);
 DLLLOCAL QoreObject *getQoreObject(Smoke::Index classId, void *obj, QoreClass *&qc);
 DLLLOCAL bool isptrtype(const char *var, const char *type);
 
-extern Smoke::ModuleIndex QT_METACALL_ID;
+DLLLOCAL extern Smoke::ModuleIndex QT_METACALL_ID;
 
-extern QoreThreadLocalStorage<void> qore_qt_virtual_flag;
+DLLLOCAL extern QoreThreadLocalStorage<void> qore_qt_virtual_flag;
 
 static inline void qore_smoke_set_virtual() {
     assert(!qore_qt_virtual_flag.get());
@@ -144,6 +148,12 @@ static inline QoreObject *getQoreMappedObject(Smoke::Index classId, void *p) {
 }
 
 DLLLOCAL const QoreMethod *findUserMethod(const QoreClass *qc, const char *name);
+
+// type for map from class names to QoreClass pointers
+typedef std::map<std::string, QoreClass *> qcmap_t;
+
+// map from class names to QoreClass pointers
+DLLLOCAL extern qcmap_t parse_class_map;
 
 #endif
 
