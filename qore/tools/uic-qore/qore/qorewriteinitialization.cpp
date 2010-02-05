@@ -1240,7 +1240,7 @@ void WriteInitialization::writeProperties(const QString &varNameIn,
         case DomProperty::SizePolicy: {
             const QString spName = writeSizePolicy( p->elementSizePolicy());
             m_output << m_option.indent << spName << QString::fromLatin1(
-                ".setHeightForWidth(%1.sizePolicy.hasHeightForWidth)\n")
+                ".setHeightForWidth(%1.sizePolicy().hasHeightForWidth());\n")
                 .arg(varName);
 
             propertyValue = spName;
