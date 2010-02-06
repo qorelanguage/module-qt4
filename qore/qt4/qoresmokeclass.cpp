@@ -249,7 +249,7 @@ static const QoreTypeInfo *getInitClassType(const char *name, const Smoke::Type 
 
       Smoke::ModuleIndex mi = qt_Smoke->findClass(name);
       if (!mi.smoke) {
-	 printd(0, "getInitClassType(%s) skipping mapping for tname=%s\n", name, t.name);
+	 //printd(0, "getInitClassType(%s) skipping mapping for tname=%s\n", name, t.name);
 	 return 0;
       }
       QoreClass *qc = new QoreClass(name, QDOM_GUI);
@@ -284,7 +284,7 @@ static const QoreTypeInfo *getInitType(const Smoke::Type &t) {
       case Smoke::t_class:
 	 break;
       default:
-	 printd(0, "getInitType() tid=%d name=%s class=%d\n", tid, t.name, t.classId);
+	 //printd(0, "getInitType() tid=%d name=%s class=%d\n", tid, t.name, t.classId);
 	 assert(false);
    }
 
@@ -313,7 +313,7 @@ static const QoreTypeInfo *getInitType(const Smoke::Type &t) {
       if (!strcmp(f, "QStringList"))
 	 return listTypeInfo;
 
-      printd(0, "getInitType() name=%s (%s) class=%d returning NULL\n", t.name, f, t.classId);
+      //printd(0, "getInitType() name=%s (%s) class=%d returning NULL\n", t.name, f, t.classId);
       return 0;
    }
 
@@ -358,6 +358,10 @@ QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) : m
 
     m_qoreClass = getInitClass(m_class.className);
 
+#ifdef DEBUG
+    if (strstr(m_class.className, "QPixmapCache"))
+       printd(0, "QoreSmokeClass::QoreSmokeClass() processing class %s\n", m_class.className);
+#endif
     if (!QC_QOBJECT && !strcmp(className, "QObject")) {
         QC_QOBJECT = m_qoreClass;
         m_qoreClass->addMethodExtended("createSignal", (q_method_t)QOBJECT_createSignal, false, QDOM_DEFAULT, nothingTypeInfo, 1, stringTypeInfo, QORE_PARAM_NO_ARG);
@@ -460,7 +464,7 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
         if ((method.flags & Smoke::mf_ctor)) {
 	   const QoreMethod *qm = m_qoreClass->getConstructor();
 	   if (qm && qm->existsVariant(method.numArgs, argTypeInfo)) {
-	      printd(0, "QoreSmokeClass::addClassMethods() skipping already-created variant %s::%s()\n", m_qoreClass->getName(), methodName);
+	      //printd(0, "QoreSmokeClass::addClassMethods() skipping already-created variant %s::%s()\n", m_qoreClass->getName(), methodName);
 	      delete [] argTypeInfo;
 	      continue;
 	   }
@@ -479,7 +483,7 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 
 	   const QoreMethod *qm = m_qoreClass->findStaticMethod(methodName);
 	   if (qm && qm->existsVariant(method.numArgs, argTypeInfo)) {
-	      printd(0, "QoreSmokeClass::addClassMethods() skipping already-created variant (static) %s::%s()\n", m_qoreClass->getName(), methodName);
+	      //printd(0, "QoreSmokeClass::addClassMethods() skipping already-created variant (static) %s::%s()\n", m_qoreClass->getName(), methodName);
 	      delete [] argTypeInfo;
 	      continue;
 	   }
@@ -502,7 +506,7 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 	
 	const QoreMethod *qm = m_qoreClass->findMethod(name);
 	if (qm && qm->existsVariant(method.numArgs, argTypeInfo)) {
-	   printd(0, "QoreSmokeClass::addClassMethods() skipping already-created variant %s::%s()\n", m_qoreClass->getName(), name);
+	   //printd(0, "QoreSmokeClass::addClassMethods() skipping already-created variant %s::%s()\n", m_qoreClass->getName(), name);
 	   delete [] argTypeInfo;
 	   continue;
 	}
