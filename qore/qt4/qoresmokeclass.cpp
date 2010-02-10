@@ -322,6 +322,9 @@ static const QoreTypeInfo *getInitType(const Smoke::Type &t) {
    if (strchr(f, '<'))
       return 0;
 
+   if (!strcmp(f, "QVariant"))
+      return 0;
+
    // see if the class has been created already
    QoreClass *qc = ClassNamesMap::Instance()->value(f);
    if (qc)
@@ -358,10 +361,8 @@ QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) : m
 
     m_qoreClass = getInitClass(m_class.className);
 
-#ifdef DEBUG
-    if (strstr(m_class.className, "QPixmapCache"))
-       printd(0, "QoreSmokeClass::QoreSmokeClass() processing class %s\n", m_class.className);
-#endif
+    //printd(5, "QoreSmokeClass::QoreSmokeClass() processing class %s\n", m_class.className);
+
     if (!QC_QOBJECT && !strcmp(className, "QObject")) {
         QC_QOBJECT = m_qoreClass;
         m_qoreClass->addMethodExtended("createSignal", (q_method_t)QOBJECT_createSignal, false, QDOM_DEFAULT, nothingTypeInfo, 1, stringTypeInfo, QORE_PARAM_NO_ARG);
@@ -518,6 +519,7 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 	m_qoreClass->addMethodExtendedList2(name, func, isPrivate, QDOM_DEFAULT, returnTypeInfo, method.numArgs, argTypeInfo);
     }
 
+/*
     {
        // add generic methods for custom conversion
        QoreMethodIterator mi(m_qoreClass);
@@ -553,7 +555,8 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 	  m_qoreClass->addStaticMethodExtended2(qm->getName(), func, qm->isPrivate(), QDOM_DEFAULT, qm->getUniqueReturnTypeInfo());
        }
     }
-    
+*/
+  
     if (!strcmp(m_class.className, "QVariant")) {
        //printd(0, "registered toQore\n");
        m_qoreClass->addMethod2("toQore", (q_method2_t)Marshalling::return_qvariant);

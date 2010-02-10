@@ -273,8 +273,12 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
         if (type_handler.arg_handler(Stack, type_handler.types, params, *this, xsink))
             m_valid = false;
 #if DEBUG
-        else
-            assert(!*xsink);
+        else {
+	   if (*xsink) {
+	      xsink->handleExceptions();
+	      assert(false);
+	   }
+	}
 #endif
     } else {
         // Create a Smoke stack from params

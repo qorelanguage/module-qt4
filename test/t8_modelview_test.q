@@ -28,7 +28,7 @@ class MainWindow inherits QMainWindow, Ui::MainWindow
 		$.filteredView.setModel($.proxyModel);
 		$.proxyModel.setFilterWildcard("*");
 
-        $.connect($.lineEdit, SIGNAL("textEdited(const QString&)"),
+		QObject::connect($.lineEdit, SIGNAL("textEdited(const QString&)"),
                   $.proxyModel, SLOT("setFilterWildcard(const QString&)"));
 	}
 }

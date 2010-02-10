@@ -41,8 +41,8 @@
 class QoreSmokePrivate : public AbstractPrivateData {
 public:
    DLLLOCAL QoreSmokePrivate(Smoke::Index classID, bool n_is_qobject = false) : m_class(classID), externally_owned(false), is_qobject(n_is_qobject) {}
-    DLLLOCAL virtual ~QoreSmokePrivate() {
-    }
+   DLLLOCAL virtual ~QoreSmokePrivate() {
+   }
     DLLLOCAL virtual void * object() = 0;
     DLLLOCAL virtual void clear() = 0;
     // the following is defined as pure virtual so only 1 virtual call has to be made when calling it
@@ -111,37 +111,42 @@ private:
 class QoreSmokePrivateQObjectData : public QoreSmokePrivate {
 public:
    DLLLOCAL QoreSmokePrivateQObjectData(Smoke::Index classID, QObject *p) : QoreSmokePrivate(classID, true), m_qobject(p), obj_ref(false) {
-        qt_metaobject_method_count = getParentMetaObject()->methodCount();
-        Smoke::ModuleIndex mi = qt_Smoke->findMethod(qt_Smoke->classes[classID].className, "qt_metacall$$?");
-        assert(mi.smoke);
-        qt_metacall_index = qt_Smoke->methodMaps[mi.index].method;
-        assert(qt_metacall_index > 0);
-        assert(!strcmp(qt_Smoke->methodNames[qt_Smoke->methods[qt_metacall_index].name], "qt_metacall"));
+      qt_metaobject_method_count = getParentMetaObject()->methodCount();
+      Smoke::ModuleIndex mi = qt_Smoke->findMethod(qt_Smoke->classes[classID].className, "qt_metacall$$?");
+      assert(mi.smoke);
+      qt_metacall_index = qt_Smoke->methodMaps[mi.index].method;
+      assert(qt_metacall_index > 0);
+      assert(!strcmp(qt_Smoke->methodNames[qt_Smoke->methods[qt_metacall_index].name], "qt_metacall"));
+      
+      if (p->isWidgetType()) {
+	 QWidget *qw = reinterpret_cast<QWidget *>(p);
+	 // add to QoreWidgetManager if it's a window - so it can be deleted if necessary
+	 // when the QApplication object is deleted
+	 if (!qw->parent())
+	    QWM.add(qw);
+      }
+   }
+   DLLLOCAL virtual ~QoreSmokePrivateQObjectData() {
+      //printd(0, "QoreSmokePrivateQObjectData::~QoreSmokePrivateQObjectData() this=%p obj=%p (%s)\n", this, m_qobject.data(), getClassName());
+      // set property to 0 because QoreObject is being deleted
 
-	if (p->isWidgetType()) {
-	   QWidget *qw = reinterpret_cast<QWidget *>(p);
-	   // add to QoreWidgetManager if it's a window - so it can be deleted if necessary
-	   // when the QApplication object is deleted
-	   if (!qw->parent())
-	      QWM.add(qw);
-	}
-    }
-    DLLLOCAL virtual ~QoreSmokePrivateQObjectData() {
-        //printd(0, "QoreSmokePrivateQObjectData::~QoreSmokePrivateQObjectData() this=%p obj=%p (%s)\n", this, m_qobject.data(), getClassName());
-       // set property to 0 because QoreObject is being deleted
-        if (m_qobject.data()) {
-	    {
-	        QoreQtVirtualFlagHelper vfh;
-		m_qobject->setProperty(QORESMOKEPROPERTY, (qulonglong)0);
-	    }
+      QObject *qo = m_qobject.data();
+      if (qo) {
+	 if (qo->isWidgetType())
+	    QWM.remove(reinterpret_cast<QWidget *>(qo));
 
-	    if (!externallyOwned() && !m_qobject->parent()) {
-	       delete m_qobject;
-	    }
-	}
-
-    }
-    //DLLLOCAL int metacall(Smoke::Stack args);
+	 {
+	    QoreQtVirtualFlagHelper vfh;
+	    m_qobject->setProperty(QORESMOKEPROPERTY, (qulonglong)0);
+	 }
+	 
+	 if (!externallyOwned() && !m_qobject->parent()) {
+	    delete m_qobject;
+	 }
+      }
+      
+   }
+   //DLLLOCAL int metacall(Smoke::Stack args);
     DLLLOCAL bool deleteBlocker(QoreObject *self) {
         //printd(0, "QoreSmokePrivateQObjectData::deleteBlocker(%p) %s obj=%p parent=%p eo=%s\n", self, self->getClassName(), m_qobject.data(), m_qobject.data() ? m_qobject->parent() : 0, externallyOwned() ? "true" : "false");
         if (m_qobject.data() && (m_qobject->parent() || externallyOwned())) {

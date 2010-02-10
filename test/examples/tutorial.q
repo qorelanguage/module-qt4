@@ -1,9 +1,7 @@
 #!/usr/bin/env qore
 
 # This is basically a direct port of the QT tutorial to Qore 
-# using Qore's "qt" module.  
-
-# Note that Qore's "qt" module requires QT 4.3 or above 
+# using Qore's "qt4" module.  
 
 # use the "qt4" module
 %requires qt4
@@ -16,24 +14,26 @@
 %enable-all-warnings
 
 class LCDRange inherits QWidget {
-    constructor($text, $parent) : QWidget($parent) {
+    public {
+	QSlider $.slider = new QSlider(Qt::Horizontal);
+	QLabel $.label = new QLabel();
+    }
+    constructor(string $text, $parent) : QWidget($parent) {
 	my $lcd = new QLCDNumber(2);
 	$lcd.setSegmentStyle(QLCDNumber::Filled);
 
 	# signals must be declared before used - note that the signature should be c/c++ style
 	$.createSignal("valueChanged(int)");
 
-	$.slider = new QSlider(Qt::Horizontal);
 	$.slider.setRange(0, 99);
 	$.slider.setValue(0);
 	
-	$.label = new QLabel();
 	$.label.setAlignment(Qt::AlignHCenter | Qt::AlignTop);
 
 	QObject::connect($.slider, SIGNAL("valueChanged(int)"), $lcd, SLOT("display(int)"));
 	QObject::connect($.slider, SIGNAL("valueChanged(int)"), $self, SIGNAL("valueChanged(int)"));
 
-	my $layout = new QVBoxLayout();
+	my QVBoxLayout $layout = new QVBoxLayout();
 	$layout.addWidget($lcd);
 	$layout.addWidget($.slider);
 	$layout.addWidget($.label);
@@ -46,11 +46,11 @@ class LCDRange inherits QWidget {
 	return $.slider.value();
     }
 
-    setValue($val) {
+    setValue(int $val) {
 	$.slider.setValue($val);
     }
 
-    setRange($minValue, $maxValue) {
+    setRange(int $minValue, int $maxValue) {
 	if ($minValue < 0 || $maxValue > 99 || $minValue > $maxValue) {
 	    qWarning("LCDRange::setRange(%d, %d)
 \tRange must be 0..99
@@ -65,14 +65,23 @@ class LCDRange inherits QWidget {
 	return $.label.text();
     }
 
-    setText($text) {
+    setText(string $text) {
 	$.label.setText($text);
     }
 }
 
 class CannonField inherits QWidget {
-    private $.currentAngle, $.currentForce, $.timerCount, $.autoShootTimer, $.shootAngle, 
-    $.shootForce, $.target, $.gameEnded, $.barrelPressed;
+    private {
+	int $.currentAngle = 45;
+	int $.currentForce;
+	int $.timerCount;
+	QTimer $.autoShootTimer = new QTimer($self);
+	int $.shootAngle; 
+	int $.shootForce; 
+	QPoint $.target = new QPoint(0, 0);
+	bool $.gameEnded;
+	bool $.barrelPressed;
+    }
 
     constructor($parent) : QWidget($parent) {
 	# declare dynamic signals
@@ -82,18 +91,8 @@ class CannonField inherits QWidget {
 	$.createSignal("missed()");
 	$.createSignal("canShoot(bool)");
 
-        $.currentAngle = 45;
-	$.currentForce = 0;
-
-	$.timerCount = 0;
 	$.autoShootTimer = new QTimer($self);
 	$.connect($.autoShootTimer, SIGNAL("timeout()"), SLOT("moveShot()"));
-	$.shootAngle = 0;
-	$.shootForce = 0;
-
-	$.target = new QPoint(0, 0);
-	$.gameEnded = False;
-	$.barrelPressed = False;
 	$.setPalette(new QPalette(new QColor(250, 250, 200)));
 	$.setAutoFillBackground(True);
 	$.newTarget();
@@ -114,7 +113,7 @@ class CannonField inherits QWidget {
     newTarget() {
 	if ($firstTime) {
 	    $firstTime = False;
-	    my $now = now();
+	    my date $now = now();
 	    qsrand($now - get_midnight($now));
 	}
 	$.target = new QPoint(200 + qrand() % 190, 10 + qrand() % 255);
@@ -161,7 +160,7 @@ class CannonField inherits QWidget {
     }
 
     paintEvent() {
-	my $painter = new QPainter($self);
+	my QPainter $painter = new QPainter($self);
 
 	if ($.gameEnded) {
 	    $painter.setPen(Qt::black);
@@ -177,13 +176,13 @@ class CannonField inherits QWidget {
 	    $.paintTarget($painter);
     }
 
-    paintTarget($painter) {
+    paintTarget(QPainter $painter) {
 	$painter.setPen(Qt::black);
 	$painter.setBrush(Qt::red);
 	$painter.drawRect($.targetRect());
     }
 
-    paintBarrier($painter) {
+    paintBarrier(QPainter $painter) {
 	$painter.setPen(Qt::black);
 	$painter.setBrush(Qt::yellow);
 	$painter.drawRect($.barrierRect());
@@ -194,33 +193,33 @@ class CannonField inherits QWidget {
     }
 
     barrelHit($pos) {
-	my $matrix = new QMatrix();
-	$matrix.translate(0, $.height());
+	my QMatrix $matrix = new QMatrix();
+	$matrix.translate(0.0, $.height());
 	$matrix.rotate(-$.currentAngle);
 	$matrix = $matrix.inverted();
 	return $barrelRect.contains($matrix.map($pos));
     }
 
-    paintCannon($painter) {
+    paintCannon(QPainter $painter) {
 	$painter.setPen(Qt::NoPen);
 	$painter.setBrush(Qt::blue);
 
 	$painter.save();
-	$painter.translate(0, $.height());
+	$painter.translate(0.0, $.height());
 	$painter.drawPie(new QRect(-35, -35, 70, 70), 0, 90 * 16);
 	$painter.rotate(-$.currentAngle);
 	$painter.drawRect($barrelRect);
 	$painter.restore();
     }
 
-    paintShot($painter) {
+    paintShot(QPainter $painter) {
 	$painter.setPen(Qt::NoPen);
 	$painter.setBrush(Qt::black);
 	$painter.drawRect($.shotRect());
     }
 
     cannonRect() {
-	my $result = new QRect(0, 0, 50, 50);
+	my QRect $result = new QRect(0, 0, 50, 50);
 	$result.moveBottomLeft($.rect().bottomLeft());
 	return $result;
     }
@@ -241,10 +240,10 @@ class CannonField inherits QWidget {
     }
 
     moveShot() {
-	my $region = $.shotRect();
+	my QRegion $region = $.shotRect();
 	++$.timerCount;
 	
-	my $shotR = $.shotRect();
+	my QRect $shotR = $.shotRect();
 	
 	if ($shotR.intersects($.targetRect())) {
 	    $.autoShootTimer.stop();
@@ -273,13 +272,13 @@ class CannonField inherits QWidget {
     mouseMoveEvent($event) {
 	if (!$.barrelPressed)
 	    return;
-	my $pos = $event.pos();
+	my QPoint $pos = $event.pos();
 	if ($pos.x() <= 0)
 	    $pos.setX(1);
 	if ($pos.y
 	    () >= $.height())
 	    $pos.setY($.height() - 1);
-	my $rad = atan((float($.rect().bottom()) - $pos.y
+	my float $rad = atan((float($.rect().bottom()) - $pos.y
 			   ()) / $pos.x());
 	$.setAngle(qRound($rad * 180 / 3.14159265));
     }
@@ -291,26 +290,26 @@ class CannonField inherits QWidget {
     }
 
     shotRect() {
-	my $gravity = 4.0;
+	my float $gravity = 4.0;
 
-	my $time = $.timerCount / 20.0;
-	my $velocity = $.shootForce;
-	my $radians = $.shootAngle * 3.14159265 / 180;
+	my float $time = $.timerCount / 20.0;
+	my float $velocity = $.shootForce;
+	my float $radians = $.shootAngle * 3.14159265 / 180;
 
-	my $velx = $velocity * cos($radians);
-	my $vely = $velocity * sin($radians);
-	my $x0 = ($barrelRect.right() + 5) * cos($radians);
-	my $y0 = ($barrelRect.right() + 5) * sin($radians);
-	my $x = $x0 + $velx * $time;
-	my $y = $y0 + $vely * $time - 0.5 * $gravity * $time * $time;
+	my float $velx = $velocity * cos($radians);
+	my float $vely = $velocity * sin($radians);
+	my float $x0 = ($barrelRect.right() + 5) * cos($radians);
+	my float $y0 = ($barrelRect.right() + 5) * sin($radians);
+	my float $x = $x0 + $velx * $time;
+	my float $y = $y0 + $vely * $time - 0.5 * $gravity * $time * $time;
 
-	my $result = new QRect(0, 0, 6, 6);
+	my QRect $result = new QRect(0, 0, 6, 6);
 	$result.moveCenter(new QPoint(qRound($x), $.height() - 1 - qRound($y)));
 	return $result;
     }
 
     targetRect() {
-	my $result = new QRect(0, 0, 20, 10);
+	my QRect $result = new QRect(0, 0, 20, 10);
 	$result.moveCenter(new QPoint($.target.x(), $.height() - 1 - $.target.y
 				      ()));
 	return $result;
@@ -322,22 +321,27 @@ class CannonField inherits QWidget {
 }
 
 class GameBoard inherits QWidget {
+    private {
+	CannonField $.cannonField = new CannonField();
+	QLCDNumber $.hits;
+	QLCDNumber $.shotsLeft;
+    }
     constructor($parent) : QWidget($parent) {
-	my $quit = new QPushButton($.tr("&Quit"));
+	my QPushButton $quit = new QPushButton($.tr("&Quit"));
 	$quit.setFont(new QFont("Times", 18, QFont::Bold));
 
 	QObject::connect($quit, SIGNAL("clicked()"), qApp(), SLOT("quit()"));
 
-	my $angle = new LCDRange($.tr("ANGLE"));
+	my LCDRange $angle = new LCDRange($.tr("ANGLE"));
 	$angle.setRange(5, 70);
 
-	my $force = new LCDRange($.tr("FORCE"));
+	my LCDRange $force = new LCDRange($.tr("FORCE"));
 	$force.setRange(10, 50);
 
-	my $cannonBox = new QFrame();
+	my QFrame $cannonBox = new QFrame();
 	$cannonBox.setFrameStyle(QFrame::WinPanel | QFrame::Sunken);
 
-	$.cannonField = new CannonField();
+	#$.cannonField = new CannonField();
 
 	QObject::connect($angle,       SIGNAL("valueChanged(int)"), $.cannonField, SLOT("setAngle(int)"));
 	QObject::connect($.cannonField, SIGNAL("angleChanged(int)"), $angle,       SLOT("setValue(int)"));
@@ -348,13 +352,13 @@ class GameBoard inherits QWidget {
 	$.connect($.cannonField, SIGNAL("hit()"),    SLOT("hit()"));
 	$.connect($.cannonField, SIGNAL("missed()"), SLOT("missed()"));
 
-	my $shoot = new QPushButton($.tr("&Shoot"));
+	my QPushButton $shoot = new QPushButton($.tr("&Shoot"));
 	$shoot.setFont(new QFont("Times", 18, QFont::Bold));
 
 	$.connect($shoot, SIGNAL("clicked()"), SLOT("fire()"));
 	$shoot.connect($.cannonField, SIGNAL("canShoot(bool)"), SLOT("setEnabled(bool)"));
 
-	my $restart = new QPushButton($.tr("&New Game"));
+	my QPushButton $restart = new QPushButton($.tr("&New Game"));
 	$restart.setFont(new QFont("Times", 18, QFont::Bold));
 
 	$.connect($restart, SIGNAL("clicked()"), SLOT("newGame()"));
@@ -365,8 +369,8 @@ class GameBoard inherits QWidget {
 	$.shotsLeft = new QLCDNumber(2);
 	$.shotsLeft.setSegmentStyle(QLCDNumber::Filled);
 
-	my $hitsLabel = new QLabel($.tr("HITS"));
-	my $shotsLeftLabel = new QLabel($.tr("SHOTS LEFT"));
+	my QLabel $hitsLabel = new QLabel($.tr("HITS"));
+	my QLabel $shotsLeftLabel = new QLabel($.tr("SHOTS LEFT"));
 
         #new QShortcut(Qt::Key_Enter, $self, SLOT("fire()"));
 	#new QShortcut(Qt::Key_Return, $self, SLOT("fire()"));
@@ -376,7 +380,7 @@ class GameBoard inherits QWidget {
 	#printf("Qt::CTRL + Qt::Key_Q = %N\n", Qt::CTRL + Qt::Key_Q);
 	#new QShortcut(new QKeySequence(Qt::CTRL | Qt::Key_Q), $self, SLOT("close()"));
 
-	my $topLayout = new QHBoxLayout();
+	my QHBoxLayout $topLayout = new QHBoxLayout();
 	$topLayout.addWidget($shoot);
 	$topLayout.addWidget($.hits);
 	$topLayout.addWidget($hitsLabel);
@@ -385,15 +389,15 @@ class GameBoard inherits QWidget {
 	$topLayout.addStretch(1);
 	$topLayout.addWidget($restart);
 
-	my $leftLayout = new QVBoxLayout();
+	my QVBoxLayout $leftLayout = new QVBoxLayout();
 	$leftLayout.addWidget($angle);
 	$leftLayout.addWidget($force);
 
-	my $cannonLayout = new QVBoxLayout();
+	my QVBoxLayout $cannonLayout = new QVBoxLayout();
 	$cannonLayout.addWidget($.cannonField);
 	$cannonBox.setLayout($cannonLayout);
 
-	my $gridLayout = new QGridLayout();
+	my QGridLayout $gridLayout = new QGridLayout();
 	$gridLayout.addWidget($quit, 0, 0);
 	$gridLayout.addLayout($topLayout, 0, 1);
 	$gridLayout.addLayout($leftLayout, 1, 0);
@@ -440,10 +444,10 @@ class qt_example inherits QApplication {
     constructor() {
 	# in qore programs using "exec-class", global variables must be
 	# initialized in the application's constructor
-	our $firstTime = True;
-	our $barrelRect = new QRect(30, -5, 20, 10);
+	our bool $firstTime = True;
+	our QRect $barrelRect = new QRect(30, -5, 20, 10);
 
-	my $board = new GameBoard();
+	my GameBoard $board = new GameBoard();
 	$board.setGeometry(100, 100, 500, 355);
 	$board.show();
 

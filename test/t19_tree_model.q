@@ -178,7 +178,7 @@ my $app = new QApplication();
 my $w = new QTreeView();
 my $m = new Model($w);
 
-$w.connect($w, SIGNAL("doubleClicked(const QModelIndex &)"), $m, SLOT("do_doubleClicked(const QModelIndex &)"));
+QObject::connect($w, SIGNAL("doubleClicked(const QModelIndex &)"), $m, SLOT("do_doubleClicked(const QModelIndex &)"));
 
 $w.setModel($m);
 $w.show();

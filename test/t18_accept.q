@@ -10,7 +10,7 @@ class Dialog inherits QDialog
         {
                 $.resize(320,200);
                 $.button = new QPushButton("OK", $self);
-                $.connect($.button, SIGNAL("clicked()"), $self, SLOT("accept()"));
+                QObject::connect($.button, SIGNAL("clicked()"), $self, SLOT("accept()"));
         }
 
         accept()

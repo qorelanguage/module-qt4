@@ -4,7 +4,7 @@
 my $a = new QApplication();
 
 sub getPM($name) {
-    #my $pm = new QPixmap();
+    #my QPixmap $pm = new QPixmap();
     my $pm; # it doesn't work
     if (!QPixmapCache::find($name, \$pm)) {
         printf("Creating new pixmap %s.png\n", $name);
