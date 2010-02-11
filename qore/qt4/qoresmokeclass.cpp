@@ -53,6 +53,40 @@ ClassMap * ClassMap::m_instance = NULL;
 static AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const QoreListNode *params, ExceptionSink *xsink);
 static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink);
 
+/*
+class QRegionTypeHelper : public AbstractQoreClassTypeInfoHelper {
+public:
+   DLLLOCAL QRegionTypeHelper() : AbstractQoreClassTypeInfoHelper("QRegion", QDOM_GUI) {
+   }
+
+   DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+      if (!n || n->getType() != NT_OBJECT)
+	 return false;
+
+      QoreObject *o = reinterpret_cast<QoreObject *>(n);
+    // see if we can get a QRect
+      ReferenceHolder<QoreSmokePrivateData> pd(reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QRECT->getID(), xsink)), xsink);
+      if (!pd)
+	 return false;
+      QRegion *qr = new QRegion(*(pd->getObject<QRect>()));
+      QoreObject *rv = new QoreObject(QC_QREGION, getProgram());
+      QoreSmokePrivateData *data = new QoreSmokePrivateData(SCI_QREGION, qr, rv);
+      rv->setPrivate(QC_QREGION->getID(), data);
+      n->deref(xsink);
+      n = rv;
+      return true;
+   }
+   DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
+      if (!n || n->getType() != NT_OBJECT || !testObjectClassAccess(reinterpret_cast<const QoreObject *>(n), QC_QREGION))
+	 return QTI_NOT_EQUAL;
+      return QTI_AMBIGUOUS;
+   }
+   DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
+      return typeInfoGetClass(typeInfo) == QC_QREGION ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+   }
+} QRegionTypeHelper;
+*/
+
 const QoreMethod *findUserMethod(const QoreClass *qc, const char *name) {
     const QoreMethod *m = qc->findMethod(name);
     return m && m->isUser() ? m : 0;
@@ -240,6 +274,14 @@ static void dump_parse_class_map() {
 }
 #endif
 
+static QoreClass *getNewClass(const char *name) {
+/*
+   if (!strcmp(name, "QRegion"))
+      return QRegionTypeHelper.getClass();
+*/
+   return new QoreClass(name, QDOM_GUI);
+}
+
 // get type from parse class map or create it and add to map
 static const QoreTypeInfo *getInitClassType(const char *name, const Smoke::Type &t) {
    //printd(0, "getInitClassType(%s)\n", name);
@@ -252,7 +294,7 @@ static const QoreTypeInfo *getInitClassType(const char *name, const Smoke::Type 
 	 //printd(0, "getInitClassType(%s) skipping mapping for tname=%s\n", name, t.name);
 	 return 0;
       }
-      QoreClass *qc = new QoreClass(name, QDOM_GUI);
+      QoreClass *qc = getNewClass(name);
       parse_class_map[name] = qc;
       return qc->getTypeInfo();
    }
@@ -336,9 +378,9 @@ static const QoreTypeInfo *getInitType(const Smoke::Type &t) {
 // get class from map, and delete it if it's there, or simply create the class
 static QoreClass *getInitClass(const char *name) {
    qcmap_t::iterator i = parse_class_map.find(name);
-   if (i == parse_class_map.end()) {
-      return new QoreClass(name, QDOM_GUI);
-   }
+   if (i == parse_class_map.end())
+      return getNewClass(name);
+
    QoreClass *qc = i->second;
    parse_class_map.erase(i);
    return qc;
@@ -438,9 +480,8 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
             (* m_class.classFn)(method.method, 0, arg);
 
             //printd(0, "adding enum constant %s::%s (%d)\n", m_class.className, methodName, arg[0].s_enum);
-//             m_namespace->addConstant(methodName, new QoreBigIntNode(arg[0].s_enum));
             Smoke::Type t = qt_Smoke->types[method.ret];
-            m_namespace->addConstant(methodName, new QoreQtEnumNode(arg[0].s_enum, t));
+            m_namespace->addConstant(methodName, new QoreQtEnumNode(arg[0].s_enum, t), enumTypeInfo);
             continue;
         }
 

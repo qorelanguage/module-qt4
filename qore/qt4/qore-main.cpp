@@ -1,7 +1,7 @@
 /*
   Qore Programming Language Qt4 Module
 
-  Copyright 2009 Qore Technologies sro
+  Copyright 2009 - 2010 Qore Technologies sro
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -64,9 +64,10 @@ const QoreTypeInfo *enumTypeInfo;
 
 const QoreClass *QC_QOBJECT = 0, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT,
    *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME, *QC_QICON,
-   *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QTREEWIDGETITEM, *QC_QLISTWIDGETITEM, *QC_QBYTEARRAY;
+   *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QTREEWIDGETITEM, *QC_QLISTWIDGETITEM, *QC_QBYTEARRAY,
+   *QC_QRECT, *QC_QREGION;
 
-Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON;
+Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON, SCI_QRECT, SCI_QREGION;
 
 extern Smoke* qt_Smoke;
 
@@ -557,6 +558,8 @@ static QoreStringNode *qt_module_init() {
     setClassInfo(QC_QTREEWIDGETITEM, "QTreeWidgetItem");
     setClassInfo(QC_QLISTWIDGETITEM, "QListWidgetItem");
     setClassInfo(QC_QBYTEARRAY, "QByteArray");
+    setClassInfo(QC_QRECT, SCI_QRECT, "QRect");
+    setClassInfo(QC_QREGION, SCI_QREGION, "QRegion");
 
     // add alternate method argument handlers
     ClassMap &cm = *(ClassMap::Instance());
