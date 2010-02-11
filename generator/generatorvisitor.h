@@ -104,13 +104,15 @@ private:
     Class::Kind kind;
     QStack<Class*> klass;
     QStack<Access> access;
+    QStack<bool> inSignals;
+    QStack<bool> inSlots;
     
     QStack<QStringList> usingTypes;
     QStack<QStringList> usingNamespaces;
     
     QStringList nspace;
     
-    QList<QProperty> q_properties;
+    QStack<QList<QProperty> > q_properties;
 };
 
 #endif // PARSERVISITOR_H

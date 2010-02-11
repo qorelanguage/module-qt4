@@ -54,9 +54,8 @@ SmokeDataFile::SmokeDataFile()
     // These classes need to be indexed as well.
     foreach (const QString& className, includedClasses) {
         const Class* klass = &classes[className];
-        Util::VirtualMethodList list = Util::virtualMethodsForClass(klass);
-        foreach (const Util::MethodStringPair& pair, list) {
-            const Method* meth = pair.first;
+        QList<const Method*> list = Util::virtualMethodsForClass(klass);
+        foreach (const Method* meth, list) {
             usedTypes << meth->type();
             foreach (const Parameter& param, meth->parameters()) {
                 usedTypes << param.type();
@@ -133,7 +132,7 @@ void SmokeDataFile::write()
         foreach (const Class* base, Util::superClassList(&klass)) {
             QString className = base->toString();
             
-            if (includedClasses.contains(className)) {
+            if (includedClasses.contains(className) || externalClasses.contains((Class *) base)) {
                 int index = classIndex[className];
                 if (indices.contains(index))
                     continue;
@@ -267,6 +266,8 @@ void SmokeDataFile::write()
                 if (Util::canClassBeCopied(klass)) flags += "|Smoke::cf_deepcopy";
                 if (Util::hasClassVirtualDestructor(klass)) flags += "|Smoke::cf_virtual";
                 flags.replace("0|", ""); // beautify
+            } else {
+                flags = "Smoke::cf_namespace";
             }
             out << flags << ", ";
             if (!klass->isNameSpace())
@@ -285,7 +286,7 @@ void SmokeDataFile::write()
     out << "    { 0, 0, 0 },\t//0 (no type)\n";
     QMap<QString, Type*> sortedTypes;
     for (QSet<Type*>::const_iterator it = usedTypes.constBegin(); it != usedTypes.constEnd(); it++) {
-        QString typeString = (*it)->toString().replace("< ", "<").replace(" >", ">");
+        QString typeString = (*it)->toString();
         if (!typeString.isEmpty()) {
             sortedTypes.insert(typeString, *it);
         }
@@ -440,9 +441,10 @@ void SmokeDataFile::write()
     out << "// (classId, name (index in methodNames), argumentList index, number of args, method flags, "
         << "return type (index in types), xcall() index)\n";
     out << "static Smoke::Method methods[] = {\n";
+    out << "    { 0, 0, 0, 0, 0, 0, 0 },\t// (no method)\n";
     
-    i = 0;
-    int methodCount = 0;
+    i = 1;
+    int methodCount = 1;
     for (QMap<QString, int>::const_iterator iter = classIndex.constBegin(); iter != classIndex.constEnd(); iter++) {
         Class* klass = &classes[iter.key()];
         const Method* destructor = 0;
@@ -451,6 +453,8 @@ void SmokeDataFile::write()
             isExternal = true;
         if (isExternal && !declaredVirtualMethods.contains(klass))
             continue;
+        
+        QList<const Method*> virtualMethods = Util::virtualMethodsForClass(klass);
         
         int xcall_index = 1;
         foreach (const Method& meth, klass->methods()) {
@@ -487,6 +491,18 @@ void SmokeDataFile::write()
                 flags += "|Smoke::mf_attribute";
             if (meth.isQPropertyAccessor())
                 flags += "|Smoke::mf_property";
+            
+            // Simply checking for flags() & Method::Virtual won't be enough, because methods can override virtuals without being
+            // declared 'virtual' themselves (and they're still virtual, then).
+            if (virtualMethods.contains(&meth))
+                flags += "|Smoke::mf_virtual";
+            if (meth.flags() & Method::PureVirtual)
+                flags += "|Smoke::mf_purevirtual";
+            if (meth.isSignal())
+                flags += "|Smoke::mf_signal";
+            else if (meth.isSlot())
+                flags += "|Smoke::mf_slot";
+
             flags.replace("0|", "");
             out << flags;
             if (meth.type() == Type::Void) {
@@ -638,7 +654,8 @@ void SmokeDataFile::write()
     out << "}\n\n";
 
     if (Options::parentModules.isEmpty()) {
-        out << "std::map<std::string, Smoke*> Smoke::classMap;\n\n";
+        out << "Smoke::ClassMap Smoke::classMap;\n\n";
+        out << "Smoke::ModuleIndex Smoke::NullModuleIndex;\n\n";
     }
 
     out << "extern \"C\" {\n\n";
@@ -662,7 +679,7 @@ void SmokeDataFile::write()
     out << "        " << smokeNamespaceName << "::classes, " << classCount << ",\n";
     out << "        " << smokeNamespaceName << "::methods, " << methodCount << ",\n";
     out << "        " << smokeNamespaceName << "::methodMaps, " << methodMapCount << ",\n";
-    out << "        " << smokeNamespaceName << "::methodNames, " << methodNames.count() + 1 << ",\n";
+    out << "        " << smokeNamespaceName << "::methodNames, " << methodNames.count() << ",\n";
     out << "        " << smokeNamespaceName << "::types, " << typeIndex.count() << ",\n";
     out << "        " << smokeNamespaceName << "::inheritanceList,\n";
     out << "        " << smokeNamespaceName << "::argumentList,\n";

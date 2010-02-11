@@ -257,7 +257,22 @@ QString GeneratorVisitor::resolveEnumMember(const QString& parent, const QString
         if (!nspace.isEmpty())
             nspace.pop_back();
     } while (!nspace.isEmpty());
-    
+
+    QStack<Class*> parentStack = klass;
+    while (!parentStack.isEmpty()) {
+        const Class* clazz = parentStack.pop();
+        foreach (const BasicTypeDeclaration* decl, clazz->children()) {
+            const Enum *e = 0;
+            if (!(e = dynamic_cast<const Enum*>(decl)))
+                continue;
+            foreach (const EnumMember& member, e->members()) {
+                if (member.name() == name) {
+                    return clazz->toString() + "::" + name;
+                }
+            }
+        }
+    }
+
     return QString();
 }
 
@@ -269,17 +284,28 @@ void GeneratorVisitor::visitAccessSpecifier(AccessSpecifierAST* node)
         DefaultVisitor::visitAccessSpecifier(node);
         return;
     }
-    
+
+    inSignals.top() = false;
+    inSlots.top() = false;
+
     const ListNode<std::size_t> *it = node->specs->toFront(), *end = it;
     do {
         if (it->element) {
             const Token& t = token(it->element);
             if (t.kind == Token_public)
                 access.top() = Access_public;
-            else if (t.kind == Token_protected || t.kind == Token_signals)
+            else if (t.kind == Token_protected)
                 access.top() = Access_protected;
             else if (t.kind == Token_private)
                 access.top() = Access_private;
+
+            // signal/slot handling
+            if (t.kind == Token_signals) {
+                access.top() = Access_protected;
+                inSignals.top() = true;
+            } else if (t.kind == Token_slots) {
+                inSlots.top() = true;
+            }
         }
         it = it->next;
     } while (end != it);
@@ -324,7 +350,10 @@ void GeneratorVisitor::visitClassSpecifier(ClassSpecifierAST* node)
         access.push(Access_private);
     else
         access.push(Access_public);
+    inSignals.push(false);
+    inSlots.push(false);
     inClass++;
+    q_properties.push(QList<QProperty>());
     
     klass.top()->setFileName(m_header);
     klass.top()->setIsForwardDecl(false);
@@ -333,9 +362,11 @@ void GeneratorVisitor::visitClassSpecifier(ClassSpecifierAST* node)
         Class* parent = klass[klass.count() - 2];
         parent->appendChild(klass.top());
     }
-    q_properties.clear();
     DefaultVisitor::visitClassSpecifier(node);
+    q_properties.pop();
     access.pop();
+    inSignals.pop();
+    inSlots.pop();
     inClass--;
 }
 
@@ -407,11 +438,12 @@ void GeneratorVisitor::visitDeclarator(DeclaratorAST* node)
             } while (end != it);
             literals.replace("\"", "");
             // this monster only matches "type name READ getMethod WRITE setMethod"
-            QRegExp regexp("^([a-zA-Z]+)(\\s*\\*\\s*)?\\s+([a-zA-Z]+)\\s+READ\\s+([a-zA-Z0-9]+)(\\s+WRITE\\s+[a-zA-Z0-9]+)?");
+            static QRegExp regexp("^([\\w:<>\\*]+)\\s+(\\w+)\\s+READ\\s+(\\w+)(\\s+WRITE\\s+\\w+)?");
+            static QRegExp typePtr(".*\\*$");
             if (regexp.indexIn(literals) != -1) {
-                QProperty prop = { regexp.cap(1), !regexp.cap(2).isEmpty(), regexp.cap(3),
-                                   regexp.cap(4), regexp.cap(5).replace(QRegExp("\\s+WRITE\\s+"), QString()) };
-                q_properties.append(prop);
+                QProperty prop = { QMetaObject::normalizedType(regexp.cap(1).toLatin1()), (typePtr.indexIn(regexp.cap(1)) !=  -1), regexp.cap(2),
+                                   regexp.cap(3), regexp.cap(4).replace(QRegExp("\\s+WRITE\\s+"), QString()) };
+                q_properties.top().append(prop);
             }
             return;
         }
@@ -432,6 +464,8 @@ void GeneratorVisitor::visitDeclarator(DeclaratorAST* node)
         currentMethod = Method(klass.top(), declName, returnType, access.top());
         currentMethod.setIsConstructor(isConstructor);
         currentMethod.setIsDestructor(isDestructor);
+        currentMethod.setIsSignal(inSignals.top());
+        currentMethod.setIsSlot(inSlots.top());
         // build parameter list
         inMethod = true;
         visit(node->parameter_declaration_clause);
@@ -451,15 +485,27 @@ void GeneratorVisitor::visitDeclarator(DeclaratorAST* node)
 
         // Q_PROPERTY accessor?
         if (ParserOptions::qtMode) {
-            foreach (const QProperty& prop, q_properties) {
-                if (   (currentMethod.parameters().count() == 0 && prop.read == currentMethod.name() && prop.type == currentMethod.type()->name()
+            foreach (const QProperty& prop, q_properties.top()) {
+                if (   (currentMethod.parameters().count() == 0 && prop.read == currentMethod.name() && currentMethod.type()->toString().endsWith(prop.type)
                        && (currentMethod.type()->pointerDepth() == 1) == prop.isPtr)    // READ accessor?
                     || (currentMethod.parameters().count() == 1 && prop.write == currentMethod.name()
-                       && prop.type == currentMethod.parameters()[0].type()->name()     // or WRITE accessor?
-                       && (currentMethod.parameters()[0].type()->pointerDepth() == 1) == prop.isPtr))
+                       && currentMethod.parameters()[0].type()->toString().remove(QRegExp("^const ")).remove(QRegExp("\\&$")).endsWith(prop.type)
+                       && (currentMethod.parameters()[0].type()->pointerDepth() == 1) == prop.isPtr))   // or WRITE accessor?
                 {
                     currentMethod.setIsQPropertyAccessor(true);
                 }
+            }
+        }
+
+        if (node->exception_spec) {
+            currentMethod.setHasExceptionSpec(true);
+            if (node->exception_spec->type_ids) {
+                const ListNode<TypeIdAST*>* it = node->exception_spec->type_ids->toFront(), *end = it;
+                do {
+                    tc->run(it->element->type_specifier, it->element->declarator);
+                    currentMethod.appendExceptionType(tc->type());
+                    it = it->next;
+                } while (it != end);
             }
         }
 
@@ -616,23 +662,32 @@ void GeneratorVisitor::visitParameterDeclaration(ParameterDeclarationAST* node)
             expression = postfix->sub_expressions->at(0)->element;
             
             nc->run(primary->name);
-            QString className = nc->qualifiedName().join("::");
-            BasicTypeDeclaration* decl = resolveType(className);
+            QStringList className = nc->qualifiedName();
+            BasicTypeDeclaration* decl = resolveType(className.join("::"));
             if (decl)
-                className = decl->toString();
-            
-            // TODO: This only works if the last part of the name has the template parameters.
-            // Maybe create a special "Identifier" class for names that has a proper toString() method.
-            int templatePos = nc->qualifiedName().count() - 1;
-            if (nc->templateArguments().contains(templatePos)) {
-                className.append("< ");
-                for (int i = 0; i < nc->templateArguments()[templatePos].count(); i++) {
-                    if (i > 0) className.append(',');
-                    className.append(nc->templateArguments()[templatePos][i].toString());
-                }
-                className.append(" >");
+                className = decl->toString().split("::");
+
+            if (!decl && className.count() > 1) {
+                // Resolving failed, so this might also be a some static method (like Cursor::start() in KTextEditor).
+                // Pop the last element (probably the method name) and resolve the rest.
+                QString last = className.takeLast();
+                BasicTypeDeclaration* decl = resolveType(className.join("::"));
+                if (decl)
+                    className = decl->toString().split("::");
+                className.append(last);
             }
-            defaultValue.append(className);
+
+            QMap<int, QList<Type> > map = nc->templateArguments();
+            for (QMap<int, QList<Type> >::const_iterator it = map.begin(); it != map.end(); it++) {
+                QString str("< ");
+                for (int i = 0; i < it.value().count(); i++) {
+                    if (i > 0) str.append(',');
+                    str.append(it.value()[i].toString());
+                }
+                str.append(" >");
+                className[it.key()].append(str);
+            }
+            defaultValue.append(className.join("::"));
         } else if ((primary = ast_cast<PrimaryExpressionAST*>(node->expression))) {
             if (primary->name) {
                 // don't build the default value twice
@@ -712,7 +767,18 @@ void GeneratorVisitor::visitSimpleDeclaration(SimpleDeclarationAST* node)
         do {
             if (it->element && it->element->initializer) {
                 hasInitializer = true;
-                break;
+            }
+            if (it->element && it->element->declarator && it->element->declarator->parameter_declaration_clause) {
+                if (popKlass) {
+                    // This method return type has 'class' or 'struct' prepended to avoid a forward declaration.
+                    // example: 'class KMultiTabBarTab *tab(...)'
+                    QString oldClass = klass.top()->toString();
+                    klass.top()->setParent(0);
+                    classes.insert(klass.top()->toString(), *klass.top());
+                    classes.remove(oldClass);
+                    klass.pop();
+                    popKlass = false;
+                }
             }
             it = it->next;
         } while (end != it);

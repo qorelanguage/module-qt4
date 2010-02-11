@@ -998,7 +998,7 @@ static Smoke::Index findClass(const char * cname) {
 
 Smoke::Index resolveQtClass(void * ptr, Smoke::Index classId) {
     Smoke::Index ret = classId;
-    if (qt_Smoke->isDerivedFromByName(qt_Smoke->classes[classId].className, "QEvent")) {
+    if (qt_Smoke->isDerivedFrom(qt_Smoke->classes[classId].className, "QEvent")) {
         QEvent * qevent = (QEvent *) qt_Smoke->cast(ptr, classId, qt_Smoke->idClass("QEvent").index);
         switch (qevent->type()) {
         case QEvent::Timer:
@@ -1218,7 +1218,7 @@ Smoke::Index resolveQtClass(void * ptr, Smoke::Index classId) {
         default:
             break;
         }
-    } else if (qt_Smoke->isDerivedFromByName(qt_Smoke->classes[classId].className, "QGraphicsItem")) {
+    } else if (qt_Smoke->isDerivedFrom(qt_Smoke->classes[classId].className, "QGraphicsItem")) {
         QGraphicsItem * item = (QGraphicsItem *) qt_Smoke->cast(ptr, classId, qt_Smoke->idClass("QGraphicsItem").index);
         switch (item->type()) {
         case 1:
@@ -1251,7 +1251,7 @@ Smoke::Index resolveQtClass(void * ptr, Smoke::Index classId) {
             ret = findClass("QGraphicsItemGroup");
             break;
         }
-    } else if (qt_Smoke->isDerivedFromByName(qt_Smoke->classes[classId].className, "QLayoutItem")) {
+    } else if (qt_Smoke->isDerivedFrom(qt_Smoke->classes[classId].className, "QLayoutItem")) {
         QLayoutItem * item = (QLayoutItem *) qt_Smoke->cast(ptr, classId, qt_Smoke->idClass("QLayoutItem").index);
         if (item->widget() != 0) {
             ret = findClass("QWidgetItem");

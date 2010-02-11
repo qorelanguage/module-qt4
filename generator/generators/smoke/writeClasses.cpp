@@ -246,7 +246,7 @@ void SmokeClassFiles::generateEnumMemberCall(QTextStream& out, const QString& cl
         << "    }\n";
 }
 
-void SmokeClassFiles::generateVirtualMethod(QTextStream& out, const QString& className, const Method& meth, QSet<QString>& includes)
+void SmokeClassFiles::generateVirtualMethod(QTextStream& out, const Method& meth, QSet<QString>& includes)
 {
     QString x_params, x_list;
     QString type = meth.type()->toString();
@@ -270,6 +270,14 @@ void SmokeClassFiles::generateVirtualMethod(QTextStream& out, const QString& cla
     out << ") ";
     if (meth.isConst())
         out << "const ";
+    if (meth.hasExceptionSpec()) {
+        out << "throw(";
+        for (int i = 0; i < meth.exceptionTypes().count(); i++) {
+            if (i > 0) out << ", ";
+            out << meth.exceptionTypes()[i].toString();
+        }
+        out << ") ";
+    }
     out << "{\n";
     out << QString("        Smoke::StackItem x[%1];\n").arg(meth.parameters().count() + 1);
     out << x_params;
@@ -313,7 +321,7 @@ void SmokeClassFiles::generateVirtualMethod(QTextStream& out, const QString& cla
         out << "        ";
         if (meth.type() != Type::Void)
             out << "return ";
-        out << QString("this->%1::%2(%3);\n").arg(className).arg(meth.name()).arg(x_list);
+        out << QString("this->%1::%2(%3);\n").arg(meth.getClass()->toString()).arg(meth.name()).arg(x_list);
     }
     out << "    }\n";
 }
@@ -344,10 +352,14 @@ void SmokeClassFiles::writeClass(QTextStream& out, const Class* klass, const QSt
     }
     
     int xcall_index = 1;
-    
+    const Method *destructor = 0;
     foreach (const Method& meth, klass->methods()) {
-        if (meth.access() == Access_private || meth.isDestructor())
+        if (meth.access() == Access_private)
             continue;
+        if (meth.isDestructor()) {
+            destructor = &meth;
+            continue;
+        }
         switchOut << "        case " << xcall_index << ": "
                   << (((meth.flags() & Method::Static) || meth.isConstructor()) ? smokeClassName + "::" : "xself->")
                   << "x_" << xcall_index << "(args);\tbreak;\n";
@@ -364,7 +376,7 @@ void SmokeClassFiles::writeClass(QTextStream& out, const Class* klass, const QSt
         }
         xcall_index++;
     }
-    
+
     QString enumCode;
     QTextStream enumOut(&enumCode);
     const Enum* e = 0;
@@ -409,8 +421,8 @@ void SmokeClassFiles::writeClass(QTextStream& out, const Class* klass, const QSt
         enumOut << "            break;\n";
     }
     
-    foreach (const Util::MethodStringPair& pair, Util::virtualMethodsForClass(klass)) {
-        generateVirtualMethod(out, pair.second, *pair.first, includes);
+    foreach (const Method* meth, Util::virtualMethodsForClass(klass)) {
+        generateVirtualMethod(out, *meth, includes);
     }
     
     // this class contains enums, write out an xenum_operation method
@@ -424,8 +436,18 @@ void SmokeClassFiles::writeClass(QTextStream& out, const Class* klass, const QSt
     
     // destructor
     // if the class can't be instanciated, a callback when it's deleted is unnecessary
-    if (Util::canClassBeInstanciated(klass))
-        out << "    ~" << smokeClassName << QString("() { this->_binding->deleted(%1, (void*)this); }\n").arg(m_smokeData->classIndex[className]);    
+    if (Util::canClassBeInstanciated(klass)) {
+        out << "    ~" << smokeClassName << "() ";
+        if (destructor && destructor->hasExceptionSpec()) {
+            out << "throw(";
+            for (int i = 0; i < destructor->exceptionTypes().count(); i++) {
+                if (i > 0) out << ", ";
+                out << destructor->exceptionTypes()[i].toString();
+            }
+            out << ") ";
+        }
+        out << QString("{ this->_binding->deleted(%1, (void*)this); }\n").arg(m_smokeData->classIndex[className]);
+    }
     out << "};\n";
     
     if (enumFound) {
