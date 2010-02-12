@@ -24,9 +24,7 @@
 #include <qore/Qore.h>
 #include <smoke.h>
 
-
 DLLEXPORT extern qore_type_t NT_QTENUM;
-
 
 class QoreQtEnumNode : public SimpleValueQoreNode {
 private:
@@ -60,9 +58,9 @@ public:
 
     DLLLOCAL virtual void getStringRepresentation(QoreString &str) const;
 
-    DLLLOCAL virtual QoreString *getAsString(bool &del, int foff, class ExceptionSink *xsink) const;
+    DLLLOCAL virtual QoreString *getAsString(bool &del, int foff, ExceptionSink *xsink) const;
 
-    DLLLOCAL virtual int getAsString(QoreString &str, int foff, class ExceptionSink *xsink) const;
+    DLLLOCAL virtual int getAsString(QoreString &str, int foff, ExceptionSink *xsink) const;
 
     DLLLOCAL virtual class AbstractQoreNode *realCopy() const;
 
@@ -77,9 +75,30 @@ public:
     static void registerType() {
         NT_QTENUM = get_next_type_id();
     }
-
 };
 
+class QoreEnumTypeInfoHelper : public QoreTypeInfoHelper {
+public:
+   DLLLOCAL QoreEnumTypeInfoHelper() : QoreTypeInfoHelper(QoreQtEnumNode::getStaticTypeName()) {
+   }
+   DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+      //printd(0, "QoreEnumTypeInfoHelper::checkTypeInstantiationImpl() this=%p n=%p (%s)\n", this, n, n ? n->getTypeName() : "NOTHING");
+      if (!n || n->getType() != NT_INT)
+	 return false;
 
+      QoreQtEnumNode *rv = new QoreQtEnumNode(reinterpret_cast<QoreBigIntNode *>(n)->val, Smoke::Type());
+      n->deref(xsink);
+      n = rv;
+      return true;
+   }
+   DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
+      //printd(0, "QoreEnumTypeInfoHelper::testTypeCompatibilityImpl() this=%p n=%p (%s)\n", this, n, n ? n->getTypeName() : "NOTHING");
+      return n && n->getType() == NT_INT ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+   }
+   DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
+      //printd(0, "QoreEnumTypeInfoHelper::parseEqualImpl() this=%p typeInfo=%s\n", this, typeInfoGetName(typeInfo));
+      return typeInfo && typeInfoGetType(typeInfo) == NT_INT ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+   }
+};
 
 #endif

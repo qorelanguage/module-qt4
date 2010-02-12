@@ -26,6 +26,7 @@
 #include "qoreqtenumnode.h"
 #include "qtfunctions.h"
 #include "qoremarshalling.h"
+#include "typeinfohelpers.h"
 
 #include <QObject>
 #include <QDebug>
@@ -43,7 +44,7 @@ static void qt_module_delete();
 
 DLLEXPORT char qore_module_name[] = "qt4";
 DLLEXPORT char qore_module_version[] = PACKAGE_VERSION;
-DLLEXPORT char qore_module_description[] = "QT 4 module";
+DLLEXPORT char qore_module_description[] = "QT4 module";
 DLLEXPORT char qore_module_author[] = "Qore Technologies, s.r.o.";
 DLLEXPORT char qore_module_url[] = "http://qore.org";
 DLLEXPORT int qore_module_api_major = QORE_MODULE_API_MAJOR;
@@ -59,15 +60,20 @@ DLLEXPORT qore_license_t qore_module_license = QL_LGPL;
 DLLEXPORT qore_license_t qore_module_license = QL_GPL;
 #endif
 
-static QoreTypeInfoHelper enumTypeInfoHelper(QoreQtEnumNode::getStaticTypeName());
+qore_type_t QoreQtIntCompatibleTypeInfoHelper::fake_id = 0;
+
+static QoreEnumTypeInfoHelper enumTypeInfoHelper;
 const QoreTypeInfo *enumTypeInfo;
+
+static QoreQtIntCompatibleTypeInfoHelper qtIntTypeInfoHelper;
+const QoreTypeInfo *qtIntTypeInfo;
 
 const QoreClass *QC_QOBJECT = 0, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT,
    *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME, *QC_QICON,
    *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QTREEWIDGETITEM, *QC_QLISTWIDGETITEM, *QC_QBYTEARRAY,
    *QC_QRECT, *QC_QREGION;
 
-Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON, SCI_QRECT, SCI_QREGION;
+Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON, SCI_QRECT, SCI_QREGION, SCI_QCOLOR;
 
 extern Smoke* qt_Smoke;
 
@@ -547,7 +553,7 @@ static QoreStringNode *qt_module_init() {
     setClassInfo(QC_QABSTRACTITEMMODEL, "QAbstractItemModel");
     setClassInfo(QC_QVARIANT, SCI_QVARIANT, "QVariant");
     setClassInfo(QC_QLOCALE, SCI_QLOCALE, "QLocale");
-    setClassInfo(QC_QCOLOR, "QColor");
+    setClassInfo(QC_QCOLOR, SCI_QCOLOR, "QColor");
     setClassInfo(QC_QBRUSH, "QBrush");
     setClassInfo(QC_QDATE, "QDate");
     setClassInfo(QC_QDATETIME, "QDateTime");

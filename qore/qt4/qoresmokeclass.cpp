@@ -27,6 +27,7 @@
 #include "qoremarshalling.h"
 #include "commonqoremethod.h"
 #include "qoreqtenumnode.h"
+#include "typeinfohelpers.h"
 
 #include <iostream>
 #include <QtDebug>
@@ -53,37 +54,9 @@ ClassMap * ClassMap::m_instance = NULL;
 static AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const QoreListNode *params, ExceptionSink *xsink);
 static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink);
 
-class QRegionTypeHelper : public AbstractQoreClassTypeInfoHelper {
-public:
-   DLLLOCAL QRegionTypeHelper() : AbstractQoreClassTypeInfoHelper("QRegion", QDOM_GUI) {
-   }
-
-   DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
-      if (!n || n->getType() != NT_OBJECT)
-	 return false;
-
-      QoreObject *o = reinterpret_cast<QoreObject *>(n);
-    // see if we can get a QRect
-      ReferenceHolder<QoreSmokePrivateData> pd(reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QRECT->getID(), xsink)), xsink);
-      if (!pd)
-	 return false;
-      QRegion *qr = new QRegion(*(pd->getObject<QRect>()));
-      QoreObject *rv = new QoreObject(QC_QREGION, getProgram());
-      QoreSmokePrivateData *data = new QoreSmokePrivateData(SCI_QREGION, qr, rv);
-      rv->setPrivate(QC_QREGION->getID(), data);
-      n->deref(xsink);
-      n = rv;
-      return true;
-   }
-   DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
-      if (!n || n->getType() != NT_OBJECT || !testObjectClassAccess(reinterpret_cast<const QoreObject *>(n), QC_QREGION))
-	 return QTI_NOT_EQUAL;
-      return QTI_AMBIGUOUS;
-   }
-   DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
-      return typeInfoGetClass(typeInfo) == QC_QREGION ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
-   }
-} QRegionTypeHelper;
+QRegionTypeHelper typeHelperQRegion;
+QWidgetTypeHelper typeHelperQWidget;
+QColorTypeHelper  typeHelperQColor;
 
 const QoreMethod *findUserMethod(const QoreClass *qc, const char *name) {
     const QoreMethod *m = qc->findMethod(name);
@@ -273,8 +246,12 @@ static void dump_parse_class_map() {
 #endif
 
 static QoreClass *getNewClass(const char *name) {
-   if (!strcmp(name, "QRegion"))
-      return QRegionTypeHelper.getClass();
+   if (typeHelperQRegion.hasClass() && !strcmp(name, "QRegion"))
+      return typeHelperQRegion.getClass();
+   if (typeHelperQWidget.hasClass() && !strcmp(name, "QWidget"))
+      return typeHelperQWidget.getClass();
+   if (typeHelperQColor.hasClass() && !strcmp(name, "QColor"))
+      return typeHelperQColor.getClass();
    return new QoreClass(name, QDOM_GUI);
 }
 
@@ -297,22 +274,22 @@ static const QoreTypeInfo *getInitClassType(const char *name, const Smoke::Type 
    return i->second->getTypeInfo();
 }
 
-static const QoreTypeInfo *getInitType(const Smoke::Type &t) {
+static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool param = false) {
    //int flags = t.flags & 0x30;
    int tid = t.flags & Smoke::tf_elem;
    switch (tid) {
       case Smoke::t_bool:
 	 return boolTypeInfo;
       case Smoke::t_char:
-      case Smoke::t_uchar:
 	 return stringTypeInfo;
+      case Smoke::t_uchar:
       case Smoke::t_short:
       case Smoke::t_ushort:
       case Smoke::t_int:
       case Smoke::t_uint:
       case Smoke::t_long:
       case Smoke::t_ulong:
-	 return bigIntTypeInfo;
+	 return param ? qtIntTypeInfo : bigIntTypeInfo;
       case Smoke::t_float:
       case Smoke::t_double:
 	 return floatTypeInfo;
@@ -497,7 +474,7 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 	Smoke::Index *idx = qt_Smoke->argumentList + method.args;
 	for (unsigned i = 0; i < method.numArgs; ++i) {
 	   assert(idx[i]);
-	   argTypeInfo.push_back(getInitType(qt_Smoke->types[idx[i]]));
+	   argTypeInfo.push_back(getInitType(qt_Smoke->types[idx[i]], true));
 	}
 
         if ((method.flags & Smoke::mf_ctor)) {

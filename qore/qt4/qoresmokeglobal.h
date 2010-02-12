@@ -43,9 +43,11 @@ DLLLOCAL extern const QoreClass *QC_QOBJECT, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL
    *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QBYTEARRAY, *QC_QRECT, *QC_QREGION;
 
 DLLLOCAL extern const QoreTypeInfo *enumTypeInfo;
+DLLLOCAL extern const QoreTypeInfo *qtIntTypeInfo;
 
 DLLLOCAL extern Smoke::ModuleIndex SMI_QOBJECT;
-DLLLOCAL extern Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON, SCI_QRECT, SCI_QREGION;
+DLLLOCAL extern Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON, SCI_QRECT, SCI_QREGION,
+   SCI_QCOLOR;
 
 DLLLOCAL QoreObject *getQoreQObject(const QObject *obj);
 DLLLOCAL QoreObject *getQoreObject(Smoke::Index classId, void *obj, QoreClass *&qc);
