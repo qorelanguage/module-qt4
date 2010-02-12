@@ -123,7 +123,7 @@ static int argv_handler_intern(int argc_no, Smoke::Stack &stack, ClassMap::TypeL
 static int argv_handler_rint_charpp(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     // Create a Smoke stack from params
     stack = new Smoke::StackItem[3];
-//    printd(0, "argv_handler_rint_charpp() allocated stack of size %d\n", 3);
+    //printd(0, "argv_handler_rint_charpp() allocated stack of size %d\n", 3);
 
     bool done = false;
 
@@ -583,14 +583,18 @@ static QoreStringNode *qt_module_init() {
     Smoke::ModuleIndex methodIndex;
     methodIndex = qt_Smoke->findMethod("QCoreApplication", "QCoreApplication$?");
     assert(methodIndex.smoke);
-    cm.registerMethod("QCoreApplication", "QCoreApplication", "QCoreApplication?", methodIndex.index, argv_charpp_h);
+
+    type_vec_t argv_list;
+    argv_list.push_back(listTypeInfo);
+
+    cm.registerMethod("QCoreApplication", "QCoreApplication", "QCoreApplication?", methodIndex.index, argv_charpp_h, 0, argv_list);
     cm.registerMethod("QCoreApplication", "QCoreApplication", "QCoreApplication", methodIndex.index, argv_none_h);
     cm.addArgHandler("QCoreApplication", "QCoreApplication", argv_handler_rint_charpp);
     cm.addArgHandler("QApplication", "QApplication", argv_handler_rint_charpp);
 
     methodIndex = qt_Smoke->findMethod("QApplication", "QApplication$?");
     assert(methodIndex.smoke);
-    cm.registerMethod("QApplication", "QApplication", "QApplication?", methodIndex.index, argv_charpp_h);
+    cm.registerMethod("QApplication", "QApplication", "QApplication?", methodIndex.index, argv_charpp_h, 0, argv_list);
     cm.registerMethod("QApplication", "QApplication", "QApplication", methodIndex.index, argv_none_h);
     
     // QLayout::addItem() and ::addWidget() handlers

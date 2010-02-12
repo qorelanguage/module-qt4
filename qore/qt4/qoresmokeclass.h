@@ -493,7 +493,7 @@ public:
     }
     DLLLOCAL void addArgHandler(const char *cls, const char *meth, const char *munged, arg_handler_t arg_handler);
     DLLLOCAL void addArgHandler(const char *cls, const char *meth, arg_handler_t arg_handler);
-    DLLLOCAL void registerMethod(const char *class_name, const char *method_name, const char *munged_name, Smoke::Index method_index, TypeHandler &type_handler);
+    DLLLOCAL void registerMethod(const char *class_name, const char *method_name, const char *munged_name, Smoke::Index method_index, TypeHandler &type_handler, const QoreTypeInfo *returnType = 0, const type_vec_t &argTypeList = type_vec_t());
 
 private:
 

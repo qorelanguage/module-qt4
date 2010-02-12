@@ -103,7 +103,7 @@ void ClassMap::registerMethods() {
     }
 }
 
-void ClassMap::registerMethod(const char *class_name, const char *method_name, const char *munged_name, Smoke::Index method_index, TypeHandler &type_handler) {
+void ClassMap::registerMethod(const char *class_name, const char *method_name, const char *munged_name, Smoke::Index method_index, TypeHandler &type_handler, const QoreTypeInfo *returnType, const type_vec_t &argTypeList) {
 //     assert(m_map[class_name][method_name][munged_name].types.count() == 0);
 
     method_index = qt_Smoke->methodMaps[method_index].method;
@@ -113,6 +113,17 @@ void ClassMap::registerMethod(const char *class_name, const char *method_name, c
     type_handler.method = method_index;
 
     m_map[class_name][method_name].insert(munged_name, type_handler);
+    // add method to class if possible
+    QoreClass *qc = ClassNamesMap::Instance()->value(class_name);
+    assert(qc);
+
+    if (!strcmp(class_name, method_name)) {
+       assert(!returnType);
+       qc->setConstructorExtendedList2(common_constructor, false, QDOM_DEFAULT, argTypeList);
+    }
+    else {
+       qc->addMethodExtendedList2(method_name, (q_method2_t)common_method, false, QDOM_DEFAULT, returnType, argTypeList);
+    }
     //printd(0, "ClassMap::registerMethod(%s, %s, %s)\n", class_name, method_name, munged_name);
 }
 
