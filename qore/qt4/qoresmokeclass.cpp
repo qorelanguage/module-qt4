@@ -53,7 +53,6 @@ ClassMap * ClassMap::m_instance = NULL;
 static AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const QoreListNode *params, ExceptionSink *xsink);
 static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink);
 
-/*
 class QRegionTypeHelper : public AbstractQoreClassTypeInfoHelper {
 public:
    DLLLOCAL QRegionTypeHelper() : AbstractQoreClassTypeInfoHelper("QRegion", QDOM_GUI) {
@@ -85,7 +84,6 @@ public:
       return typeInfoGetClass(typeInfo) == QC_QREGION ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
 } QRegionTypeHelper;
-*/
 
 const QoreMethod *findUserMethod(const QoreClass *qc, const char *name) {
     const QoreMethod *m = qc->findMethod(name);
@@ -275,10 +273,8 @@ static void dump_parse_class_map() {
 #endif
 
 static QoreClass *getNewClass(const char *name) {
-/*
    if (!strcmp(name, "QRegion"))
       return QRegionTypeHelper.getClass();
-*/
    return new QoreClass(name, QDOM_GUI);
 }
 
@@ -496,22 +492,22 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 	   continue;
 
 	// create return and argument type information for method signature
-	const QoreTypeInfo **argTypeInfo = new const QoreTypeInfo *[method.numArgs];
+	type_vec_t argTypeInfo;
+	argTypeInfo.reserve(method.numArgs);
 	Smoke::Index *idx = qt_Smoke->argumentList + method.args;
 	for (unsigned i = 0; i < method.numArgs; ++i) {
 	   assert(idx[i]);
-	   argTypeInfo[i] = getInitType(qt_Smoke->types[idx[i]]);
+	   argTypeInfo.push_back(getInitType(qt_Smoke->types[idx[i]]));
 	}
 
         if ((method.flags & Smoke::mf_ctor)) {
 	   const QoreMethod *qm = m_qoreClass->getConstructor();
-	   if (qm && qm->existsVariant(method.numArgs, argTypeInfo)) {
+	   if (qm && qm->existsVariant(argTypeInfo)) {
 	      //printd(0, "QoreSmokeClass::addClassMethods() skipping already-created variant %s::%s()\n", m_qoreClass->getName(), methodName);
-	      delete [] argTypeInfo;
 	      continue;
 	   }
 
-	   m_qoreClass->setConstructorExtendedList2(common_constructor, isPrivate, QDOM_DEFAULT, method.numArgs, argTypeInfo);
+	   m_qoreClass->setConstructorExtendedList2(common_constructor, isPrivate, QDOM_DEFAULT, argTypeInfo);
 	   continue;
         }
 
@@ -524,13 +520,12 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 	      func = f_QOBJECT_connect;
 
 	   const QoreMethod *qm = m_qoreClass->findStaticMethod(methodName);
-	   if (qm && qm->existsVariant(method.numArgs, argTypeInfo)) {
+	   if (qm && qm->existsVariant(argTypeInfo)) {
 	      //printd(0, "QoreSmokeClass::addClassMethods() skipping already-created variant (static) %s::%s()\n", m_qoreClass->getName(), methodName);
-	      delete [] argTypeInfo;
 	      continue;
 	   }
 	   
-	   m_qoreClass->addStaticMethodExtendedList2(methodName, func, isPrivate, QDOM_DEFAULT, returnTypeInfo, method.numArgs, argTypeInfo);
+	   m_qoreClass->addStaticMethodExtendedList2(methodName, func, isPrivate, QDOM_DEFAULT, returnTypeInfo, argTypeInfo);
 	   continue;
         }
 
@@ -547,9 +542,8 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
         }
 	
 	const QoreMethod *qm = m_qoreClass->findMethod(name);
-	if (qm && qm->existsVariant(method.numArgs, argTypeInfo)) {
+	if (qm && qm->existsVariant(argTypeInfo)) {
 	   //printd(0, "QoreSmokeClass::addClassMethods() skipping already-created variant %s::%s()\n", m_qoreClass->getName(), name);
-	   delete [] argTypeInfo;
 	   continue;
 	}
 
@@ -557,7 +551,7 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 	if (m_qoreClass == QC_QOBJECT && !strcmp(methodName, "connect"))
 	   func = (q_method2_t)QOBJECT_connect;
 	    
-	m_qoreClass->addMethodExtendedList2(name, func, isPrivate, QDOM_DEFAULT, returnTypeInfo, method.numArgs, argTypeInfo);
+	m_qoreClass->addMethodExtendedList2(name, func, isPrivate, QDOM_DEFAULT, returnTypeInfo, argTypeInfo);
     }
 
 /*
