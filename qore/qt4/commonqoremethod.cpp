@@ -196,7 +196,7 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
 
     if (candidates.count() == 0) {
         QoreStringNode *desc = new QoreStringNode;
-        desc->sprintf("no match found for call to %s::%s(", m_className, methodName);
+        desc->sprintf("no candidates found for call to %s::%s(", m_className, methodName);
         add_args(*desc, params);
         desc->concat(')');
         add_candidates(*desc, m_className, methodName);
@@ -211,22 +211,22 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
         m_munged = i.key();
         type_handler = i.value();
     } else {
-//         printd(0, "CommonQoreMethod::CommonQoreMethod() more candidates to solve\n");
-        // leave only one method in candidates on the end of searching
-        int high_score = 0, perfect = qoreArgCnt * 2;
-        for (ClassMap::MungledToTypes::iterator i = candidates.begin(), e = candidates.end(); i != e; ++i) {
-            int score = 0, cnt = 0, matches = 0;
+       //printd(0, "CommonQoreMethod::CommonQoreMethod() more candidates to solve\n");
+       // leave only one method in candidates on the end of searching
+       int high_score = 0, perfect = qoreArgCnt * 2;
+       for (ClassMap::MungledToTypes::iterator i = candidates.begin(), e = candidates.end(); i != e; ++i) {
+	  int score = 0, cnt = 0, matches = 0;
 
-	    //printd(0, "calling getScore() %s::%s()...\n", className, methodName);
-            foreach (Smoke::Type t, i.value().types) {
-                const AbstractQoreNode *n = get_param(params, cnt);
-                int rc = getScore(t, n, cnt);
-		//printd(0, "  arg %d: %s qoretype=%s (%p) rc=%d\n", cnt, t.name, n ? n->getTypeName() : "NOTHING", n, rc);
-                ++cnt;
-                if (rc)
-                    ++matches;
-                score += rc;
-            }
+	  //printd(0, "calling getScore() %s::%s()...\n", className, methodName);
+	  foreach (Smoke::Type t, i.value().types) {
+	     const AbstractQoreNode *n = get_param(params, cnt);
+	     int rc = getScore(t, n, cnt);
+	     //printd(0, "  arg %d: %s qoretype=%s (%p) rc=%d\n", cnt, t.name, n ? n->getTypeName() : "NOTHING", n, rc);
+	     ++cnt;
+	     if (rc)
+		++matches;
+	     score += rc;
+	  }
 
 #ifdef DEBUG_0
             QoreString tmp("getScore() ");
@@ -282,8 +282,8 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
 #endif
     } else {
         // Create a Smoke stack from params
-        Stack = new Smoke::StackItem[type_handler.types.count() + 1];
-//        printd(0, "CommonQoreMethod::CommonQoreMethod() allocated stack of size %d\n", type_handler.types.count() + 1);
+       Stack = new Smoke::StackItem[type_handler.types.count() + 1];
+       //printd(0, "CommonQoreMethod::CommonQoreMethod() allocated stack of size %d\n", type_handler.types.count() + 1);
 
         int i = 1;
         foreach (Smoke::Type t, type_handler.types) {
@@ -329,9 +329,13 @@ CommonQoreMethod::~CommonQoreMethod() {
                     break;
                 case ref_store_s::r_qreal:
                     ref.assign(new QoreFloatNode(rf.data.q_qreal), m_xsink);
-                    break;		    
+                    break;
+		case ref_store_s::r_qpixmap:
+		    ref.assign(Marshalling::createQoreObjectFromNonQObject(QC_QPIXMAP, SCI_QPIXMAP, rf.data.q_qpixmap), m_xsink);
+		    rf.data.q_qpixmap = 0;
+		    break;
                 default:
-                    m_xsink->raiseException("QT-REFERENCE-BIND", "Unhandled refrence type %s", rf.type);
+                    m_xsink->raiseException("QT-REFERENCE-BIND", "Unhandled refrence type %d", rf.type);
                 }
             }
         }
@@ -1096,7 +1100,6 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
 
     // TODO/FIXME: is it good approach? example class F inherits X { constructor($parent): X($parent)...} and then new F(); will result for NOTHING as parent
     // see e.g. digitalclock.q example
-    if (qore_type == NT_NOTHING) return 0;
 
     int tid = smoke_type.flags & Smoke::tf_elem;
     int flags = smoke_type.flags & 0x30;
@@ -1123,6 +1126,9 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
             }
             qore_type = n ? n->getType() : NT_NOTHING;
         }
+
+	if (qore_type == NT_NOTHING)
+	   return flags == Smoke::tf_ref || iconst ? 0 : 1;
 
         const char *name = smoke_type.name;
         if (iconst) {
@@ -1243,6 +1249,8 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
         } else if (tid == Smoke::t_voidp)
 	   return qore_type == NT_OBJECT ? 2 : 0;
     } else {
+	if (qore_type == NT_NOTHING)
+	   return 0;
         switch (tid) {
         case Smoke::t_voidp:
         case Smoke::t_class:

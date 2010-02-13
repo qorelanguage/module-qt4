@@ -73,7 +73,7 @@ const QoreClass *QC_QOBJECT = 0, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIA
    *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QTREEWIDGETITEM, *QC_QLISTWIDGETITEM, *QC_QBYTEARRAY,
    *QC_QRECT, *QC_QREGION;
 
-Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON, SCI_QRECT, SCI_QREGION, SCI_QCOLOR;
+Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON, SCI_QRECT, SCI_QREGION, SCI_QCOLOR, SCI_QPIXMAP;
 
 extern Smoke* qt_Smoke;
 
@@ -470,36 +470,15 @@ static int arg_handler_QPixmapCache_find(Smoke::Stack &stack, ClassMap::TypeList
     const AbstractQoreNode *n = get_param(args, 0);
     cqm.qoreToStack(types[0], n, 1);
 
-    const ReferenceNode *r = test_reference_param(args, 1);
-    if (!r) {
-       xsink->raiseException("QPIXMAPCACHE-FIND-ERROR", "expecting a reference as the second argument to QPixmapCache::find()");
-       return -1;
+    ref_store_s *rs = cqm.getRefEntry(1);
+    assert(rs);
+    if (rs->type != ref_store_s::r_qpixmap) {
+       rs->del();
+       rs->assign(new QPixmap);
     }
-
-    AutoVLock vl(xsink);
-    ReferenceHelper rh(r, vl, xsink);
-    if (!rh)
-       return -1;
-
-    cqm.qoreToStack(types[1], rh.getValue(), 2);
+    stack[2].s_class = rs->getPtr();
 
     return 0;
-}
-
-static AbstractQoreNode *rv_handler_QPixmapCache_find(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
-   bool b = Stack[0].s_bool;
-   if (b) {
-      // write back pixmap
-      const ReferenceNode *r = reinterpret_cast<const ReferenceNode *>(cqm.getArg(1));
-      AutoVLock vl(xsink);
-      ReferenceHelper rh(r, vl, xsink);
-      if (rh) {
-	 AbstractQoreNode *qpm = Marshalling::stackToQore(cqm.getTypeHandler().types[1], Stack[2], xsink);
-	 if (qpm)
-	    rh.assign(qpm, xsink);
-      }
-   }
-   return get_bool_node(b);
 }
 
 static AbstractQoreNode *rv_handler_spacer_item(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
@@ -559,7 +538,7 @@ static QoreStringNode *qt_module_init() {
     setClassInfo(QC_QDATETIME, "QDateTime");
     setClassInfo(QC_QTIME, "QTime");
     setClassInfo(QC_QICON, SCI_QICON, "QIcon");
-    setClassInfo(QC_QPIXMAP, "QPixmap");
+    setClassInfo(QC_QPIXMAP, SCI_QPIXMAP, "QPixmap");
     setClassInfo(QC_QAPPLICATION, "QApplication");
     setClassInfo(QC_QTREEWIDGETITEM, "QTreeWidgetItem");
     setClassInfo(QC_QLISTWIDGETITEM, "QListWidgetItem");
@@ -644,7 +623,6 @@ static QoreStringNode *qt_module_init() {
     cm.addArgHandler("QTimer", "singleShot", arg_handler_QTimer_singleShot);
 
     cm.addArgHandler("QPixmapCache", "find", arg_handler_QPixmapCache_find);
-    cm.setRVHandler("QPixmapCache", "find", rv_handler_QPixmapCache_find);
 
     // initialize global constants
     QT_METACALL_ID = qt_Smoke->idMethodName("qt_metacall$$?");

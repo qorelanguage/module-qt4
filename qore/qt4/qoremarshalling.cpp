@@ -154,7 +154,7 @@ AbstractQoreNode * QtContainerToQore::listToQObject(const Smoke::Type &t, void* 
     return retList.release();
 }
 
-QoreObject *createQoreObjectFromNonQObject(const QoreClass *theclass, Smoke::Index classId, void *ptr, QoreSmokePrivate **p = 0) {
+QoreObject *createQoreObjectFromNonQObject(const QoreClass *theclass, Smoke::Index classId, void *ptr, QoreSmokePrivate **p) {
     // ensure this is not a QObject
     assert(!theclass->getClass(QC_QOBJECT->getID()));
     QoreObject *o = new QoreObject(theclass, getProgram());
@@ -165,7 +165,7 @@ QoreObject *createQoreObjectFromNonQObject(const QoreClass *theclass, Smoke::Ind
     return o;
 }
 
-QoreObject *createQoreObjectFromNonQObjectExternallyOwned(const QoreClass *theclass, Smoke::Index classId, void *ptr, QoreSmokePrivate **p = 0) {
+QoreObject *createQoreObjectFromNonQObjectExternallyOwned(const QoreClass *theclass, Smoke::Index classId, void *ptr, QoreSmokePrivate **p) {
     // ensure this is not a QObject
     assert(!theclass->getClass(QC_QOBJECT->getID()));
     QoreObject *o = new QoreObject(theclass, getProgram());

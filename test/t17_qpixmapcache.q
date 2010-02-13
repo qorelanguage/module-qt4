@@ -1,11 +1,10 @@
 #!/usr/bin/env qore
 %requires qt4
 
-my $a = new QApplication();
+my QApplication $a = new QApplication();
 
-sub getPM($name) {
-    #my QPixmap $pm = new QPixmap();
-    my $pm; # it doesn't work
+sub getPM(string $name) {
+    my $pm;
     if (!QPixmapCache::find($name, \$pm)) {
         printf("Creating new pixmap %s.png\n", $name);
         $pm = new QPixmap(sprintf("examples/widgets/images/%s.png", $name));
@@ -15,7 +14,6 @@ sub getPM($name) {
         printf("Cached pixmap %s.png: %N\n", $name, $pm);
     return $pm;
 }
-
 
 #circle.png  open.png  pause.png  play.png  quit.png  square.png  stop.png  triangle.png  woodbackground.png  woodbutton.png
 printf("pixmap 1: %N\n", getPM("circle"));

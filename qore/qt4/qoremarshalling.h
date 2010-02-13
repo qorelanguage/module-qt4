@@ -26,7 +26,7 @@
 #include <QVariant>
 
 class QByteArray;
-
+class QoreSmokePrivate;
 
 namespace Marshalling {
 
@@ -36,47 +36,47 @@ QoreObject *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0);
 class QtContainerToQore {
 public:
 
-    static QtContainerToQore* Instance() {
+    DLLLOCAL static QtContainerToQore* Instance() {
         if (!m_instance) {
             m_instance = new QtContainerToQore();
         }
         return m_instance;
     }
 
-    AbstractQoreNode * marshall(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+    DLLLOCAL AbstractQoreNode * marshall(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
 
 private:
     typedef AbstractQoreNode* (*qlist_handler_t)(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
 
-    static QByteArray getSubType(const char * name);
+    DLLLOCAL static QByteArray getSubType(const char * name);
 
     template<class QLISTT, class QORET>
-    static AbstractQoreNode * listToSimpleValue(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+    DLLLOCAL static AbstractQoreNode * listToSimpleValue(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
 
-    static AbstractQoreNode * listToQStringList(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
-    static AbstractQoreNode * listToQByteArray(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
-
-    template<class QLISTT>
-    static AbstractQoreNode * listToEnum(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+    DLLLOCAL static AbstractQoreNode * listToQStringList(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+    DLLLOCAL static AbstractQoreNode * listToQByteArray(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
 
     template<class QLISTT>
-    static AbstractQoreNode * listToQObject(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+    DLLLOCAL static AbstractQoreNode * listToEnum(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+
+    template<class QLISTT>
+    DLLLOCAL static AbstractQoreNode * listToQObject(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
 
     //! QList<Foo>
     template<class QLISTT>
-    static AbstractQoreNode * listToObject(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+    DLLLOCAL static AbstractQoreNode * listToObject(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
 
     //! QList<Foo*>
     template<class QLISTT>
-    static AbstractQoreNode * listToObjectPtr(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+    DLLLOCAL static AbstractQoreNode * listToObjectPtr(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
 
     QMap<QByteArray,qlist_handler_t> m_map;
     static QtContainerToQore * m_instance;
 
-    QtContainerToQore();
-    QtContainerToQore(const QtContainerToQore &);
-    //QtContainerToQore& operator=(const QtContainerToQore&) {};
-    ~QtContainerToQore() {
+    DLLLOCAL QtContainerToQore();
+    DLLLOCAL QtContainerToQore(const QtContainerToQore &);
+    //DLLLOCAL QtContainerToQore& operator=(const QtContainerToQore&) {};
+    DLLLOCAL ~QtContainerToQore() {
         delete m_instance;
     }
 };
@@ -85,11 +85,11 @@ private:
 class QoreQListBase {
 public:
     bool isValid;
-    QoreQListBase() {
+    DLLLOCAL QoreQListBase() {
         isValid = false;
     }
-    virtual ~QoreQListBase() {}
-    virtual void * voidp() = 0;
+    DLLLOCAL virtual ~QoreQListBase() {}
+    DLLLOCAL virtual void * voidp() = 0;
 };
 
 template<class QLIST>
@@ -97,9 +97,9 @@ class QoreQList : public QoreQListBase {
 public:
     QLIST qlist;
 
-    QoreQList() : QoreQListBase() {};
+    DLLLOCAL QoreQList() : QoreQListBase() {};
 
-    void * voidp() {
+    DLLLOCAL void * voidp() {
         return &qlist;
     }
 };
@@ -108,41 +108,41 @@ public:
 class QoreToQtContainer {
 public:
 
-    static QoreToQtContainer* Instance() {
+    DLLLOCAL static QoreToQtContainer* Instance() {
         if (!m_instance) {
             m_instance = new QoreToQtContainer();
         }
         return m_instance;
     }
 
-    QoreQListBase * marshall(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
+    DLLLOCAL QoreQListBase * marshall(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
 
 private:
     typedef QoreQListBase* (*qlist_handler_t)(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
 
-    static QByteArray getSubType(const char * name);
+    DLLLOCAL static QByteArray getSubType(const char * name);
 
     template<class QLISTT>
-    static QoreQListBase * listToSimpleValue(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
+    DLLLOCAL static QoreQListBase * listToSimpleValue(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
 
-    static QoreQListBase * listToQStringList(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
-
-    template<class QLISTT, class SUBTYPET>
-    static QoreQListBase * listToEnum(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
+    DLLLOCAL static QoreQListBase * listToQStringList(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
 
     template<class QLISTT, class SUBTYPET>
-    static QoreQListBase * listToObject(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
+    DLLLOCAL static QoreQListBase * listToEnum(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
 
     template<class QLISTT, class SUBTYPET>
-    static QoreQListBase * listToQObject(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
+    DLLLOCAL static QoreQListBase * listToObject(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
+
+    template<class QLISTT, class SUBTYPET>
+    DLLLOCAL static QoreQListBase * listToQObject(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
 
     QMap<QByteArray,qlist_handler_t> m_map;
-    static QoreToQtContainer * m_instance;
+    DLLLOCAL static QoreToQtContainer * m_instance;
 
-    QoreToQtContainer();
-    QoreToQtContainer(const QoreToQtContainer &);
-    //QoreToQtContainer& operator=(const QoreToQtContainer&) {};
-    ~QoreToQtContainer() {
+    DLLLOCAL QoreToQtContainer();
+    DLLLOCAL QoreToQtContainer(const QoreToQtContainer &);
+    //DLLLOCAL QoreToQtContainer& operator=(const QoreToQtContainer&) {};
+    DLLLOCAL ~QoreToQtContainer() {
         delete m_instance;
     }
 };
@@ -158,45 +158,48 @@ public:
     };
     Status status;
     QVariant qvariant;
-    QoreQVariant() {
+    DLLLOCAL QoreQVariant() {
         status = Valid;
     }
-    virtual ~QoreQVariant() {}
-    virtual void * s_class() {
+    DLLLOCAL virtual ~QoreQVariant() {}
+    DLLLOCAL virtual void * s_class() {
         return &qvariant;
     }
 };
 
 //! Convert Qore to QVaraint
-QoreQVariant * qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * node, ExceptionSink * xsink);
+DLLLOCAL QoreQVariant * qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * node, ExceptionSink * xsink);
 
 /*! Helper function for CommonQoreMethod::getScore().
 It's much more efficient than when there was used qoreToQVariant
 */
-QoreQVariant::Status qoreToQVariantScore(const Smoke::Type & t, const AbstractQoreNode * node, ExceptionSink * xsink);
+DLLLOCAL QoreQVariant::Status qoreToQVariantScore(const Smoke::Type & t, const AbstractQoreNode * node, ExceptionSink * xsink);
 
-AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, ExceptionSink *xsink);
+DLLLOCAL AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, ExceptionSink *xsink);
 
 /*! Create a copy of given non-qobject based object.
 Using copy constructor. */
-void * constructCopy(void * obj, const char * className,
-                     ExceptionSink *xsink);
+DLLLOCAL void * constructCopy(void * obj, const char * className,
+			      ExceptionSink *xsink);
 
 /*! Lookup for the most specific class for given ptr.
 Example: if somebody calls QWidget::event(QEvent *e),
 this function will try to setup the real event object for
 Qore (for example QHelpEvent) automatically.
 */
-Smoke::Index resolveQtClass(void * ptr, Smoke::Index classId);
+DLLLOCAL Smoke::Index resolveQtClass(void * ptr, Smoke::Index classId);
 
 /*! Additional method for QVariant. QVariant::toQore().
 It performs a direct conversion from QVariant to native
 Qore node. */
-AbstractQoreNode *return_qvariant(const QoreMethod &method,
-                                 QoreObject *self,
-                                 AbstractPrivateData *apd,
-                                 const QoreListNode *params,
-                                 ExceptionSink *xsink);
+DLLLOCAL AbstractQoreNode *return_qvariant(const QoreMethod &method,
+					   QoreObject *self,
+					   AbstractPrivateData *apd,
+					   const QoreListNode *params,
+					   ExceptionSink *xsink);
+
+DLLLOCAL QoreObject *createQoreObjectFromNonQObject(const QoreClass *qc, Smoke::Index classId, void *ptr, QoreSmokePrivate **p = 0);
+DLLLOCAL QoreObject *createQoreObjectFromNonQObjectExternallyOwned(const QoreClass *qc, Smoke::Index classId, void *ptr, QoreSmokePrivate **p = 0);
 
 }
 

@@ -135,6 +135,7 @@ struct ref_store_s {
         r_qdatetime,     // for QDateTime
         r_qdate,         // for QDate
         r_qtime,         // for QTime
+	r_qpixmap,       // for QPixmap
     };
 
     const ReferenceNode *ref;
@@ -142,25 +143,29 @@ struct ref_store_s {
     enum ref_type type;
     bool have_ref_value;
     union data_store_u {
-        int q_int;
-        char *q_str;
-        bool q_bool;
-        QString *q_qstr;
-        ArgStringList *q_sl;
-        qreal q_qreal;
-        QKeySequence *q_qkeysequence;
-        QBrush *q_qbrush;
-        QPen *q_qpen;
-        QColor *q_qcolor;
-        QDateTime *q_qdatetime;
-        QDate *q_qdate;
-        QTime *q_qtime;
-        Marshalling::QoreQListBase * q_container;
-        Marshalling::QoreQVariant * q_qvariant;
+       int q_int;
+       char *q_str;
+       bool q_bool;
+       QString *q_qstr;
+       ArgStringList *q_sl;
+       qreal q_qreal;
+       QKeySequence *q_qkeysequence;
+       QBrush *q_qbrush;
+       QPen *q_qpen;
+       QColor *q_qcolor;
+       QDateTime *q_qdatetime;
+       QDate *q_qdate;
+       QTime *q_qtime;
+       Marshalling::QoreQListBase * q_container;
+       Marshalling::QoreQVariant * q_qvariant;
+       QPixmap *q_qpixmap;
     } data;
 
     DLLLOCAL ref_store_s() : ref(0), ref_value(0), type(r_none), have_ref_value(false) {}
     DLLLOCAL ~ref_store_s() {
+       del();
+    }
+    DLLLOCAL void del() {
 //         printd(0, "ref_store_s::~ref_store_s() this=%p, ref=%p, ref_value=%p, type=%d, have_ref_value=%d\n", this, ref, ref_value, type, have_ref_value);
         switch (type) {
         case r_str:
@@ -204,6 +209,9 @@ struct ref_store_s {
         case r_qtime:
             delete data.q_qtime;
             break;
+	case r_qpixmap:
+	    delete data.q_qpixmap;
+	    break;
         default:
             (void)data; // suppress compiler warning
         }
@@ -277,6 +285,10 @@ struct ref_store_s {
         type = r_qvariant;
         data.q_qvariant = v;
     }
+    DLLLOCAL void assign(QPixmap *v) {
+        type = r_qpixmap;
+        data.q_qpixmap = v;
+    }
 
     DLLLOCAL void *getPtr() {
         void *ptr;
@@ -325,6 +337,9 @@ struct ref_store_s {
             break;
         case r_qtime:
             ptr = data.q_qtime;
+            break;
+        case r_qpixmap:
+            ptr = data.q_qpixmap;
             break;
         default:
             assert(false);

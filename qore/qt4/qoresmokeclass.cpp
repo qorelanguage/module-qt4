@@ -442,7 +442,6 @@ void QoreSmokeClass::addSuperClasses(Smoke::Index ix, QoreNamespace &qt_ns) {
     }
 }
 
-// FIXME: add special common methods for methods with hard typing
 void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
     for (Smoke::Index i = 1; i < qt_Smoke->numMethods; ++i) {
         Smoke::Method method = qt_Smoke->methods[i];
@@ -487,6 +486,10 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 	   assert(idx[i]);
 	   argTypeInfo.push_back(getInitType(qt_Smoke->types[idx[i]], true));
 	}
+
+	// process exceptions (FIXME: find algorithm for identifying where references are needed)
+	if (method.numArgs == 2 && !strcmp(m_qoreClass->getName(), "QPixmap"))
+	   argTypeInfo[1] = referenceTypeInfo;
 
         if ((method.flags & Smoke::mf_ctor)) {
 	   const QoreMethod *qm = m_qoreClass->getConstructor();
