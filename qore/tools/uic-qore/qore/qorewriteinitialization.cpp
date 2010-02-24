@@ -463,7 +463,7 @@ void WriteInitialization::acceptUI(DomUI *node)
 
     const QString widgetClassName = node->elementWidget()->attributeClass();
 
-    m_output << m_option.indent << "setupUi( $" << m_mainWidget << " ) {\n";
+    m_output << m_option.indent << "setupUi( $" << m_mainWidget << " ) returns nothing {\n";
 
     const QStringList connections = m_uic->databaseInfo()->connections();
     for (int i=0; i<connections.size(); ++i) {
@@ -473,7 +473,7 @@ void WriteInitialization::acceptUI(DomUI *node)
             continue;
 
         QString varConn = QLatin1String("@") + connection + QLatin1String("Connection");
-        m_output << m_option.indent << varConn << " = Qt::SqlDatabase.database(" << fixString(connection, m_option.indent) << ")\n";
+        m_output << m_option.indent << varConn << " = QSqlDatabase::database(" << fixString(connection, m_option.indent) << ")\n";
     }
 
     acceptWidget(node->elementWidget());
@@ -513,7 +513,7 @@ void WriteInitialization::acceptUI(DomUI *node)
 
     m_output << m_option.indent << "} # setupUi\n\n";
 
-    m_output << m_option.indent << "retranslateUi( $" << m_mainWidget << ") {\n"
+    m_output << m_option.indent << "retranslateUi( $" << m_mainWidget << ") returns nothing {\n"
            << m_refreshInitialization
            << m_option.indent << "} # retranslateUi\n\n";
 
@@ -2338,17 +2338,17 @@ void WriteInitialization::initializeQ3SqlDataBrowser(DomWidget *w)
 
     QString varName = toQoreIdentifier(m_driver->findOrInsertWidget(w));
 
-    m_output << m_option.indent << "if !" << varName << ".sqlCursor.nil?\n";
+    m_output << m_option.indent << "if (!" << varName << ".sqlCursor().nil()) {\n";
 
     m_output << m_option.indent << m_option.indent << varName << ".setSqlCursor(";
 
     if (connection == QLatin1String("(default)")) {
-        m_output << "Qt::SqlCursor.new(" << fixString(table, m_option.indent) << "), true)\n";
+        m_output << "new QSqlCursor(" << fixString(table, m_option.indent) << "), True);\n";
     } else {
-        m_output << "Qt::SqlCursor.new(" << fixString(table, m_option.indent) << ", true, " << connection << "Connection" << "), false, true)\n";
+        m_output << "new QSqlCursor(" << fixString(table, m_option.indent) << ", True, " << connection << "Connection" << "), False, True);\n";
     }
-    m_output << m_option.indent << m_option.indent << varName << ".refresh\n";
-    m_output << m_option.indent << "end\n";
+    m_output << m_option.indent << m_option.indent << varName << ".refresh()\n";
+    m_output << m_option.indent << "}\n";
 }
 
 void WriteInitialization::initializeMenu(DomWidget *w, const QString &/*parentWidget*/)

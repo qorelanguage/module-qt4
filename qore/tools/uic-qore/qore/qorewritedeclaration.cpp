@@ -101,7 +101,7 @@ void WriteDeclaration::acceptUI(DomUI *node)
         if (connection == QLatin1String("(default)"))
             continue;
 
-        m_output << m_option.indent << "@" << connection << "Connection = Qt::SqlDatabase.new\n";
+        m_output << m_option.indent << "my $" << connection << "Connection = new QSqlDatabase();\n";
     }
 
     TreeWalker::acceptWidget(node->elementWidget());
@@ -163,26 +163,26 @@ void WriteDeclaration::acceptUI(DomUI *node)
 
 void WriteDeclaration::acceptWidget(DomWidget *node)
 {
-    QString className = QLatin1String("Qt::Widget");
+    QString className = QLatin1String("QWidget");
     if (node->hasAttributeClass())
         className = node->attributeClass();
 
 	QString item = m_driver->findOrInsertWidget(node);
 	item = item.mid(0, 1).toLower() + item.mid(1);
-    m_output << m_option.indent << "# public widget: $." << item << ";\n";
+    m_output << m_option.indent << "private { " << className << " $." << item << "; }\n";
 
     TreeWalker::acceptWidget(node);
 }
 
 void WriteDeclaration::acceptLayout(DomLayout *node)
 {
-    QString className = QLatin1String("Qt::Layout");
+    QString className = QLatin1String("QLayout");
     if (node->hasAttributeClass())
         className = node->attributeClass();
 
 	QString item = m_driver->findOrInsertLayout(node);
 	item = item.mid(0, 1).toLower() + item.mid(1);
-    m_output << m_option.indent << "# public layout: $." << item << ";\n";
+    m_output << m_option.indent << "private { " << className << " $." << item << "; }\n";
 
     TreeWalker::acceptLayout(node);
 }
@@ -191,7 +191,7 @@ void WriteDeclaration::acceptSpacer(DomSpacer *node)
 {
 	QString item = m_driver->findOrInsertSpacer(node);
 	item = item.mid(0, 1).toLower() + item.mid(1);
-    m_output << m_option.indent << "# public spacer: $." << item << ";\n";
+    m_output << m_option.indent << "private { QSpacerItem $." << item << "; }\n";
 
     TreeWalker::acceptSpacer(node);
 }
@@ -200,7 +200,7 @@ void WriteDeclaration::acceptActionGroup(DomActionGroup *node)
 {
 	QString item = m_driver->findOrInsertActionGroup(node);
 	item = item.mid(0, 1).toLower() + item.mid(1);
-    m_output << m_option.indent << "# public action group: $." << item << ";\n";
+    m_output << m_option.indent << "private { QActionGroup $." << item << "; }\n";
 
     TreeWalker::acceptActionGroup(node);
 }
@@ -209,7 +209,7 @@ void WriteDeclaration::acceptAction(DomAction *node)
 {
 	QString item = m_driver->findOrInsertAction(node);
 	item = item.mid(0, 1).toLower() + item.mid(1);
-    m_output << m_option.indent << "# public action: $." << item << ";\n";
+    m_output << m_option.indent << "private { QAction $." << item << "; }\n";
 
     TreeWalker::acceptAction(node);
 }
