@@ -57,6 +57,7 @@ static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, QoreObject *s
 QRegionTypeHelper typeHelperQRegion;
 QWidgetTypeHelper typeHelperQWidget;
 QColorTypeHelper  typeHelperQColor;
+QVariantTypeHelper typeHelperQVariant;
 
 const QoreMethod *findUserMethod(const QoreClass *qc, const char *name) {
     const QoreMethod *m = qc->findMethod(name);
@@ -263,6 +264,9 @@ static QoreClass *getNewClass(const char *name) {
       return typeHelperQWidget.getClass();
    if (typeHelperQColor.hasClass() && !strcmp(name, "QColor"))
       return typeHelperQColor.getClass();
+   if (typeHelperQVariant.hasClass() && !strcmp(name, "QVariant"))
+      return typeHelperQVariant.getClass();
+   
    return new QoreClass(name, QDOM_GUI);
 }
 

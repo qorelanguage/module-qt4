@@ -84,7 +84,7 @@ public:
    DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
       //printd(0, "QoreEnumTypeInfoHelper::checkTypeInstantiationImpl() this=%p n=%p (%s)\n", this, n, n ? n->getTypeName() : "NOTHING");
       if (!n || n->getType() != NT_INT)
-	 return false;
+         return false;
 
       QoreQtEnumNode *rv = new QoreQtEnumNode(reinterpret_cast<QoreBigIntNode *>(n)->val, Smoke::Type());
       n->deref(xsink);

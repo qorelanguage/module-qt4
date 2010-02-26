@@ -141,4 +141,34 @@ public:
    }
 };
 
+
+class QVariantTypeHelper : public AbstractQoreClassTypeInfoHelper {
+public:
+   DLLLOCAL QVariantTypeHelper() : AbstractQoreClassTypeInfoHelper("QVariant", QDOM_GUI) {
+   }
+
+   DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+      return is_nothing(n) ? true : false;
+   }
+   DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
+      return is_nothing(n) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+   }
+   DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
+       if (!typeInfo)
+           return QTI_NOT_EQUAL;
+       switch (typeInfoGetType(typeInfo)) {
+           case NT_NOTHING:;
+           case NT_INT:
+           case NT_FLOAT:
+           case NT_STRING:
+           case NT_DATE:
+           case NT_BOOLEAN:
+           case NT_BINARY:
+               return QTI_AMBIGUOUS;
+           default:
+               return QTI_NOT_EQUAL;
+       }
+   }
+};
+
 #endif
