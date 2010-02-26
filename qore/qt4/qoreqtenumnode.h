@@ -26,10 +26,9 @@
 
 DLLEXPORT extern qore_type_t NT_QTENUM;
 
-class QoreQtEnumNode : public SimpleValueQoreNode {
+class QoreQtEnumNode : public QoreBigIntNode {
 private:
     Smoke::Type m_type;
-    int m_value;
 
     DLLLOCAL virtual bool getAsBoolImpl() const;
     DLLLOCAL virtual int getAsIntImpl() const;
@@ -37,10 +36,9 @@ private:
     DLLLOCAL virtual double getAsFloatImpl() const;
 
 public:
-    DLLLOCAL QoreQtEnumNode(int v, Smoke::Type t)
-            : SimpleValueQoreNode(NT_QTENUM),
-            m_type(t),
-            m_value(v) {
+    DLLLOCAL QoreQtEnumNode(int64 v, Smoke::Type t)
+       : QoreBigIntNode(NT_QTENUM, v),
+            m_type(t) {
     }
 
     DLLLOCAL ~QoreQtEnumNode() {
@@ -50,8 +48,8 @@ public:
         return m_type;
     }
 
-    int value() const {
-        return m_value;
+    int64 value() const {
+        return val;
     }
 
     DLLLOCAL virtual QoreString *getStringRepresentation(bool &del) const;
@@ -86,6 +84,7 @@ public:
       if (!n || n->getType() != NT_INT)
          return false;
 
+      // FIXME: no enum type is given here because we don't know which to give
       QoreQtEnumNode *rv = new QoreQtEnumNode(reinterpret_cast<QoreBigIntNode *>(n)->val, Smoke::Type());
       n->deref(xsink);
       n = rv;

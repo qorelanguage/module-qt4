@@ -1,7 +1,7 @@
 /*
   Qore Programming Language Qt4 Module
 
-  Copyright 2009 Qore Technologies sro
+  Copyright 2009 -2010 Qore Technologies sro
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -30,23 +30,23 @@ QoreString * QoreQtEnumNode::getStringRepresentation(bool &del) const {
 }
 
 void QoreQtEnumNode::getStringRepresentation(QoreString &str) const {
-    str.sprintf("%s::%d", m_type.name, m_value);
+    str.sprintf("%s::%d", m_type.name, val);
 }
 
 bool QoreQtEnumNode::getAsBoolImpl() const {
-    return (bool)m_value;
+    return (bool)val;
 }
 
 int QoreQtEnumNode::getAsIntImpl() const {
-    return (int)m_value;
+    return (int)val;
 }
 
 int64 QoreQtEnumNode::getAsBigIntImpl() const {
-    return (int64)m_value;
+    return (int64)val;
 }
 
 double QoreQtEnumNode::getAsFloatImpl() const {
-    return (double)m_value;
+    return (double)val;
 }
 
 QoreString *QoreQtEnumNode::getAsString(bool &del, int foff, class ExceptionSink *xsink) const {
@@ -59,11 +59,11 @@ int QoreQtEnumNode::getAsString(QoreString &str, int foff, class ExceptionSink *
 }
 
 class AbstractQoreNode *QoreQtEnumNode::realCopy() const {
-        return new QoreQtEnumNode(m_value, m_type);
+        return new QoreQtEnumNode(val, m_type);
     }
 
 bool QoreQtEnumNode::is_equal_soft(const AbstractQoreNode *v, ExceptionSink *xsink) const {
-    return (v ? v->getAsInt() : 0) == m_value;
+    return (v ? v->getAsInt() : 0) == val;
 }
 
 bool QoreQtEnumNode::is_equal_hard(const AbstractQoreNode *v, ExceptionSink *xsink) const {
@@ -72,7 +72,7 @@ bool QoreQtEnumNode::is_equal_hard(const AbstractQoreNode *v, ExceptionSink *xsi
         return false;
 
     const Smoke::Type t = ps->smokeType();
-    return ps->value() == m_value
+    return ps->value() == val
            && (!strcmp(m_type.name, t.name));
 }
 
