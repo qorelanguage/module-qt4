@@ -90,7 +90,7 @@ QoreThreadLocalStorage<void> qore_qt_virtual_flag;
 ArgStringSink qore_string_sink;
 
 // argc_no = argument position for the int &argc argument (1st = 0)
-static int argv_handler_intern(int argc_no, Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *list, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static int argv_handler_intern(int argc_no, Smoke::Stack &stack, const ClassMap::TypeList &types, const QoreListNode *list, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     if (!list || list->empty()) {
         xsink->raiseException("QT-ARGUMENT-ERROR", "this version of %s::%s() requires a non-empty list for the list argument (recommended to use $ARGV)", cqm.getClassName(), cqm.getMethodName());
         return -1;
@@ -120,7 +120,7 @@ static int argv_handler_intern(int argc_no, Smoke::Stack &stack, ClassMap::TypeL
     return 0;
 }
 
-static int argv_handler_rint_charpp(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static int argv_handler_rint_charpp(Smoke::Stack &stack, const ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     // Create a Smoke stack from params
     stack = new Smoke::StackItem[3];
     //printd(0, "argv_handler_rint_charpp() allocated stack of size %d\n", 3);
@@ -129,7 +129,7 @@ static int argv_handler_rint_charpp(Smoke::Stack &stack, ClassMap::TypeList &typ
 
     for (int j = 0, e = types.count(); j < e; ++j) {
         const AbstractQoreNode *n = get_param(args, j);
-        Smoke::Type &t = types[j];
+        const Smoke::Type &t = types[j];
 
         int flags = t.flags & 0x30;
 
@@ -154,7 +154,7 @@ static int argv_handler_rint_charpp(Smoke::Stack &stack, ClassMap::TypeList &typ
 }
 
 // handles int &argc, char **argv automatically from the global ARGV variable
-static int argv_handler_none(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static int argv_handler_none(Smoke::Stack &stack, const ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     // Create a Smoke stack from params
     stack = new Smoke::StackItem[3];
 //    printd(0, "argv_handler_rint_charpp() allocated stack of size %d\n", 3);
@@ -170,7 +170,7 @@ static int argv_handler_none(Smoke::Stack &stack, ClassMap::TypeList &types, con
 }
 
 // handles int &argc, char **argv from a single list
-static int argv_handler_charpp(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static int argv_handler_charpp(Smoke::Stack &stack, const ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     // Create a Smoke stack from params
     stack = new Smoke::StackItem[3];
 //    printd(0, "argv_handler_rint_charpp() allocated stack of size %d\n", 3);
@@ -184,7 +184,7 @@ static int argv_handler_charpp(Smoke::Stack &stack, ClassMap::TypeList &types, c
     return argv_handler_intern(0, stack, types, reinterpret_cast<const QoreListNode *>(p), cqm, xsink);
 }
 
-static int createIndex_handler(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static int createIndex_handler(Smoke::Stack &stack, const ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     // Create a Smoke stack from params
     stack = new Smoke::StackItem[types.size() + 1];
 
@@ -197,7 +197,7 @@ static int createIndex_handler(Smoke::Stack &stack, ClassMap::TypeList &types, c
     //int column = n ? n->getAsInt() : 0;
 
     n = get_param(args, 2);
-    Smoke::Type &t = types[2];
+    const Smoke::Type &t = types[2];
     if ((t.flags & Smoke::tf_elem) != Smoke::t_voidp) {
         cqm.qoreToStack(t, n, 3);
         return 0;
@@ -217,7 +217,7 @@ static int createIndex_handler(Smoke::Stack &stack, ClassMap::TypeList &types, c
 }
 
 template <typename T>
-static AbstractQoreNode *rv_handler_internalPointer(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static AbstractQoreNode *rv_handler_internalPointer(QoreObject *self, const Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     if (!Stack[0].s_voidp)
         return 0;
 
@@ -240,7 +240,7 @@ static AbstractQoreNode *rv_handler_internalPointer(QoreObject *self, Smoke::Typ
     return c->isQoreData(Stack[0].s_voidp);
 }
 
-static AbstractQoreNode *rv_handler_QWidget_setParent(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static AbstractQoreNode *rv_handler_QWidget_setParent(QoreObject *self, const Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
    QWidget *qw = reinterpret_cast<QWidget *>(cqm.getPrivateData()->object());
    if (!qw)
       return 0;
@@ -253,7 +253,7 @@ static AbstractQoreNode *rv_handler_QWidget_setParent(QoreObject *self, Smoke::T
    return 0;
 }
 
-static AbstractQoreNode *rv_handler_QAbstractItemView_reset(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static AbstractQoreNode *rv_handler_QAbstractItemView_reset(QoreObject *self, const Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     QoreSmokePrivateQAbstractItemModelData *smc = reinterpret_cast<QoreSmokePrivateQAbstractItemModelData *>(cqm.getPrivateData());
     assert(smc);
     smc->purgeMap(xsink);
@@ -274,7 +274,7 @@ static int do_externally_owned(const Smoke::Type &t, CommonQoreMethod &cqm, cons
    return 0;
 }
 
-static int setExternallyOwned_handler(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static int setExternallyOwned_handler(Smoke::Stack &stack, const ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     // Create a Smoke stack from params
     stack = new Smoke::StackItem[types.size() + 1];
     //printd(0, "setExternallyOwned_handler() %s::%s() allocated stack of size %d\n", cqm.getClassName(), cqm.getMethodName(), types.size() + 1);
@@ -335,7 +335,7 @@ protected:
     }
 };
 
-static int arg_handler_QTimer_singleShot(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static int arg_handler_QTimer_singleShot(Smoke::Stack &stack, const ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     const AbstractQoreNode *p = get_param(args, 0);
     int msec = p ? p->getAsInt() : 0;
     const QoreObject *o = test_object_param(args, 1);
@@ -373,14 +373,14 @@ static int arg_handler_QTimer_singleShot(Smoke::Stack &stack, ClassMap::TypeList
     return 0;
 }
 
-static int arg_handler_QShortcut(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static int arg_handler_QShortcut(Smoke::Stack &stack, const ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     // Create a Smoke stack from params
     stack = new Smoke::StackItem[types.size() + 1];
 //    printd(0, "QShortcut_handler() allocated stack of size %d (rv handler=%p)\n", types.size() + 1, cqm.getTypeHandler().return_value_handler);
 
     const AbstractQoreNode *w = 0;
     for (int i = 0, e = types.size(); i < e; ++i) {
-        Smoke::Type &t = types[i];
+        const Smoke::Type &t = types[i];
         const AbstractQoreNode *n = get_param(args, i);
 
         // get Smoke type ID
@@ -408,7 +408,7 @@ static int arg_handler_QShortcut(Smoke::Stack &stack, ClassMap::TypeList &types,
     return 0;
 }
 
-static AbstractQoreNode *rv_handler_QTreeWidgetItem(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static AbstractQoreNode *rv_handler_QTreeWidgetItem(QoreObject *self, const Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     ReferenceHolder<QoreSmokePrivateData> pd(reinterpret_cast<QoreSmokePrivateData *>(self->getReferencedPrivateData(QC_QTREEWIDGETITEM->getID(), xsink)), xsink);
     if (pd) {
        QTreeWidgetItem *qtwi = pd->getObject<QTreeWidgetItem>();
@@ -419,7 +419,7 @@ static AbstractQoreNode *rv_handler_QTreeWidgetItem(QoreObject *self, Smoke::Typ
     return 0;
 }
 
-static AbstractQoreNode *rv_handler_QListWidgetItem(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static AbstractQoreNode *rv_handler_QListWidgetItem(QoreObject *self, const Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     ReferenceHolder<QoreSmokePrivateData> pd(reinterpret_cast<QoreSmokePrivateData *>(self->getReferencedPrivateData(QC_QLISTWIDGETITEM->getID(), xsink)), xsink);
     if (pd) {
        QListWidgetItem *qlwi = pd->getObject<QListWidgetItem>();
@@ -430,7 +430,7 @@ static AbstractQoreNode *rv_handler_QListWidgetItem(QoreObject *self, Smoke::Typ
     return 0;
 }
 
-static AbstractQoreNode *rv_handler_QShortcut(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static AbstractQoreNode *rv_handler_QShortcut(QoreObject *self, const Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     ReferenceHolder<QoreSmokePrivateQObjectData> shortcut(reinterpret_cast<QoreSmokePrivateQObjectData *>(self->getReferencedPrivateData(QC_QOBJECT->getID(), xsink)), xsink);
     if (*xsink)
         return 0;
@@ -464,7 +464,7 @@ static AbstractQoreNode *rv_handler_QShortcut(QoreObject *self, Smoke::Type &t, 
     return 0;
 }
 
-static int arg_handler_QPixmapCache_find(Smoke::Stack &stack, ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static int arg_handler_QPixmapCache_find(Smoke::Stack &stack, const ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     stack = new Smoke::StackItem[3];
 
     const AbstractQoreNode *n = get_param(args, 0);
@@ -481,7 +481,7 @@ static int arg_handler_QPixmapCache_find(Smoke::Stack &stack, ClassMap::TypeList
     return 0;
 }
 
-static AbstractQoreNode *rv_handler_spacer_item(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
+static AbstractQoreNode *rv_handler_spacer_item(QoreObject *self, const Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     return self ? self->refSelf() : 0;
 }
 

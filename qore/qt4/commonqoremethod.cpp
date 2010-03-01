@@ -266,14 +266,14 @@ CommonQoreMethod::CommonQoreMethod(ClassMap::TypeHandler *th,
     }
 
 */
-    m_method = qt_Smoke->methods[type_handler.method];
+    m_method = qt_Smoke->methods[type_handler->method];
     m_valid = true;
 
-//     printd(0, "CommonQoreMethod::method() '%s' method=%d (%s)\n", m_munged.data(), type_handler.method, qt_Smoke->methodNames[m_method.name]);
+//     printd(0, "CommonQoreMethod::method() '%s' method=%d (%s)\n", m_munged.data(), type_handler->method, qt_Smoke->methodNames[m_method.name]);
 
     // stack must be larger for its 0th value as a retval
-    if (type_handler.arg_handler)  {
-        if (type_handler.arg_handler(Stack, type_handler.types, params, *this, xsink))
+    if (type_handler->arg_handler)  {
+        if (type_handler->arg_handler(Stack, type_handler->types, params, *this, xsink))
             m_valid = false;
 #if DEBUG
         else {
@@ -285,11 +285,11 @@ CommonQoreMethod::CommonQoreMethod(ClassMap::TypeHandler *th,
 #endif
     } else {
         // Create a Smoke stack from params
-       Stack = new Smoke::StackItem[type_handler.types.count() + 1];
-       //printd(0, "CommonQoreMethod::CommonQoreMethod() allocated stack of size %d\n", type_handler.types.count() + 1);
+       Stack = new Smoke::StackItem[type_handler->types.count() + 1];
+       //printd(0, "CommonQoreMethod::CommonQoreMethod() allocated stack of size %d\n", type_handler->types.count() + 1);
 
         int i = 1;
-        foreach (Smoke::Type t, type_handler.types) {
+        foreach (Smoke::Type t, type_handler->types) {
             if (qoreToStack(t, get_param(params, i-1), i))
                 break;
             ++i;
@@ -1311,19 +1311,19 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
 
 AbstractQoreNode *CommonQoreMethod::returnValue() {
     Smoke::Type t = qt_Smoke->types[m_method.ret];
-    if (type_handler.return_value_handler)
-        return type_handler.return_value_handler(self, t, Stack, *this, m_xsink);
+    if (type_handler->return_value_handler)
+        return type_handler->return_value_handler(self, t, Stack, *this, m_xsink);
     assert(!tparams);
     return Marshalling::stackToQore(t, Stack[0], m_xsink);
 }
 
 void CommonQoreMethod::postProcessConstructor(QoreSmokePrivate *n_smc) {
-    if (type_handler.return_value_handler) {
+    if (type_handler->return_value_handler) {
         assert(n_smc);
         assert(!smc);
         smc = n_smc;
-        Smoke::Type t = type_handler.types[0];
-        type_handler.return_value_handler(self, t, Stack, *this, m_xsink);
+        Smoke::Type t = type_handler->types[0];
+        type_handler->return_value_handler(self, t, Stack, *this, m_xsink);
         return;
     }
     assert(!tparams);

@@ -451,8 +451,8 @@ class CommonQoreMethod;
 class ClassMap {
 public:
     typedef QList<Smoke::Type> TypeList;
-    typedef int (*arg_handler_t)(Smoke::Stack &stack, TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink);
-    typedef AbstractQoreNode *(*return_value_handler_t)(QoreObject *self, Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink);
+    typedef int (*arg_handler_t)(Smoke::Stack &stack, const TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink);
+    typedef AbstractQoreNode *(*return_value_handler_t)(QoreObject *self, const Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink);
     typedef struct type_handler_s {
         TypeList types;
         arg_handler_t arg_handler;
@@ -460,7 +460,7 @@ public:
         Smoke::Index method;
         DLLLOCAL type_handler_s(TypeList &n_types, arg_handler_t n_handler, return_value_handler_t n_rv_handler, Smoke::Index n_method) :
                 types(n_types), arg_handler(n_handler), return_value_handler(n_rv_handler), method(n_method) {}
-        DLLLOCAL type_handler_s() : arg_handler(0), return_value_handler(0) {}
+       DLLLOCAL type_handler_s() : arg_handler(0), return_value_handler(0), method(0) {}
     } TypeHandler;
     typedef QMultiMap<QByteArray,TypeHandler> MungledToTypes;
     typedef QMap<QByteArray,MungledToTypes> MethodToMungleds;
@@ -491,6 +491,16 @@ public:
         }
         return m_instance;
     }
+    const TypeHandler *findHandler(const char *cls, const char *meth, Smoke::Index method) {
+       for (MungledToTypes::iterator i = m_map[cls][meth].begin(), e = m_map[cls][meth].end(); i != e; ++i) 
+	  if (i.value().method == method)
+	     return &i.value();
+
+       printd(0, "ClassMap::findHandler(cls=%s, meth=%s, method=%d) NOT FOUND!!!!!!!!!\n", cls, meth, method);
+       assert(false);
+       return 0;
+    }
+
     DLLLOCAL void addArgHandler(const char *cls, const char *meth, const char *munged, arg_handler_t arg_handler);
     DLLLOCAL void addArgHandler(const char *cls, const char *meth, arg_handler_t arg_handler);
     DLLLOCAL void registerMethod(const char *class_name, const char *method_name, const char *munged_name, Smoke::Index method_index, TypeHandler &type_handler, const QoreTypeInfo *returnType = 0, const type_vec_t &argTypeList = type_vec_t());
@@ -579,24 +589,24 @@ private:
 // method for object/class instance.
 void common_constructor(const QoreClass &myclass,
 			const type_vec_t &typeList,
-			Smoke::Method *smoke_method, 
+			ClassMap::TypeHandler *type_handler, 
                         QoreObject *self,
                         const QoreListNode *params,
                         ExceptionSink *xsink);
 AbstractQoreNode * common_method(const QoreMethod &method,
 				 const type_vec_t &typeList,
-				 Smoke::Method *smoke_method, 
+				 ClassMap::TypeHandler *type_handler, 
                                  QoreObject *self,
                                  AbstractPrivateData *apd,
                                  const QoreListNode *params,
                                  ExceptionSink *xsink);
 AbstractQoreNode * common_static_method(const QoreMethod &method,
 					const type_vec_t &typeList,
-					Smoke::Method *smoke_method, 
+					ClassMap::TypeHandler *type_handler, 
                                         const QoreListNode *params,
                                         ExceptionSink *xsink);
 void common_destructor(const QoreClass &thisclass, 
-		       Smoke::Method *smoke_method,
+		       ClassMap::TypeHandler *type_handler, 
 		       QoreObject *self,
                        AbstractPrivateData *apd,
                        ExceptionSink *xsink);
