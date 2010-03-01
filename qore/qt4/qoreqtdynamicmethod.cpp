@@ -205,8 +205,8 @@ static void doDefaultValue(const Smoke::Type &t, Smoke::StackItem &si, Exception
    assert(flags == Smoke::tf_stack);
 #endif
 
-   // find and execute constructor
-   CommonQoreMethod cqm(0, 0, t.name, t.name, 0, xsink);
+   // execute constructor
+   CommonQoreMethod cqm(t.name, t.name);
 
    si.s_class = cqm.callConstructor();
 }

@@ -3,7 +3,7 @@
 
   Qore Programming Language Qt4 Module
 
-  Copyright 2009 Qore Technologies sro
+  Copyright 2009 - 2010 Qore Technologies sro
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -34,10 +34,6 @@
 
 #include <memory>
 
-static bool matches_int(qore_type_t qore_type) {
-    return (qore_type == NT_BOOLEAN || qore_type == NT_INT || qore_type == NT_FLOAT || qore_type == NT_STRING || qore_type == NT_NOTHING || qore_type == NT_NULL || qore_type == NT_QTENUM) ? true : false;
-}
-
 // returns true to var="QString&" or "QString&" and type = "QString"
 bool isptrtype(const char *var, const char *type) {
     int i = 0;
@@ -51,6 +47,11 @@ bool isptrtype(const char *var, const char *type) {
     }
     //printd(0, "isptrtype(%s, %s) returning %d\n", var, type, ((var[i] == '*' || var[i] == '&') && !type[i] && !var[i+1]) ? true : false);
     return ((var[i] == '*' || var[i] == '&') && !type[i] && !var[i+1]) ? true : false;
+}
+
+/*
+static bool matches_int(qore_type_t qore_type) {
+    return (qore_type == NT_BOOLEAN || qore_type == NT_INT || qore_type == NT_FLOAT || qore_type == NT_STRING || qore_type == NT_NOTHING || qore_type == NT_NULL || qore_type == NT_QTENUM) ? true : false;
 }
 
 static void add_args(QoreStringNode &str, const QoreListNode *args) {
@@ -75,7 +76,7 @@ static void add_args(QoreStringNode &str, const QoreListNode *args) {
     }
 }
 
-/*! Print the "list of candidates" for given method of class */
+//! Print the "list of candidates" for given method of class
 static void add_candidates(QoreStringNode &str, const char * cname, const char * mname) {
     ClassMap::MungledToTypes * mMap = ClassMap::Instance()->availableMethods(cname, mname);
 
@@ -102,6 +103,7 @@ static void add_candidates(QoreStringNode &str, const char * cname, const char *
         }
     }    
 }
+*/
 
 CommonQoreMethod::CommonQoreMethod(const char *cname, const char *mname)
    : Stack(0),
@@ -112,6 +114,7 @@ CommonQoreMethod::CommonQoreMethod(const char *cname, const char *mname)
      qoreArgCnt(0),
      ref_store(0),
      vl(0),
+     type_handler(0),
      tparams(0),
      self(0),
      smc(0),
@@ -121,10 +124,10 @@ CommonQoreMethod::CommonQoreMethod(const char *cname, const char *mname)
     ClassMap::MungledToTypes *mMap = ClassMap::Instance()->availableMethods(cname, mname);
 
     foreach (QByteArray name, mMap->keys()) {
-        foreach (ClassMap::TypeHandler th, mMap->values(name)) {
+        foreach (const ClassMap::TypeHandler &th, mMap->values(name)) {
 	   if (!th.types.count()) {
 	      m_munged = name;
-	      type_handler = th;
+	      type_handler = &th;
 	      break;
 	   }
 	}
@@ -136,33 +139,36 @@ CommonQoreMethod::CommonQoreMethod(const char *cname, const char *mname)
 
     m_valid = true;
 
-    m_method = qt_Smoke->methods[type_handler.method];
+    m_method = qt_Smoke->methods[type_handler->method];
     //printd(0, "CommonQoreMethod::method() '%s' method=%d (%s)\n", m_munged.data(), type_handler.method, qt_Smoke->methodNames[m_method.name]);
 
     // Create a Smoke stack for return value
     Stack = new Smoke::StackItem[1];
 }
 
-CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
+CommonQoreMethod::CommonQoreMethod(ClassMap::TypeHandler *th,
+				   QoreObject *n_self,
                                    QoreSmokePrivate *n_smc,
                                    const char* className,
                                    const char* methodName,
                                    const QoreListNode* params,
                                    ExceptionSink *xsink)
-        : Stack(0),
-        m_className(className),
-        m_methodName(methodName),
-        m_xsink(xsink),
-        m_valid(false),
-        qoreArgCnt(num_params(params)),
-        ref_store(0),
-        vl(xsink),
-        tparams(0),
-        self(n_self),
-        smc(n_smc),
-	suppress_method(false),
-	args(params) {
+   : Stack(0),
+     m_className(className),
+     m_methodName(methodName),
+     m_xsink(xsink),
+     m_valid(false),
+     qoreArgCnt(num_params(params)),
+     ref_store(0),
+     vl(xsink),
+     type_handler(th),
+     tparams(0),
+     self(n_self),
+     smc(n_smc),
+     suppress_method(false),
+     args(params) {
 
+/*   
     //printd(0, "CommonQoreMethod::CommonQoreMethod() %s::%s() %d arg(s)\n", className, methodName, qoreArgCnt);
 
     //qDebug() << "new method call" << className << "::" << methodName;
@@ -183,10 +189,6 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
         foreach (ClassMap::TypeHandler th, mMap->values(name)) {
 //             printd(0, "AVAILABLE METHODS: %s %s %d param(s) (%s)\n", className, name.data(), th.types.count(),
 //                    th.types.count() == qoreArgCnt ? "OK" : "x");
-            /*#ifdef DEBUG
-                        foreach (Smoke::Type t, th.types)
-                            printd(0, "    ARGS %s\n", t.name);
-            #endif*/
             if (th.types.count() == qoreArgCnt) {
                 candidates.insert(name, th);
             }
@@ -263,9 +265,10 @@ CommonQoreMethod::CommonQoreMethod(QoreObject *n_self,
         }
     }
 
+*/
+    m_method = qt_Smoke->methods[type_handler.method];
     m_valid = true;
 
-    m_method = qt_Smoke->methods[type_handler.method];
 //     printd(0, "CommonQoreMethod::method() '%s' method=%d (%s)\n", m_munged.data(), type_handler.method, qt_Smoke->methodNames[m_method.name]);
 
     // stack must be larger for its 0th value as a retval
@@ -591,9 +594,9 @@ int CommonQoreMethod::returnQtObjectOnStack(Smoke::StackItem &si, const char *cn
 
     if (!p && flags == Smoke::tf_stack) {
         // construct a new object if we have to
-        CommonQoreMethod cqm(0, 0, t.name, t.name, 0, xsink);
-        (* cqm.smokeClass().classFn)(cqm.method().method, 0, cqm.Stack);
-        p = cqm.Stack[0].s_class;
+       CommonQoreMethod cqm(t.name, t.name);
+       (* cqm.smokeClass().classFn)(cqm.method().method, 0, cqm.Stack);
+       p = cqm.Stack[0].s_class;
     }
 
     si.s_class = p;
@@ -1095,6 +1098,7 @@ int CommonQoreMethod::getObjectStatic(ExceptionSink *xsink,
     return 0;
 }
 
+/*
 int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n, int index) {
     qore_type_t qore_type = n ? n->getType() : NT_NOTHING;
 
@@ -1303,6 +1307,7 @@ int CommonQoreMethod::getScore(Smoke::Type smoke_type, const AbstractQoreNode *n
     }
     return 0;
 }
+*/
 
 AbstractQoreNode *CommonQoreMethod::returnValue() {
     Smoke::Type t = qt_Smoke->types[m_method.ret];

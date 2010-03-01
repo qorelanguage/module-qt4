@@ -3,7 +3,7 @@
 
   Qore Programming Language Qt4 Module
 
-  Copyright 2009 Qore Technologies sro
+  Copyright 2009 - 2010 Qore Technologies sro
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -51,8 +51,9 @@ QoreWidgetManager QWM;
 ClassNamesMap* ClassNamesMap::m_instance = NULL;
 ClassMap * ClassMap::m_instance = NULL;
 
-static AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const QoreListNode *params, ExceptionSink *xsink);
-static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink);
+// FIXME: add type information when adding these functions
+static AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *ptr, const QoreListNode *params, ExceptionSink *xsink);
+static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *ptr, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink);
 
 QRegionTypeHelper typeHelperQRegion;
 QWidgetTypeHelper typeHelperQWidget;
@@ -104,7 +105,7 @@ void ClassMap::registerMethods() {
     }
 }
 
-void ClassMap::registerMethod(const char *class_name, const char *method_name, const char *munged_name, Smoke::Index method_index, TypeHandler &type_handler, const QoreTypeInfo *returnType, const type_vec_t &argTypeList) {
+void ClassMap::registerMethod(const char *class_name, const char *method_name, const char *munged_name, Smoke::Index method_index, ClassMap::TypeHandler &type_handler, const QoreTypeInfo *returnType, const type_vec_t &argTypeList) {
 //     assert(m_map[class_name][method_name][munged_name].types.count() == 0);
 
     method_index = qt_Smoke->methodMaps[method_index].method;
@@ -118,12 +119,14 @@ void ClassMap::registerMethod(const char *class_name, const char *method_name, c
     QoreClass *qc = ClassNamesMap::Instance()->value(class_name);
     assert(qc);
 
+    Smoke::Method &method = qt_Smoke->methods[method_index];
+
     if (!strcmp(class_name, method_name)) {
        assert(!returnType);
-       qc->setConstructorExtendedList2(common_constructor, false, QDOM_DEFAULT, argTypeList);
+       qc->setConstructorExtendedList3(&m_map[class_name][method_name][munged_name], (q_constructor3_t)common_constructor, false, QDOM_DEFAULT, argTypeList);
     }
     else {
-       qc->addMethodExtendedList2(method_name, (q_method2_t)common_method, false, QDOM_DEFAULT, returnType, argTypeList);
+       qc->addMethodExtendedList3(&m_map[class_name][method_name][munged_name], method_name, (q_method3_t)common_method, false, QDOM_DEFAULT, returnType, argTypeList);
     }
     //printd(0, "ClassMap::registerMethod(%s, %s, %s)\n", class_name, method_name, munged_name);
 }
@@ -380,11 +383,11 @@ QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) : m
     m_classId = qt_Smoke->findClass(className);
     // if the class is already registered, skip
     if (ClassNamesMap::Instance()->value(m_classId.index)) {
-        return;
+       return;
     }
     if (!m_classId.smoke) {
-        printd(0, "Unknown class %s. Skipping.\n", className);
-        return;
+       printd(1, "Unknown class %s. Skipping.\n", className);
+       return;
     }
 
     m_class = m_classId.smoke->classes[m_classId.index];
@@ -432,7 +435,7 @@ void QoreSmokeClass::addSuperClasses(Smoke::Index ix, QoreNamespace &qt_ns) {
         if (!parent) {
             QoreSmokeClass qsc(qt_Smoke->classes[(*i)].className, qt_ns);
 	    if (!qsc.m_qoreClass) {
-	       printd(0, "QoreSmokeClass::addSuperClasses() cannot add %s as base class of %s (class not found)\n", qt_Smoke->classes[(*i)].className, m_qoreClass->getName());
+	       printd(1, "QoreSmokeClass::addSuperClasses() cannot add %s as base class of %s (class not found)\n", qt_Smoke->classes[(*i)].className, m_qoreClass->getName());
 	       continue;
 	    }
             parent = qsc.m_qoreClass;
@@ -448,15 +451,18 @@ void QoreSmokeClass::addSuperClasses(Smoke::Index ix, QoreNamespace &qt_ns) {
 
 void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
     for (Smoke::Index i = 1; i < qt_Smoke->numMethods; ++i) {
-        Smoke::Method method = qt_Smoke->methods[i];
+        Smoke::Method &method = qt_Smoke->methods[i];
 
         if (classIx != method.classId)//m_classId.index)
             continue;
 
-        const char * methodName = qt_Smoke->methodNames[method.name];
+        const char *methodName = qt_Smoke->methodNames[method.name];
+	const char *mungedName = qt_Smoke->methodNames[qt_Smoke->methodMaps[i].name];
         bool isPrivate = method.flags & Smoke::mf_protected;
 
-        //printd(0, "QoreSmokeClass::addClassMethods() %s::%s() enum=%d static=%d\n", m_qoreClass->getName(), methodName, method.flags & Smoke::mf_enum, method.flags & Smoke::mf_static);
+	printd(0, "QoreSmokeClass::addClassMethods() %s::%s() enum=%d static=%d method=%p args=%d\n", m_qoreClass->getName(), methodName, method.flags & Smoke::mf_enum, method.flags & Smoke::mf_static, &method, method.numArgs);
+
+	ClassMap::TypeHandler &th = m_map[m_qoreClass->getName()][methodName][mungedName];
 
         // only target classes handle enums. Parents do it in their init.
         if (targetClass && (method.flags & Smoke::mf_enum)) {
@@ -474,7 +480,7 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 
         if (targetClass && (method.flags & Smoke::mf_dtor)) {
             assert(!m_qoreClass->getDestructor());
-            m_qoreClass->setDestructor2(common_destructor);
+            m_qoreClass->setDestructor3(&th, (q_destructor3_t)common_destructor);
             continue;
         }
 
@@ -502,7 +508,7 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 	      continue;
 	   }
 
-	   m_qoreClass->setConstructorExtendedList2(common_constructor, isPrivate, QDOM_DEFAULT, argTypeInfo);
+	   m_qoreClass->setConstructorExtendedList3(&th, (q_constructor3_t)common_constructor, isPrivate, QDOM_DEFAULT, argTypeInfo);
 	   continue;
         }
 
@@ -510,9 +516,9 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 
         if (method.flags & Smoke::mf_static) {
 	   // set function pointer for methods with explicit implementations
-	   q_static_method2_t func = common_static_method;
+	   q_static_method3_t func = (q_static_method3_t)common_static_method;
 	   if (m_qoreClass == QC_QOBJECT && !strcmp(methodName, "connect"))
-	      func = f_QOBJECT_connect;
+	      func = (q_static_method3_t)f_QOBJECT_connect;
 
 	   const QoreMethod *qm = m_qoreClass->findStaticMethod(methodName);
 	   if (qm && qm->existsVariant(argTypeInfo)) {
@@ -520,7 +526,7 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 	      continue;
 	   }
 	   
-	   m_qoreClass->addStaticMethodExtendedList2(methodName, func, isPrivate, QDOM_DEFAULT, returnTypeInfo, argTypeInfo);
+	   m_qoreClass->addStaticMethodExtendedList3(&th, methodName, func, isPrivate, QDOM_DEFAULT, returnTypeInfo, argTypeInfo);
 	   continue;
         }
 
@@ -542,50 +548,12 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
 	   continue;
 	}
 
-	q_method2_t func = (q_method2_t)common_method;
+	q_method3_t func = (q_method3_t)common_method;
 	if (m_qoreClass == QC_QOBJECT && !strcmp(methodName, "connect"))
-	   func = (q_method2_t)QOBJECT_connect;
+	   func = (q_method3_t)QOBJECT_connect;
 	    
-	m_qoreClass->addMethodExtendedList2(name, func, isPrivate, QDOM_DEFAULT, returnTypeInfo, argTypeInfo);
+	m_qoreClass->addMethodExtendedList3(&th, name, func, isPrivate, QDOM_DEFAULT, returnTypeInfo, argTypeInfo);
     }
-
-/*
-    {
-       // add generic methods for custom conversion
-       QoreMethodIterator mi(m_qoreClass);
-       while (mi.next()) {
-	  const QoreMethod *qm = mi.getMethod();
-	  if (qm->existsVariant(0, NULL))
-	     continue;
-	  
-	  if (qm == m_qoreClass->getConstructor())
-	     m_qoreClass->setConstructorExtended2(common_constructor, qm->isPrivate());
-	  else {
-	     q_method2_t func = (q_method2_t)common_method;
-	     if (m_qoreClass == QC_QOBJECT && !strcmp(qm->getName(), "connect"))
-		func = (q_method2_t)QOBJECT_connect;       
-	 
-	     m_qoreClass->addMethodExtended2(qm->getName(), func, qm->isPrivate(), QDOM_DEFAULT, qm->getUniqueReturnTypeInfo());
-	  }
-       }
-    }
-
-    {
-       // add generic static methods for custom conversions
-       QoreStaticMethodIterator mi(m_qoreClass);
-       while (mi.next()) {
-	  const QoreMethod *qm = mi.getMethod();
-	  if (qm->existsVariant(0, NULL))
-	     continue;
-	  
-	  q_static_method2_t func = common_static_method;
-	  if (m_qoreClass == QC_QOBJECT && !strcmp(qm->getName(), "connect"))
-	     func = f_QOBJECT_connect;
-	  
-	  m_qoreClass->addStaticMethodExtended2(qm->getName(), func, qm->isPrivate(), QDOM_DEFAULT, qm->getUniqueReturnTypeInfo());
-       }
-    }
-*/
   
     if (!strcmp(m_class.className, "QVariant")) {
        //printd(0, "registered toQore\n");
@@ -593,7 +561,7 @@ void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
     }
 }
 
-static AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const QoreListNode *params, ExceptionSink *xsink) {
+static AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *th, const QoreListNode *params, ExceptionSink *xsink) {
     const QoreObject *p = test_object_param(params, 0);
 
     ReferenceHolder<QoreSmokePrivateQObjectData> sender(reinterpret_cast<QoreSmokePrivateQObjectData *>(p ? p->getReferencedPrivateData(QC_QOBJECT->getID(), xsink) : 0), xsink);
@@ -638,10 +606,10 @@ static AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const QoreL
     return 0;
 }
 
-static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink) {
+static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *type_handler, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink) {
     // HACK: workaround for $.connect(o, sig, o, slot) call type
     if (num_params(params) == 4)
-        return f_QOBJECT_connect(method, params, xsink);
+       return f_QOBJECT_connect(method, typeList, type_handler, params, xsink);
 
     QoreObject *p = test_object_param(params, 0);
     ReferenceHolder<QoreSmokePrivateQObjectData> sender(p ? (QoreSmokePrivateQObjectData *)p->getReferencedPrivateData(QC_QOBJECT->getID(), xsink) : 0, xsink);
@@ -674,11 +642,15 @@ static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, QoreObject *s
     return 0;
 }
 
-void common_constructor(const QoreClass &myclass, QoreObject *self,
-                        const QoreListNode *params, ExceptionSink *xsink) {
+void common_constructor(const QoreClass &myclass, 
+			const type_vec_t &typeList,
+			ClassMap::TypeHandler *type_handler,
+			QoreObject *self,
+                        const QoreListNode *params, 
+			ExceptionSink *xsink) {
     const char * className = myclass.getName();
 //     printd(0, className);
-    CommonQoreMethod cqm(self, 0, className, className, params, xsink);
+    CommonQoreMethod cqm(type_handler, self, 0, className, className, params, xsink);
 
     if (!cqm.isValid()) {
 //         printd(0, "common_constructor() %s failed to set up constructor call\n", className);
@@ -738,6 +710,8 @@ const char * qoreMethodName2Qt(const char * name) {
 }
 
 AbstractQoreNode * common_method(const QoreMethod &method,
+				 const type_vec_t &typeList,
+				 ClassMap::TypeHandler *type_handler,
                                  QoreObject *self,
                                  AbstractPrivateData *apd,
                                  const QoreListNode *params,
@@ -746,7 +720,7 @@ AbstractQoreNode * common_method(const QoreMethod &method,
     const char * className = method.getClass()->getName();
 
     QoreSmokePrivate * smc = reinterpret_cast<QoreSmokePrivate*>(apd);
-    CommonQoreMethod cqm(self, smc, className, methodName, params, xsink);
+    CommonQoreMethod cqm(type_handler, self, smc, className, methodName, params, xsink);
 
     Q_ASSERT_X(smc!=0, "cast", "cannot get QoreSmokeClass from QoreObject");
 #ifdef DEBUG
@@ -759,15 +733,17 @@ AbstractQoreNode * common_method(const QoreMethod &method,
 
 
 AbstractQoreNode * common_static_method(const QoreMethod &method,
+					const type_vec_t &typeList,
+					ClassMap::TypeHandler *type_handler,
                                         const QoreListNode *params,
                                         ExceptionSink *xsink) {
     const char * methodName = qoreMethodName2Qt(method.getName());
     const char * className = method.getClass()->getName();
-    CommonQoreMethod cqm(0, 0, className, methodName, params, xsink);
+    CommonQoreMethod cqm(type_handler, 0, 0, className, methodName, params, xsink);
     return cqm.callMethod();
 }
 
-void common_destructor(const QoreClass &thisclass, QoreObject *self, AbstractPrivateData *private_data, ExceptionSink *xsink) {
+void common_destructor(const QoreClass &thisclass, ClassMap::TypeHandler *type_handler, QoreObject *self, AbstractPrivateData *private_data, ExceptionSink *xsink) {
     // unconditionally deref private data on exit to avoid a memory leak
     ReferenceHolder<AbstractPrivateData> ref_helper(private_data, xsink);
 
@@ -818,7 +794,7 @@ void common_destructor(const QoreClass &thisclass, QoreObject *self, AbstractPri
     QByteArray methodName("~");
     methodName += className;
 
-    CommonQoreMethod cqm(self, p, className, methodName.constData(), 0, xsink);
+    CommonQoreMethod cqm(type_handler, self, p, className, methodName.constData(), 0, xsink);
 
     //printd(0, "common_destructor %s::destructor() Qt: %p\n", thisclass.getName(), p->object());
     assert(cqm.isValid());

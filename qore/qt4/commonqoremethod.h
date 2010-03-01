@@ -1,7 +1,7 @@
 /*
   Qore Programming Language Qt4 Module
 
-  Copyright 2009 Qore Technologies sro
+  Copyright 2009 - 2010 Qore Technologies sro
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -356,12 +356,13 @@ struct ref_store_s {
 // It's used as a "library" for common_foo funtions
 class CommonQoreMethod {
 public:
-    CommonQoreMethod(QoreObject *n_self,
-                     QoreSmokePrivate *n_smc,
-                     const char* className,
-                     const char* methodName,
-                     const QoreListNode* params,
-                     ExceptionSink *xsink);
+   CommonQoreMethod(ClassMap::TypeHandler *th,
+		    QoreObject *n_self,
+		    QoreSmokePrivate *n_smc,
+		    const char* className,
+		    const char* methodName,
+		    const QoreListNode* params,
+		    ExceptionSink *xsink);
 
     // variant for constructing default objects with no arguments,
     // for example, to return to qt code
@@ -406,8 +407,8 @@ public:
     DLLLOCAL int getArgCount() const {
         return qoreArgCnt;
     }
-    DLLLOCAL ClassMap::TypeHandler &getTypeHandler() {
-        return type_handler;
+    DLLLOCAL const ClassMap::TypeHandler &getTypeHandler() {
+        return *type_handler;
     }
     DLLLOCAL int qoreToStack(Smoke::Type t,
                              const AbstractQoreNode * node,
@@ -418,7 +419,7 @@ public:
     }
 
     DLLLOCAL void saveParam(const char *key, const AbstractQoreNode *val) {
-        assert(type_handler.return_value_handler);
+        assert(type_handler->return_value_handler);
         if (!tparams)
             tparams = new QoreHashNode();
         tparams->setKeyValue(key, val ? val->refSelf() : 0, m_xsink);
@@ -454,30 +455,30 @@ public:
     Smoke::Stack Stack;
 
 private:
-    typedef QMap<int,ref_store_s> RefMap;
+   typedef QMap<int,ref_store_s> RefMap;
 
-    const char* m_className;
-    const char* m_methodName;
-    ExceptionSink * m_xsink;
-    QByteArray m_munged;
-    Smoke::Method m_method;
-    bool m_valid;
-    int qoreArgCnt;
-    RefMap *ref_store;
-    AutoVLock vl;
-    ClassMap::TypeHandler type_handler;
-    QoreHashNode *tparams;
-    QoreObject *self;
-    QoreSmokePrivate *smc;
-    bool suppress_method;
-    const QoreListNode *args;
-
-    DLLLOCAL void checkRefStore() {
-        if (!ref_store)
-            ref_store = new RefMap;
-    }
-
-    DLLLOCAL int getScore(Smoke::Type smoke_type, const AbstractQoreNode *n, int index);
+   const char* m_className;
+   const char* m_methodName;
+   ExceptionSink * m_xsink;
+   QByteArray m_munged;
+   Smoke::Method m_method;
+   bool m_valid;
+   int qoreArgCnt;
+   RefMap *ref_store;
+   AutoVLock vl;
+   const ClassMap::TypeHandler *type_handler;
+   QoreHashNode *tparams;
+   QoreObject *self;
+   QoreSmokePrivate *smc;
+   bool suppress_method;
+   const QoreListNode *args;
+   
+   DLLLOCAL void checkRefStore() {
+      if (!ref_store)
+	 ref_store = new RefMap;
+   }
+   
+   DLLLOCAL int getScore(Smoke::Type smoke_type, const AbstractQoreNode *n, int index);
 };
 
 #endif

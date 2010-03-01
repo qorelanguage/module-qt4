@@ -1,7 +1,7 @@
 /*
   Qore Programming Language Qt4 Module
 
-  Copyright 2009 Qore Technologies sro
+  Copyright 2009 - 2010 Qore Technologies sro
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -578,18 +578,26 @@ private:
 // Functions to handle Qore constructor/any method/any static
 // method for object/class instance.
 void common_constructor(const QoreClass &myclass,
+			const type_vec_t &typeList,
+			Smoke::Method *smoke_method, 
                         QoreObject *self,
                         const QoreListNode *params,
                         ExceptionSink *xsink);
 AbstractQoreNode * common_method(const QoreMethod &method,
+				 const type_vec_t &typeList,
+				 Smoke::Method *smoke_method, 
                                  QoreObject *self,
                                  AbstractPrivateData *apd,
                                  const QoreListNode *params,
                                  ExceptionSink *xsink);
 AbstractQoreNode * common_static_method(const QoreMethod &method,
+					const type_vec_t &typeList,
+					Smoke::Method *smoke_method, 
                                         const QoreListNode *params,
                                         ExceptionSink *xsink);
-void common_destructor(const QoreClass &thisclass, QoreObject *self,
+void common_destructor(const QoreClass &thisclass, 
+		       Smoke::Method *smoke_method,
+		       QoreObject *self,
                        AbstractPrivateData *apd,
                        ExceptionSink *xsink);
 
