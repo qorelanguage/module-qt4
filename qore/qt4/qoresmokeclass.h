@@ -450,79 +450,93 @@ class CommonQoreMethod;
 // TODO/FIXME: more comments
 class ClassMap {
 public:
-    typedef QList<Smoke::Type> TypeList;
-    typedef int (*arg_handler_t)(Smoke::Stack &stack, const TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink);
-    typedef AbstractQoreNode *(*return_value_handler_t)(QoreObject *self, const Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink);
-    typedef struct type_handler_s {
-        TypeList types;
-        arg_handler_t arg_handler;
-        return_value_handler_t return_value_handler;
-        Smoke::Index method;
-        DLLLOCAL type_handler_s(TypeList &n_types, arg_handler_t n_handler, return_value_handler_t n_rv_handler, Smoke::Index n_method) :
-                types(n_types), arg_handler(n_handler), return_value_handler(n_rv_handler), method(n_method) {}
-       DLLLOCAL type_handler_s() : arg_handler(0), return_value_handler(0), method(0) {}
-    } TypeHandler;
-    typedef QMultiMap<QByteArray,TypeHandler> MungledToTypes;
-    typedef QMap<QByteArray,MungledToTypes> MethodToMungleds;
-    typedef QMap<QByteArray,MethodToMungleds> ClassToMethods;
+   typedef QList<Smoke::Type> TypeList;
+   typedef int (*arg_handler_t)(Smoke::Stack &stack, const TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink);
+   typedef AbstractQoreNode *(*return_value_handler_t)(QoreObject *self, const Smoke::Type &t, Smoke::Stack Stack, CommonQoreMethod &cqm, ExceptionSink *xsink);
+   typedef struct type_handler_s {
+      TypeList types;
+      arg_handler_t arg_handler;
+      return_value_handler_t return_value_handler;
+      Smoke::Index method;
+      DLLLOCAL type_handler_s(const TypeList &n_types, arg_handler_t n_handler, return_value_handler_t n_rv_handler, Smoke::Index n_method) :
+	 types(n_types), arg_handler(n_handler), return_value_handler(n_rv_handler), method(n_method) {}
+      DLLLOCAL type_handler_s() : arg_handler(0), return_value_handler(0), method(0) {}
+   } TypeHandler;
+   typedef QMap<QByteArray,QoreNamespace *> NameToNamespace;
+   typedef QMultiMap<QByteArray,TypeHandler> MungledToTypes;
+   typedef QMap<QByteArray,MungledToTypes> MethodToMungleds;
+   typedef QMap<QByteArray,MethodToMungleds> ClassToMethods;
 
 #ifdef DEBUG
     // "unit" test
-    void printMapToFile(const QString & fname);
+   DLLLOCAL void printMapToFile(const QString & fname);
 #endif
 
-    void setRVHandler(const char *className, const char *methodName, const char *mungedMethod, return_value_handler_t rv_handler);
-    void setRVHandler(const char *className, const char *methodName, return_value_handler_t rv_handler);
+   DLLLOCAL void setRVHandler(const char *className, const char *methodName, const char *mungedMethod, return_value_handler_t rv_handler);
+   DLLLOCAL void setRVHandler(const char *className, const char *methodName, return_value_handler_t rv_handler);
 
-    MungledToTypes * availableMethods(const QByteArray & className,
-                                      const QByteArray & methodName) {
-        return &m_map[className][methodName];
-    }
+   DLLLOCAL MungledToTypes * availableMethods(const QByteArray & className,
+					      const QByteArray & methodName) {
+      return &m_map[className][methodName];
+   }
 
 //     TypeList *availableTypes(const char *className, const char *methodName, const char *mungedName) {
 //         assert(m_map[className][methodName][mungedName].types.count() != 0);
 //         return &m_map[className][methodName][mungedName].types;
 //     }
 
-    static ClassMap* Instance() {
-        if (!m_instance) {
-            m_instance = new ClassMap();
-            m_instance->registerMethods();
-        }
-        return m_instance;
-    }
-    const TypeHandler *findHandler(const char *cls, const char *meth, Smoke::Index method) {
-       for (MungledToTypes::iterator i = m_map[cls][meth].begin(), e = m_map[cls][meth].end(); i != e; ++i) 
-	  if (i.value().method == method)
-	     return &i.value();
 
-       printd(0, "ClassMap::findHandler(cls=%s, meth=%s, method=%d) NOT FOUND!!!!!!!!!\n", cls, meth, method);
-       assert(false);
-       return 0;
-    }
+   DLLLOCAL static void init() {
+      assert(!m_instance);
+      m_instance = new ClassMap();
+   }
+   DLLLOCAL static ClassMap* Instance() {
+      assert(m_instance);
+      return m_instance;
+   }
+   DLLLOCAL const TypeHandler *findHandler(const char *cls, const char *meth, Smoke::Index method) {
+      for (MungledToTypes::iterator i = m_map[cls][meth].begin(), e = m_map[cls][meth].end(); i != e; ++i) 
+	 if (i.value().method == method)
+	    return &i.value();
+      
+      printd(0, "ClassMap::findHandler(cls=%s, meth=%s, method=%d) NOT FOUND!!!!!!!!!\n", cls, meth, method);
+      assert(false);
+      return 0;
+   }
 
-    DLLLOCAL void addArgHandler(const char *cls, const char *meth, const char *munged, arg_handler_t arg_handler);
-    DLLLOCAL void addArgHandler(const char *cls, const char *meth, arg_handler_t arg_handler);
-    DLLLOCAL void registerMethod(const char *class_name, const char *method_name, const char *munged_name, Smoke::Index method_index, TypeHandler &type_handler, const QoreTypeInfo *returnType = 0, const type_vec_t &argTypeList = type_vec_t());
-
+   DLLLOCAL void addArgHandler(const char *cls, const char *meth, const char *munged, arg_handler_t arg_handler);
+   DLLLOCAL void addArgHandler(const char *cls, const char *meth, arg_handler_t arg_handler);
+   DLLLOCAL void registerMethod(const char *class_name, const char *method_name, const char *munged_name, Smoke::Index method_index, TypeHandler &type_handler, const QoreTypeInfo *returnType = 0, const type_vec_t &argTypeList = type_vec_t());
+   
 private:
+   ClassToMethods m_map;
+   NameToNamespace nsmap;
 
-    ClassToMethods m_map;
+   DLLLOCAL static ClassMap * m_instance;
 
-    static ClassMap * m_instance;
+   // set the mapping in the class->method->munged->args direction.
+   // Smoke supports munged->method->class like direction only
+   // unfortunately.
+   DLLLOCAL ClassMap();
+   
+   DLLLOCAL ClassMap(const ClassMap &);
+   //ClassMap& operator=(const ClassMap&) {};
+   DLLLOCAL ~ClassMap() {
+      delete m_instance;
+   }
+   
+   DLLLOCAL static void addBaseClasses();
 
-    ClassMap() {};
-    ClassMap(const ClassMap &);
-    //ClassMap& operator=(const ClassMap&) {};
-    ~ClassMap() {
-        delete m_instance;
-    }
-
-    type_handler_s typeList(Smoke::Method m, Smoke::Index index);
-    // set the mapping in the class->method->munged->args direction.
-    // Smoke supports munged->method->class like direction only
-    // unfortunately.
-    void registerMethods();
+   DLLLOCAL QoreNamespace *getNS(const char *name) {
+      NameToNamespace::iterator i = nsmap.find(name);
+      if (i != nsmap.end())
+	 return i.value();
+      QoreNamespace *ns = new QoreNamespace(name);
+      nsmap[name] = ns;
+      return ns;
+   }
+  
+   DLLLOCAL void addMethod(QoreClass *qc, const Smoke::Class &c, const Smoke::Method &method, const TypeHandler *th);
 };
 
 // Singleton. Everywhere available map Smoke::Class index -> QoreClass*
@@ -565,25 +579,8 @@ private:
     }
 };
 
-// Initial setup for each Qt class. It creates common Qore binding between
-// qt class and qore class wrappers.
-// There is also a new namespace created if it's required (enums etc.).
-class QoreSmokeClass {
-public:
-    QoreSmokeClass(const char * className, QoreNamespace &qt_ns);
-    ~QoreSmokeClass();
-
-private:
-    QoreClass * m_qoreClass;
-    QoreNamespace * m_namespace;
-
-    Smoke::ModuleIndex m_classId;
-    Smoke::Class m_class;
-
-    // targetClass == false if it's one of parent classes
-    void addClassMethods(Smoke::Index methodIx, bool targetClass=true);
-    void addSuperClasses(Smoke::Index ix, QoreNamespace &qt_ns);
-};
+DLLLOCAL ClassMap::TypeHandler getTypeHandler(Smoke::Index index);
+DLLLOCAL ClassMap::TypeHandler getTypeHandlerFromMapIndex(Smoke::Index index);
 
 // Functions to handle Qore constructor/any method/any static
 // method for object/class instance.

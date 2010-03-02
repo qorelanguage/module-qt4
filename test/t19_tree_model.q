@@ -139,7 +139,7 @@ class Model inherits QAbstractItemModel
         my $child = $index.internalPointer();
         if (! exists $child)
         {
-            printf("parent() child object does not exists! QModelIndex( %N, %N )\n", $index.row(), $index.column());
+            printf("parent() child object does not exist! QModelIndex( %N, %N )\n", $index.row(), $index.column());
             return new QModelIndex();
         }
         my $parent = $child.parentItem();

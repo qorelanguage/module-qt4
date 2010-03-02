@@ -81,7 +81,7 @@ Smoke::ModuleIndex QT_METACALL_ID;
 
 // extern QoreSmokeBinding * qt_binding;
 
-static QoreNamespace qt_ns("Qt");
+QoreNamespace qt_ns("Qt");
 
 // for saving virtual call state
 QoreThreadLocalStorage<void> qore_qt_virtual_flag;
@@ -155,25 +155,25 @@ static int argv_handler_rint_charpp(Smoke::Stack &stack, const ClassMap::TypeLis
 
 // handles int &argc, char **argv automatically from the global ARGV variable
 static int argv_handler_none(Smoke::Stack &stack, const ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
-    // Create a Smoke stack from params
-    stack = new Smoke::StackItem[3];
-//    printd(0, "argv_handler_rint_charpp() allocated stack of size %d\n", 3);
+   // Create a Smoke stack from params
+   stack = new Smoke::StackItem[3];
+   //printd(0, "argv_handler_none() allocated stack of size %d\n", 3);
 
-    bool found;
-    ReferenceHolder<QoreListNode> l(new QoreListNode(), xsink);
-    ReferenceHolder<AbstractQoreNode> argv(getProgram()->getGlobalVariableValue("ARGV", found), xsink);
-    l->push(getProgram()->getScriptName());
-    if (argv && argv->getType() == NT_LIST)
-        l->merge(reinterpret_cast<const QoreListNode *>(*argv));
+   bool found;
+   ReferenceHolder<QoreListNode> l(new QoreListNode(), xsink);
+   ReferenceHolder<AbstractQoreNode> argv(getProgram()->getGlobalVariableValue("ARGV", found), xsink);
+   l->push(getProgram()->getScriptName());
+   if (argv && argv->getType() == NT_LIST)
+      l->merge(reinterpret_cast<const QoreListNode *>(*argv));
 
-    return argv_handler_intern(0, stack, types, *l, cqm, xsink);
+   return argv_handler_intern(0, stack, types, *l, cqm, xsink);
 }
 
 // handles int &argc, char **argv from a single list
 static int argv_handler_charpp(Smoke::Stack &stack, const ClassMap::TypeList &types, const QoreListNode *args, CommonQoreMethod &cqm, ExceptionSink *xsink) {
     // Create a Smoke stack from params
     stack = new Smoke::StackItem[3];
-//    printd(0, "argv_handler_rint_charpp() allocated stack of size %d\n", 3);
+    //printd(0, "argv_handler_charpp() allocated stack of size %d\n", 3);
 
     const AbstractQoreNode *p = get_param(args, 0);
     if (!p || p->getType() != NT_LIST) {
@@ -513,11 +513,7 @@ static QoreStringNode *qt_module_init() {
     enumTypeInfo = enumTypeInfoHelper.getTypeInfo();
 
     // register all classes and methods
-    Smoke::Class cls;
-    for (Smoke::Index i = 1; i < qt_Smoke->numClasses; ++i) {
-        cls = qt_Smoke->classes[i];
-        QoreSmokeClass c(cls.className, qt_ns);
-    }
+    ClassMap::init();
 
     assert(parse_class_map.empty());
 
@@ -566,17 +562,60 @@ static QoreStringNode *qt_module_init() {
     type_vec_t argv_list;
     argv_list.push_back(listTypeInfo);
 
+    // register new methods for the qore module
     cm.registerMethod("QCoreApplication", "QCoreApplication", "QCoreApplication?", methodIndex.index, argv_charpp_h, 0, argv_list);
     cm.registerMethod("QCoreApplication", "QCoreApplication", "QCoreApplication", methodIndex.index, argv_none_h);
+
+    // add argument handlers to existing methods
     cm.addArgHandler("QCoreApplication", "QCoreApplication", argv_handler_rint_charpp);
     cm.addArgHandler("QApplication", "QApplication", argv_handler_rint_charpp);
 
     methodIndex = qt_Smoke->findMethod("QApplication", "QApplication$?");
     assert(methodIndex.smoke);
+
+    // register new methods for the qore module
     cm.registerMethod("QApplication", "QApplication", "QApplication?", methodIndex.index, argv_charpp_h, 0, argv_list);
     cm.registerMethod("QApplication", "QApplication", "QApplication", methodIndex.index, argv_none_h);
+
+    // QModelIndex and QPersistentModelIndex
+    methodIndex = qt_Smoke->findMethod("QModelIndex", "internalPointer");
+    assert(methodIndex.smoke);
+
+    ClassMap::TypeHandler internalPointer = getTypeHandlerFromMapIndex(methodIndex.index);
+    internalPointer.return_value_handler = rv_handler_internalPointer<QModelIndex>;
+
+    // QModelIndex and QPersistentModelIndex return value handlers
+    cm.registerMethod("QModelIndex", "internalPointer", "internalPointer", methodIndex.index, internalPointer);
+
+    methodIndex = qt_Smoke->findMethod("QPersistentModelIndex", "internalPointer");
+    assert(methodIndex.smoke);
+
+    internalPointer = getTypeHandlerFromMapIndex(methodIndex.index);
+    internalPointer.return_value_handler = rv_handler_internalPointer<QPersistentModelIndex>;
+    cm.registerMethod("QPersistentModelIndex", "internalPointer", "internalPointer", methodIndex.index, internalPointer);
+
+    // QAbstractItemModel handlers
+    methodIndex = qt_Smoke->findMethod("QAbstractItemModel", "createIndex$$$");
+    assert(methodIndex.smoke);
+
+    ClassMap::TypeHandler createIndexHandler = getTypeHandlerFromMapIndex(methodIndex.index);
+    assert(createIndexHandler.types.size() == 3);
+    Smoke::Type voidp_t;
+    voidp_t.name = "void*";
+    voidp_t.classId = 0;
+    voidp_t.flags = Smoke::t_voidp|Smoke::tf_ptr;
+    createIndexHandler.types[2] = voidp_t;
+
+    createIndexHandler.arg_handler = createIndex_handler;
+
+    type_vec_t argv_int_int;
+    argv_int_int.push_back(bigIntTypeInfo);
+    argv_int_int.push_back(bigIntTypeInfo);
+
+    cm.registerMethod("QAbstractItemModel", "createIndex", "createIndex$$$", methodIndex.index, createIndexHandler, 0, argv_int_int);
     
     // QLayout::addItem() and ::addWidget() handlers
+    // add argument handlers to existing methods
     cm.addArgHandler("QLayout", "addItem", setExternallyOwned_handler);
     cm.addArgHandler("QGridLayout", "addItem", setExternallyOwned_handler);
     cm.addArgHandler("QFormLayout", "addItem", setExternallyOwned_handler);
@@ -600,13 +639,6 @@ static QoreStringNode *qt_module_init() {
     // QShortcut handlers
     cm.addArgHandler("QShortcut", "QShortcut", arg_handler_QShortcut);
     cm.setRVHandler("QShortcut", "QShortcut", rv_handler_QShortcut);
-
-    // QAbstractItemModel handlers
-    cm.addArgHandler("QAbstractItemModel", "createIndex", "createIndex$$$", createIndex_handler);
-
-    // QModelIndex and QPersistentModelIndex return value handlers
-    cm.setRVHandler("QModelIndex", "internalPointer", rv_handler_internalPointer<QModelIndex>);
-    cm.setRVHandler("QPersistentModelIndex", "internalPointer", rv_handler_internalPointer<QModelIndex>);
 
     // QAbstractItemView return value handlers
     cm.setRVHandler("QAbstractItemView", "reset", rv_handler_QAbstractItemView_reset);

@@ -45,7 +45,6 @@ DLLLOCAL extern const QoreClass *QC_QOBJECT, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL
 DLLLOCAL extern const QoreTypeInfo *enumTypeInfo;
 DLLLOCAL extern const QoreTypeInfo *qtIntTypeInfo;
 
-DLLLOCAL extern Smoke::ModuleIndex SMI_QOBJECT;
 DLLLOCAL extern Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON, SCI_QRECT, SCI_QREGION,
    SCI_QCOLOR, SCI_QPIXMAP;
 
@@ -56,6 +55,8 @@ DLLLOCAL bool isptrtype(const char *var, const char *type);
 DLLLOCAL extern Smoke::ModuleIndex QT_METACALL_ID;
 
 DLLLOCAL extern QoreThreadLocalStorage<void> qore_qt_virtual_flag;
+
+DLLLOCAL extern QoreNamespace qt_ns;
 
 static inline void qore_smoke_set_virtual() {
     assert(!qore_qt_virtual_flag.get());

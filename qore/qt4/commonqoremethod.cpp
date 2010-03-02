@@ -1322,7 +1322,9 @@ void CommonQoreMethod::postProcessConstructor(QoreSmokePrivate *n_smc) {
         assert(n_smc);
         assert(!smc);
         smc = n_smc;
-        Smoke::Type t = type_handler->types[0];
+        Smoke::Type t;
+	if (type_handler->types.size())
+	   t = type_handler->types[0];
         type_handler->return_value_handler(self, t, Stack, *this, m_xsink);
         return;
     }

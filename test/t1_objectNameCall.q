@@ -1,9 +1,9 @@
 #!/usr/bin/env qore
 %requires qt4
 
-printf("1\n");
+#printf("1\n");
 my $a = new QApplication();
-printf("2\n");
+#printf("2\n");
 #my $w = new QMainWindow();
 my $w = new QMainWindow(NOTHING, Qt::Window);
 
@@ -24,4 +24,3 @@ printf("inherits QWidget: %N\n", $o.qt_inherits("QWidget"));
 printf("inherits QObject: %N\n", $o.qt_inherits("QObject"));
 printf("parent: %N\n", $o.parent());
 #printf("thread: %N\n", $o.thread());
-

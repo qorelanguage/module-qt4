@@ -38,8 +38,6 @@
 // map from class names to QoreClass pointers
 qcmap_t parse_class_map;
 
-Smoke::ModuleIndex SMI_QOBJECT;
-
 extern Smoke* qt_Smoke;
 
 QtQoreMap qt_qore_map;
@@ -51,9 +49,13 @@ QoreWidgetManager QWM;
 ClassNamesMap* ClassNamesMap::m_instance = NULL;
 ClassMap * ClassMap::m_instance = NULL;
 
-// FIXME: add type information when adding these functions
+// FIXME: add type information when adding these first 2 functions
 static AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *ptr, const QoreListNode *params, ExceptionSink *xsink);
 static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *ptr, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink);
+
+static AbstractQoreNode *QOBJECT_createSignal(QoreObject *self, QoreSmokePrivateQObjectData *qo, const QoreListNode *args, ExceptionSink *xsink);
+static AbstractQoreNode *QOBJECT_emit(QoreObject *self, QoreSmokePrivateQObjectData *qo, const QoreListNode *args, ExceptionSink *xsink);
+static bool qobject_delete_blocker(QoreObject *self, QoreSmokePrivateQObjectData *data);
 
 QRegionTypeHelper typeHelperQRegion;
 QWidgetTypeHelper typeHelperQWidget;
@@ -65,82 +67,274 @@ const QoreMethod *findUserMethod(const QoreClass *qc, const char *name) {
     return m && m->isUser() ? m : 0;
 }
 
-void ClassMap::registerMethods() {
-    QByteArray mname;
-    Smoke::Method m;
-    for (int i = 1; i < qt_Smoke->numMethodMaps; ++i) {
-        Smoke::MethodMap &mm = qt_Smoke->methodMaps[i];
+static QoreClass *getInitClass(Smoke::Index ix, const Smoke::Class &c);
+static QoreClass *newClass(Smoke::Index ix, const Smoke::Class &c);
+static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool &valid, bool param = false);
 
-        QByteArray cname = qt_Smoke->classes[mm.classId].className;
-        QByteArray munged = qt_Smoke->methodNames[mm.name];
+ClassMap::ClassMap() {
+   QoreClass *qc = 0;
+   QByteArray mname;
+   for (int i = 1; i < qt_Smoke->numMethodMaps; ++i) {
+      Smoke::MethodMap &mm = qt_Smoke->methodMaps[i];
+      Smoke::Class &c = qt_Smoke->classes[mm.classId];
 
-        // overloads are < 0. Done in ambiguousMethodList part of this condition
-        if (mm.method > 0) {
+      const char *className = c.className;
 
-//             if (!strcmp(qt_Smoke->methodNames[qt_Smoke->methods[mm.method].name], "quit")) {
-//                 printd(0, "ClassMap::registerMethods() i=%d %s::%s() %smethod=%d name=%d mname=%d cmeth=%d '%s'\n", i, qt_Smoke->classes[mm.classId].className, qt_Smoke->methodNames[mm.name], qt_Smoke->methods[mm.method].flags & Smoke::mf_static ? "(static) " : "", mm.method, mm.name, qt_Smoke->methods[mm.method].name, qt_Smoke->methods[mm.method].method, qt_Smoke->methodNames[qt_Smoke->methods[mm.method].name]);
-//             }
+      // create new class
+      if (!qc || (const Smoke::Class *)qc->getUserData() != &c) {
+	 // delete all of this
+	 Smoke::ModuleIndex mi = qt_Smoke->findClass(className);
+	 if (!mi.smoke) {
+	    printd(0, "Unknown class %s. Skipping.\n", className);
+	    continue;
+	 }
 
-            m = qt_Smoke->methods[mm.method];
-            mname = qt_Smoke->methodNames[m.name];
-            m_map[cname][mname].insert(munged, typeList(m, mm.method));
+	 qc = newClass(mm.classId, c);	 
+	 if (!qc)
+	    continue;
+      }
 
-        } else {
-            // turn into ambiguousMethodList index
-            int ambIx = -mm.method;
+      QByteArray cname = c.className;
+      QByteArray munged = qt_Smoke->methodNames[mm.name];
 
-//             if (!strcmp(qt_Smoke->methodNames[qt_Smoke->methods[ambIx].name], "quit")) {
-//                 printd(0, "ClassMap::registerMethods() (-) i=%d %s::%s() %smethod=%d name=%d mname=%d '%s'\n", i, qt_Smoke->classes[mm.classId].className, qt_Smoke->methodNames[mm.name], qt_Smoke->methods[ambIx].flags & Smoke::mf_static ? "(static) " : "", ambIx, mm.name, qt_Smoke->methods[ambIx].name, qt_Smoke->methodNames[qt_Smoke->methods[ambIx].name]);
-//             }
+      // overloads are < 0. Done in ambiguousMethodList part of this condition
+      if (mm.method > 0) {
+	 const Smoke::Method &m = qt_Smoke->methods[mm.method];
+	 mname = qt_Smoke->methodNames[m.name];
+	 
+	 //if (!strcmp(qt_Smoke->methodNames[qt_Smoke->methods[mm.method].name], "quit"))
+	 //printd(0, "ClassMap::ClassMap() i=%d %s::%s() %smethod=%d name=%d mname=%d cmeth=%d '%s'\n", i, cname.constData(), munged.constData(), m.flags & Smoke::mf_static ? "(static) " : "", mm.method, mm.name, m.name, m.method, mname.constData());
+	 
+	 MungledToTypes::iterator i = m_map[cname][mname].insert(munged, getTypeHandler(mm.method));
+	 const TypeHandler *th = &i.value();
 
-            while (qt_Smoke->ambiguousMethodList[ambIx]) {
-                Smoke::Index ambMethIx = qt_Smoke->ambiguousMethodList[ambIx];
-                m = qt_Smoke->methods[ambMethIx];
-                mname = qt_Smoke->methodNames[m.name];
-                m_map[cname][mname].insert(munged, typeList(m, ambMethIx));
+	 addMethod(qc, c, m, th);	 
+      } else {
+	 // turn into ambiguousMethodList index
+	 int ambIx = -mm.method;
+	 
+	 while (qt_Smoke->ambiguousMethodList[ambIx]) {
+	    Smoke::Index ambMethIx = qt_Smoke->ambiguousMethodList[ambIx];
+	    const Smoke::Method &m = qt_Smoke->methods[ambMethIx];
+	    mname = qt_Smoke->methodNames[m.name];
+	    
+	    //if (!strcmp(qt_Smoke->methodNames[qt_Smoke->methods[ambIx].name], "quit"))
+	    //printd(0, "ClassMap::ClassMap() (-) i=%d %s::%s() %smethod=%d name=%d mname=%d '%s'\n", i, cname.constData(), munged.constData(), m.flags & Smoke::mf_static ? "(static) " : "", ambIx, mm.name, m.name, mname.constData());
 
-                ++ambIx;
-            }
-        }
-    }
+	    // FIXME: maybe only insert in m_map if it is an actual method (and not an enum for example)
+	    MungledToTypes::iterator i = m_map[cname][mname].insert(munged, getTypeHandler(ambMethIx));
+	    const TypeHandler *th = &i.value();
+	    
+	    addMethod(qc, c, m, th);	 
+
+	    ++ambIx;
+	 }
+      }
+   }
+
+   // add class hierarchy information
+   addBaseClasses();
+
+   // add enum namespaces
+   QoreNamespace *qtenum = new QoreNamespace("QtEnum");
+   for (NameToNamespace::iterator i = nsmap.begin(), e = nsmap.end(); i != e; ++i)
+      qtenum->addNamespace(i.value());
+
+   qt_ns.addNamespace(qtenum);
+
+   // free map memory
+   nsmap.clear();
+}
+
+void ClassMap::addBaseClasses() {
+   for (Smoke::Index ix = 1; ix < qt_Smoke->numClasses; ++ix) {
+      const Smoke::Class &c = qt_Smoke->classes[ix];
+      QoreClass *qc = ClassNamesMap::Instance()->value(ix);
+      if (!qc) {
+	 printd(1, "ClassMap::addBaseClasses() cannot add base classes of %s (class not found)\n", c.className);
+	 continue;
+      }
+
+      for (Smoke::Index *i = qt_Smoke->inheritanceList + c.parents; *i; ++i) {
+	 QoreClass *parent = ClassNamesMap::Instance()->value(*i);
+	 if (!parent) {
+	    printd(1, "ClassMap::addBaseClasses() cannot add %s as base class of %s (class not found)\n", qt_Smoke->classes[*i].className, qc->getName());
+	    continue;
+	 }
+
+	 /*
+	 if (QC_QOBJECT && parent == QC_QOBJECT)
+	    qc->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
+	 */
+	 
+	 qc->addBuiltinVirtualBaseClass(parent);
+	 //addSuperClasses(*i, qt_ns);
+      }
+   }
+}
+
+void ClassMap::addMethod(QoreClass *qc, const Smoke::Class &c, const Smoke::Method &method, const TypeHandler *th) {
+   //printd(0, "ClassMap::addMethod() %s i=%d/%d\n", qc->getName(), i, qt_Smoke->numMethods);
+
+   const char *methodName = qt_Smoke->methodNames[method.name];
+
+   // skip certain methods
+   if (!strcmp(qc->getName(), "QAbstractItemModel") && !strcmp(methodName, "createIndex")) {
+      //printd(0,"skipping %s::%s()\n", c.className, methodName);
+      return;
+   }
+
+   if (method.flags & Smoke::mf_enum) {
+      QoreNamespace *ns = getNS(qc->getName());
+
+      // Enum methods are static, so no object is required: 0
+      Smoke::StackItem arg[1]; // only one item on stack for retval
+      (* c.classFn)(method.method, 0, arg);
+      
+      //printd(0, "adding enum constant %s::%s (%d)\n", c.className, methodName, arg[0].s_enum);
+      Smoke::Type t = qt_Smoke->types[method.ret];
+      ns->addConstant(methodName, new QoreQtEnumNode(arg[0].s_enum, t), enumTypeInfo);
+      return;
+   }
+
+   bool isPrivate = method.flags & Smoke::mf_protected;
+
+   //if (!strcmp(methodName, "QApplication"))
+   //printd(0, "ClassMap::addMethod() %s::%s() enum=%d static=%d method=%p args=%d th=%p\n", qc->getName(), methodName, method.flags & Smoke::mf_enum, method.flags & Smoke::mf_static, &method, method.numArgs, th);
+
+   if (method.flags & Smoke::mf_dtor) {
+      assert(!qc->getDestructor());
+      qc->setDestructor3(th, (q_destructor3_t)common_destructor);
+      return;
+   }
+
+   // create return and argument type information for method signature
+   type_vec_t argTypeInfo;
+   argTypeInfo.reserve(method.numArgs);
+   Smoke::Index *idx = qt_Smoke->argumentList + method.args;
+   for (unsigned i = 0; i < method.numArgs; ++i) {
+      assert(idx[i]);
+      bool valid;
+      const QoreTypeInfo *typeInfo = getInitType(qt_Smoke->types[idx[i]], valid, true);
+      if (!valid)
+	 return;
+      argTypeInfo.push_back(typeInfo);
+   }
+
+   // process exceptions (FIXME: find algorithm for identifying where references are needed)
+   /*
+   if (method.numArgs == 2 && !strcmp(qc->getName(), "QPixmap"))
+      argTypeInfo[1] = referenceTypeInfo;
+   */
+
+   if ((method.flags & Smoke::mf_ctor)) {
+      const QoreMethod *qm = qc->getConstructor();
+      if (qm && qm->existsVariant(argTypeInfo)) {
+	 //printd(0, "ClassMap::addMethod() skipping already-created variant %s::%s()\n", qc->getName(), methodName);
+	 return;
+      }
+
+      qc->setConstructorExtendedList3(th, (q_constructor3_t)common_constructor, isPrivate, QDOM_DEFAULT, argTypeInfo);
+      return;
+   }
+   
+   bool valid;
+   const QoreTypeInfo *returnTypeInfo = getInitType(qt_Smoke->types[method.ret], valid);
+   if (!valid)
+      return;
+
+   if (method.flags & Smoke::mf_static) {
+      // set function pointer for methods with explicit implementations
+      q_static_method3_t func = (q_static_method3_t)common_static_method;
+      if (qc == QC_QOBJECT && !strcmp(methodName, "connect"))
+	 func = (q_static_method3_t)f_QOBJECT_connect;
+
+      const QoreMethod *qm = qc->findStaticMethod(methodName);
+      if (qm && qm->existsVariant(argTypeInfo)) {
+	 //printd(0, "ClassMap::addMethod() skipping already-created variant (static) %s::%s()\n", qc->getName(), methodName);
+	 return;
+      }
+      
+      qc->addStaticMethodExtendedList3(th, methodName, func, isPrivate, QDOM_DEFAULT, returnTypeInfo, argTypeInfo);
+      return;
+   }
+
+   // change name if necessary
+   const char *name = methodName;
+	
+   // common method. See qoreMethodName2Qt().
+   if (!strcmp(methodName, "copy")) {
+      name = "qt_copy";
+   } else if (!strcmp(methodName, "constructor")) {
+      name = "qt_constructor";
+   } else if (!strcmp(methodName, "inherits")) {
+      name = "qt_inherits";
+   }
+	
+   const QoreMethod *qm = qc->findMethod(name);
+   if (qm && qm->existsVariant(argTypeInfo)) {
+      //printd(0, "ClassMap::addMethod() skipping already-created variant %s::%s()\n", qc->getName(), name);
+      return;
+   }
+
+   q_method3_t func = (q_method3_t)common_method;
+   if (qc == QC_QOBJECT && !strcmp(methodName, "connect"))
+      func = (q_method3_t)QOBJECT_connect;
+   
+   qc->addMethodExtendedList3(th, name, func, isPrivate, QDOM_DEFAULT, returnTypeInfo, argTypeInfo);
 }
 
 void ClassMap::registerMethod(const char *class_name, const char *method_name, const char *munged_name, Smoke::Index method_index, ClassMap::TypeHandler &type_handler, const QoreTypeInfo *returnType, const type_vec_t &argTypeList) {
 //     assert(m_map[class_name][method_name][munged_name].types.count() == 0);
 
     method_index = qt_Smoke->methodMaps[method_index].method;
-    if (method_index < 0)
-        method_index = -method_index;
+    if (method_index < 0) {
+       method_index = qt_Smoke->ambiguousMethodList[-method_index];
+       //assert(false);
+    }
 
     type_handler.method = method_index;
 
-    m_map[class_name][method_name].insert(munged_name, type_handler);
+    MungledToTypes::iterator i = m_map[class_name][method_name].insert(munged_name, type_handler);
+    const TypeHandler *th = &i.value();
+
     // add method to class if possible
     QoreClass *qc = ClassNamesMap::Instance()->value(class_name);
     assert(qc);
 
-    const ClassMap::TypeHandler *th = ClassMap::Instance()->findHandler(class_name, method_name, method_index);
-
     if (!strcmp(class_name, method_name)) {
        assert(!returnType);
+       //printd(5, "ClassMap::registerMethod() registering constructor %s::%s() args=%d th=%p\n", class_name, method_name, argTypeList.size(), th);
        qc->setConstructorExtendedList3(th, (q_constructor3_t)common_constructor, false, QDOM_DEFAULT, argTypeList);
     }
     else {
+       //printd(5, "ClassMap::registerMethod() registering function %s::%s() args=%d th=%p\n", class_name, method_name, argTypeList.size(), th);
        qc->addMethodExtendedList3(th, method_name, (q_method3_t)common_method, false, QDOM_DEFAULT, returnType, argTypeList);
     }
     //printd(0, "ClassMap::registerMethod(%s, %s, %s)\n", class_name, method_name, munged_name);
 }
 
-ClassMap::TypeHandler ClassMap::typeList(Smoke::Method m, Smoke::Index methodIndex) {
-    ClassMap::TypeHandler ret;
-    Smoke::Index *idx = qt_Smoke->argumentList + m.args;
-    while (*idx) {
-        ret.types.append(qt_Smoke->types[*idx]);
-        idx++;
-    }
-    ret.method = methodIndex;
+ClassMap::TypeHandler getTypeHandlerFromMapIndex(Smoke::Index methodIndex) {
+   methodIndex = qt_Smoke->methodMaps[methodIndex].method;
+   if (methodIndex < 0) {
+      methodIndex = qt_Smoke->ambiguousMethodList[-methodIndex];
+      //assert(false);
+   }
+   return getTypeHandler(methodIndex);
+}
 
-    return ret;
+ClassMap::TypeHandler getTypeHandler(Smoke::Index methodIndex) {
+   ClassMap::TypeHandler ret;
+   const Smoke::Method &m = qt_Smoke->methods[methodIndex];
+
+   Smoke::Index *idx = qt_Smoke->argumentList + m.args;
+   while (*idx) {
+      ret.types.append(qt_Smoke->types[*idx]);
+      idx++;
+   }
+   ret.method = methodIndex;
+   
+   return ret;
 }
 
 // add an argument handler to all versions of a specific munged method
@@ -260,17 +454,45 @@ static void dump_parse_class_map() {
 }
 #endif
 
-static QoreClass *getNewClass(const char *name) {
+static QoreClass *getNewClass(Smoke::Index ix, const Smoke::Class &c) {
+   const char *name = c.className;
+   QoreClass *qc;
+
    if (typeHelperQRegion.hasClass() && !strcmp(name, "QRegion"))
-      return typeHelperQRegion.getClass();
-   if (typeHelperQWidget.hasClass() && !strcmp(name, "QWidget"))
-      return typeHelperQWidget.getClass();
-   if (typeHelperQColor.hasClass() && !strcmp(name, "QColor"))
-      return typeHelperQColor.getClass();
-   if (typeHelperQVariant.hasClass() && !strcmp(name, "QVariant"))
-      return typeHelperQVariant.getClass();
-   
-   return new QoreClass(name, QDOM_GUI);
+      qc = typeHelperQRegion.getClass();
+   else if (typeHelperQWidget.hasClass() && !strcmp(name, "QWidget"))
+      qc = typeHelperQWidget.getClass();
+   else if (typeHelperQColor.hasClass() && !strcmp(name, "QColor"))
+      qc = typeHelperQColor.getClass();
+   else if (typeHelperQVariant.hasClass() && !strcmp(name, "QVariant"))
+      qc = typeHelperQVariant.getClass();
+   else
+      qc = new QoreClass(name, QDOM_GUI);
+
+   qc->setUserData(&c);
+   ClassNamesMap::Instance()->addItem(ix, qc);
+
+   qt_ns.addSystemClass(qc);
+
+   return qc;
+}
+
+static QoreClass *newClass(Smoke::Index ix, const Smoke::Class &c) {
+   QoreClass *qc = getInitClass(ix, c);
+
+   // process special classes
+   if (!QC_QOBJECT && !strcmp(c.className, "QObject")) {
+      QC_QOBJECT = qc;
+      qc->addMethodExtended("createSignal", (q_method_t)QOBJECT_createSignal, false, QDOM_DEFAULT, nothingTypeInfo, 1, stringTypeInfo, QORE_PARAM_NO_ARG);
+      qc->addMethodExtended("emit", (q_method_t)QOBJECT_emit, false, QDOM_DEFAULT, nothingTypeInfo, 1, stringTypeInfo, QORE_PARAM_NO_ARG);
+      qc->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
+   }
+   else if (!strcmp(c.className, "QVariant")) {
+      //printd(0, "registered toQore\n");
+      qc->addMethod2("toQore", (q_method2_t)Marshalling::return_qvariant);
+   }
+
+   return qc;
 }
 
 // get type from parse class map or create it and add to map
@@ -279,20 +501,21 @@ static const QoreTypeInfo *getInitClassType(const char *name, const Smoke::Type 
 
    qcmap_t::iterator i = parse_class_map.find(name);
    if (i == parse_class_map.end()) {
-
       Smoke::ModuleIndex mi = qt_Smoke->findClass(name);
       if (!mi.smoke) {
 	 //printd(0, "getInitClassType(%s) skipping mapping for tname=%s\n", name, t.name);
 	 return 0;
       }
-      QoreClass *qc = getNewClass(name);
+      QoreClass *qc = getNewClass(mi.index, qt_Smoke->classes[mi.index]);
       parse_class_map[name] = qc;
       return qc->getTypeInfo();
    }
    return i->second->getTypeInfo();
 }
 
-static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool param = false) {
+static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool &valid, bool param) {
+   valid = true;
+
    //int flags = t.flags & 0x30;
    int tid = t.flags & Smoke::tf_elem;
    switch (tid) {
@@ -346,7 +569,8 @@ static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool param = false)
       if (!strcmp(f, "QStringList"))
 	 return listTypeInfo;
 
-      //printd(0, "getInitType() name=%s (%s) class=%d returning NULL\n", t.name, f, t.classId);
+      //printd(0, "getInitType() name=%s (%s) class=%d cannot handle type; returning valid = false\n", t.name, f, t.classId);
+      valid = false;
       return 0;
    }
 
@@ -367,219 +591,15 @@ static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool param = false)
 }
 
 // get class from map, and delete it if it's there, or simply create the class
-static QoreClass *getInitClass(const char *name) {
+static QoreClass *getInitClass(Smoke::Index ix, const Smoke::Class &c) {
+   const char *name = c.className;
    qcmap_t::iterator i = parse_class_map.find(name);
    if (i == parse_class_map.end())
-      return getNewClass(name);
+      return getNewClass(ix, c);
 
    QoreClass *qc = i->second;
    parse_class_map.erase(i);
    return qc;
-}
-
-//static const QoreTypeInfo *getClassType(const char *name) {}
-
-QoreSmokeClass::QoreSmokeClass(const char * className, QoreNamespace &qt_ns) : m_qoreClass(0) {
-    m_classId = qt_Smoke->findClass(className);
-    // if the class is already registered, skip
-    if (ClassNamesMap::Instance()->value(m_classId.index)) {
-       return;
-    }
-    if (!m_classId.smoke) {
-       printd(1, "Unknown class %s. Skipping.\n", className);
-       return;
-    }
-
-    m_class = m_classId.smoke->classes[m_classId.index];
-
-    m_qoreClass = getInitClass(m_class.className);
-
-    //printd(5, "QoreSmokeClass::QoreSmokeClass() processing class %s\n", m_class.className);
-
-    if (!QC_QOBJECT && !strcmp(className, "QObject")) {
-        QC_QOBJECT = m_qoreClass;
-        m_qoreClass->addMethodExtended("createSignal", (q_method_t)QOBJECT_createSignal, false, QDOM_DEFAULT, nothingTypeInfo, 1, stringTypeInfo, QORE_PARAM_NO_ARG);
-        m_qoreClass->addMethodExtended("emit", (q_method_t)QOBJECT_emit, false, QDOM_DEFAULT, nothingTypeInfo, 1, stringTypeInfo, QORE_PARAM_NO_ARG);
-        m_qoreClass->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
-        SMI_QOBJECT = m_classId;
-    }
-
-    ClassNamesMap::Instance()->addItem(m_classId.index, m_qoreClass);
-
-    // namespace "enums" constants
-    m_namespace = 0;
-
-    // add own stuff
-    addClassMethods(m_classId.index, true);
-
-    // add parents' stuff
-    addSuperClasses(m_classId.index, qt_ns);
-    
-    if (m_namespace) {
-        qt_ns.addNamespace(m_namespace);
-        m_namespace = 0;
-    }
-
-    qt_ns.addSystemClass(m_qoreClass);
-}
-
-QoreSmokeClass::~QoreSmokeClass() {
-//     if (m_classId.smoke)
-//         assert(!m_namespace);
-}
-
-void QoreSmokeClass::addSuperClasses(Smoke::Index ix, QoreNamespace &qt_ns) {
-    Smoke::Class c = qt_Smoke->classes[ix];
-    for (Smoke::Index *i = qt_Smoke->inheritanceList + c.parents; *i; ++i) {
-        QoreClass *parent = ClassNamesMap::Instance()->value(*i);	
-        if (!parent) {
-            QoreSmokeClass qsc(qt_Smoke->classes[(*i)].className, qt_ns);
-	    if (!qsc.m_qoreClass) {
-	       printd(1, "QoreSmokeClass::addSuperClasses() cannot add %s as base class of %s (class not found)\n", qt_Smoke->classes[(*i)].className, m_qoreClass->getName());
-	       continue;
-	    }
-            parent = qsc.m_qoreClass;
-        }
-        if (QC_QOBJECT && parent == QC_QOBJECT) {
-            m_qoreClass->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
-        }
-        m_qoreClass->addBuiltinVirtualBaseClass(parent);
-
-        addSuperClasses(*i, qt_ns);
-    }
-}
-
-void QoreSmokeClass::addClassMethods(Smoke::Index classIx, bool targetClass) {
-   /*
-     for (int i = 1; i < qt_Smoke->numMethodMaps; ++i) {
-     Smoke::MethodMap &mm = qt_Smoke->methodMaps[i];
-
-     if (classIx != mm.classId) {
-     //printd(0, "QoreSmokeClass::addClassMethods() skipping %d\n", i);
-     continue;
-     }
-   */
-   for (Smoke::Index i = 1; i < qt_Smoke->numMethods; ++i) {
-      Smoke::Method &method = qt_Smoke->methods[i];
-
-      /*
-	Smoke::Method method;
-	if (mm.method > 0) {
-	   method = qt_Smoke->methods[mm.method];
-	}
-	else {
-	   xxx;
-	}
-      */
-	//printd(0, "QoreSmokeClass::addClassMethods() %s i=%d/%d\n", m_qoreClass->getName(), i, qt_Smoke->numMethods);
-
-        if (classIx != method.classId) {
-	   //printd(0, "QoreSmokeClass::addClassMethods() skipping %d\n", i);
-	   continue;
-	}
-
-        const char *methodName = qt_Smoke->methodNames[method.name];
-	//xconst char *mungedName = 0; //qt_Smoke->methodNames[mm.name];
-        bool isPrivate = method.flags & Smoke::mf_protected;
-
-        // only target classes handle enums. Parents do it in their init.
-        if (targetClass && (method.flags & Smoke::mf_enum)) {
-            if (m_namespace == 0)
-                m_namespace = new QoreNamespace(m_class.className);
-            // Enum methods are static, so no object is required: 0
-            Smoke::StackItem arg[1]; // only one item on stack for retval
-            (* m_class.classFn)(method.method, 0, arg);
-
-            //printd(0, "adding enum constant %s::%s (%d)\n", m_class.className, methodName, arg[0].s_enum);
-            Smoke::Type t = qt_Smoke->types[method.ret];
-            m_namespace->addConstant(methodName, new QoreQtEnumNode(arg[0].s_enum, t), enumTypeInfo);
-            continue;
-        }
-
-	// skip parent constructors
-        if ((method.flags & Smoke::mf_ctor) && !targetClass)
-	   continue;
-	
-	//printd(0, "QoreSmokeClass::addClassMethods() %s::%s() i=%d enum=%d static=%d method=%p args=%d\n", m_qoreClass->getName(), methodName, i, method.flags & Smoke::mf_enum, method.flags & Smoke::mf_static, &method, method.numArgs);
-
-	const ClassMap::TypeHandler *th = ClassMap::Instance()->findHandler(m_qoreClass->getName(), methodName, i);
-        if (targetClass && (method.flags & Smoke::mf_dtor)) {
-            assert(!m_qoreClass->getDestructor());
-            m_qoreClass->setDestructor3(th, (q_destructor3_t)common_destructor);
-            continue;
-        }
-
-	// create return and argument type information for method signature
-	type_vec_t argTypeInfo;
-	argTypeInfo.reserve(method.numArgs);
-	Smoke::Index *idx = qt_Smoke->argumentList + method.args;
-	for (unsigned i = 0; i < method.numArgs; ++i) {
-	   assert(idx[i]);
-	   argTypeInfo.push_back(getInitType(qt_Smoke->types[idx[i]], true));
-	}
-
-	// process exceptions (FIXME: find algorithm for identifying where references are needed)
-	if (method.numArgs == 2 && !strcmp(m_qoreClass->getName(), "QPixmap"))
-	   argTypeInfo[1] = referenceTypeInfo;
-
-        if ((method.flags & Smoke::mf_ctor)) {
-	   const QoreMethod *qm = m_qoreClass->getConstructor();
-	   if (qm && qm->existsVariant(argTypeInfo)) {
-	      //printd(0, "QoreSmokeClass::addClassMethods() skipping already-created variant %s::%s()\n", m_qoreClass->getName(), methodName);
-	      continue;
-	   }
-
-	   m_qoreClass->setConstructorExtendedList3(th, (q_constructor3_t)common_constructor, isPrivate, QDOM_DEFAULT, argTypeInfo);
-	   continue;
-        }
-
-	const QoreTypeInfo *returnTypeInfo = getInitType(qt_Smoke->types[method.ret]);
-
-        if (method.flags & Smoke::mf_static) {
-	   // set function pointer for methods with explicit implementations
-	   q_static_method3_t func = (q_static_method3_t)common_static_method;
-	   if (m_qoreClass == QC_QOBJECT && !strcmp(methodName, "connect"))
-	      func = (q_static_method3_t)f_QOBJECT_connect;
-
-	   const QoreMethod *qm = m_qoreClass->findStaticMethod(methodName);
-	   if (qm && qm->existsVariant(argTypeInfo)) {
-	      //printd(0, "QoreSmokeClass::addClassMethods() skipping already-created variant (static) %s::%s()\n", m_qoreClass->getName(), methodName);
-	      continue;
-	   }
-	   
-	   m_qoreClass->addStaticMethodExtendedList3(th, methodName, func, isPrivate, QDOM_DEFAULT, returnTypeInfo, argTypeInfo);
-	   continue;
-        }
-
-	// change name if necessary
-	const char *name = methodName;
-	
-        // common method. See qoreMethodName2Qt().
-        if (!strcmp(methodName, "copy")) {
-	   name = "qt_copy";
-        } else if (!strcmp(methodName, "constructor")) {
-	   name = "qt_constructor";
-        } else if (!strcmp(methodName, "inherits")) {
-	   name = "qt_inherits";
-        }
-	
-	const QoreMethod *qm = m_qoreClass->findMethod(name);
-	if (qm && qm->existsVariant(argTypeInfo)) {
-	   //printd(0, "QoreSmokeClass::addClassMethods() skipping already-created variant %s::%s()\n", m_qoreClass->getName(), name);
-	   continue;
-	}
-
-	q_method3_t func = (q_method3_t)common_method;
-	if (m_qoreClass == QC_QOBJECT && !strcmp(methodName, "connect"))
-	   func = (q_method3_t)QOBJECT_connect;
-	    
-	m_qoreClass->addMethodExtendedList3(th, name, func, isPrivate, QDOM_DEFAULT, returnTypeInfo, argTypeInfo);
-    }
-  
-    if (!strcmp(m_class.className, "QVariant")) {
-       //printd(0, "registered toQore\n");
-       m_qoreClass->addMethod2("toQore", (q_method2_t)Marshalling::return_qvariant);
-    }
 }
 
 static AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *th, const QoreListNode *params, ExceptionSink *xsink) {
