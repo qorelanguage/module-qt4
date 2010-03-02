@@ -12,14 +12,16 @@
 %require-our
 # enable all parse warnings
 %enable-all-warnings
+# require all variables, members, parameters, return types, etc to be declared
+%require-types
 
 class LCDRange inherits QWidget {
     public {
 	QSlider $.slider = new QSlider(Qt::Horizontal);
 	QLabel $.label = new QLabel();
     }
-    constructor(string $text, $parent) : QWidget($parent) {
-	my $lcd = new QLCDNumber(2);
+    constructor(string $text, any $parent) : QWidget($parent) {
+	my QLCDNumber $lcd = new QLCDNumber(2);
 	$lcd.setSegmentStyle(QLCDNumber::Filled);
 
 	# signals must be declared before used - note that the signature should be c/c++ style
@@ -83,7 +85,7 @@ class CannonField inherits QWidget {
 	bool $.barrelPressed;
     }
 
-    constructor($parent) : QWidget($parent) {
+    constructor(any $parent) : QWidget($parent) {
 	# declare dynamic signals
 	$.createSignal("angleChanged(int)");
 	$.createSignal("forceChanged(int)");
@@ -137,7 +139,7 @@ class CannonField inherits QWidget {
 	$.emit("canShoot(bool)", True);
     }
 
-    setAngle($angle) {
+    setAngle(int $angle) {
 	#printf("CannonField::setAngle(%N) called\n", $angle);
 	if ($angle < 5)
 	    $angle = 5;
@@ -150,7 +152,7 @@ class CannonField inherits QWidget {
 	$.emit("angleChanged(int)", $.currentAngle);
     }
 
-    setForce($force) {
+    setForce(int $force) {
 	if ($force < 0)
 	    $force = 0;
 	if ($.currentForce == $force)
@@ -188,11 +190,11 @@ class CannonField inherits QWidget {
 	$painter.drawRect($.barrierRect());
     }
 
-    barrierRect() {
+    barrierRect() returns QRect {
 	return new QRect(145, $.height() - 100, 15, 99);
     }
 
-    barrelHit($pos) {
+    barrelHit(QPoint $pos) returns bool {
 	my QMatrix $matrix = new QMatrix();
 	$matrix.translate(0.0, $.height());
 	$matrix.rotate(-$.currentAngle);
@@ -218,13 +220,13 @@ class CannonField inherits QWidget {
 	$painter.drawRect($.shotRect());
     }
 
-    cannonRect() {
+    cannonRect() returns QRect {
 	my QRect $result = new QRect(0, 0, 50, 50);
 	$result.moveBottomLeft($.rect().bottomLeft());
 	return $result;
     }
 
-    isShooting() {
+    isShooting() returns bool {
 	return $.autoShootTimer.isActive();
     }
 
@@ -262,14 +264,14 @@ class CannonField inherits QWidget {
 	$.update($region);
     }
 
-    mousePressEvent($event) {
+    mousePressEvent(QMouseEvent $event) {
 	if ($event.button() != Qt::LeftButton)
 	    return;
 	if ($.barrelHit($event.pos()))
 	    $.barrelPressed = True;
     }
 
-    mouseMoveEvent($event) {
+    mouseMoveEvent(QMouseEvent $event) {
 	if (!$.barrelPressed)
 	    return;
 	my QPoint $pos = $event.pos();
@@ -283,13 +285,13 @@ class CannonField inherits QWidget {
 	$.setAngle(qRound($rad * 180 / 3.14159265));
     }
 
-    mouseReleaseEvent($event) {
+    mouseReleaseEvent(QMouseEvent $event) {
 	printf("mouseReleaseEvent() arg=%N\n", $event);
 	if ($event.button() == Qt::LeftButton)
 	    $.barrelPressed = False;
     }
 
-    shotRect() {
+    shotRect() returns QRect {
 	my float $gravity = 4.0;
 
 	my float $time = $.timerCount / 20.0;
@@ -308,14 +310,14 @@ class CannonField inherits QWidget {
 	return $result;
     }
 
-    targetRect() {
+    targetRect() returns QRect {
 	my QRect $result = new QRect(0, 0, 20, 10);
 	$result.moveCenter(new QPoint($.target.x(), $.height() - 1 - $.target.y
 				      ()));
 	return $result;
     }
 
-    sizeHint() {
+    sizeHint() returns QSize {
 	return new QSize(400, 300);
     }
 }
@@ -326,7 +328,7 @@ class GameBoard inherits QWidget {
 	QLCDNumber $.hits;
 	QLCDNumber $.shotsLeft;
     }
-    constructor($parent) : QWidget($parent) {
+    constructor(any $parent) : QWidget($parent) {
 	my QPushButton $quit = new QPushButton($.tr("&Quit"));
 	$quit.setFont(new QFont("Times", 18, QFont::Bold));
 
