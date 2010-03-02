@@ -561,7 +561,6 @@ static T get_char(const AbstractQoreNode *node) {
     return (T)(node ? node->getAsInt() : 0);
 }
 
-
 int CommonQoreMethod::returnQtObjectOnStack(Smoke::StackItem &si, const char *cname, const char *mname, const AbstractQoreNode *v, Smoke::Type &t, int index, ExceptionSink *xsink, bool temp) {
     int flags = t.flags & 0x30;
 

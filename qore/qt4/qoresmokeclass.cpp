@@ -201,7 +201,6 @@ void ClassMap::addMethod(QoreClass *qc, const Smoke::Class &c, const Smoke::Meth
 
    bool isPrivate = method.flags & Smoke::mf_protected;
 
-   //if (!strcmp(methodName, "QApplication"))
    //printd(0, "ClassMap::addMethod() %s::%s() enum=%d static=%d method=%p args=%d th=%p\n", qc->getName(), methodName, method.flags & Smoke::mf_enum, method.flags & Smoke::mf_static, &method, method.numArgs, th);
 
    if (method.flags & Smoke::mf_dtor) {
@@ -222,12 +221,6 @@ void ClassMap::addMethod(QoreClass *qc, const Smoke::Class &c, const Smoke::Meth
 	 return;
       argTypeInfo.push_back(typeInfo);
    }
-
-   // process exceptions (FIXME: find algorithm for identifying where references are needed)
-   /*
-   if (method.numArgs == 2 && !strcmp(qc->getName(), "QPixmap"))
-      argTypeInfo[1] = referenceTypeInfo;
-   */
 
    if ((method.flags & Smoke::mf_ctor)) {
       const QoreMethod *qm = qc->getConstructor();
@@ -581,9 +574,6 @@ static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool &valid, bool p
    assert(tid == Smoke::t_class);
 
    if (strchr(f, '<'))
-      return 0;
-
-   if (!strcmp(f, "QVariant"))
       return 0;
 
    // see if the class has been created already

@@ -127,7 +127,6 @@ public:
    }
 };
 
-
 class QVariantTypeHelper : public AbstractQoreClassTypeInfoHelper {
 protected:
    DLLLOCAL bool canConvertIntern(qore_type_t t, const QoreClass *qc) const;

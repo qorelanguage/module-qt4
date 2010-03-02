@@ -88,6 +88,7 @@ bool QColorTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Exceptio
 
 
 bool QVariantTypeHelper::canConvertIntern(qore_type_t t, const QoreClass *qc) const {
+   //printd(5, "QVariantTypeHelper::canConvertIntern() t=%d qc=%s\n", t, qc ? qc->getName() : "n/a");
    if (t == NT_QTENUM)
       return true;
 
