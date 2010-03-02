@@ -127,7 +127,7 @@ public:
    DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
       qore_type_t t = n ? n->getType() : NT_NOTHING;
       const QoreClass *qc = t == NT_OBJECT ? reinterpret_cast<const QoreObject *>(n)->getClass() : 0;
-      return canConvertIntern(t, qc, qc ? 0 : n->getTypeName()) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      return canConvertIntern(t, qc, qc ? 0 : get_type_name(n)) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
    DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
       qore_type_t t = typeInfo ? typeInfoGetType(typeInfo) : NT_NOTHING;

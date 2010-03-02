@@ -59,7 +59,7 @@ bool QBrushTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Exceptio
    QBrush *br;
     
    const char *name = n->getTypeName();
-   printd(0, "QBrushTypeHelper::checkTypeInstantiationImpl() this=%p checking %s\n", this, name);
+   //printd(0, "QBrushTypeHelper::checkTypeInstantiationImpl() this=%p checking %s\n", this, name);
    if (!strcmp(name, "Qt::BrushStyle")) {
       Qt::BrushStyle i = (Qt::BrushStyle)in->val;
       br = new QBrush(i);
