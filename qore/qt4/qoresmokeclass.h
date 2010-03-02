@@ -500,6 +500,12 @@ public:
       return i != enummap.end() ? i.value()->getTypeInfo() : 0;
    }
   
+   DLLLOCAL QoreQtEnumNode *getRunTimeEnumValue(const char *name, int64 val) {
+      NameToEnumType::iterator i = enummap.find(name);
+      assert(i != enummap.end());
+      return i.value()->newValue(val);
+   }
+  
    // enum type must already exist, otherwise we have to use locking for all accesses to the list
    DLLLOCAL QoreQtEnumNode *getRunTimeEnumValue(const Smoke::Type &t, int64 val) {
       NameToEnumType::iterator i = enummap.find(t.name);

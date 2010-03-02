@@ -110,10 +110,13 @@ AbstractQoreNode * QtContainerToQore::listToQByteArray(const Smoke::Type &t, voi
 
 template<class QLISTT>
 AbstractQoreNode * QtContainerToQore::listToEnum(const Smoke::Type &t, void* ptr, ExceptionSink *xsink) {
+   QByteArray name = t.name + 6;
+   name.chop(1);
+
     ReferenceHolder<QoreListNode> retList(new QoreListNode(), xsink);
     QLISTT* l = static_cast<QLISTT*>(ptr);
     for (int i = 0; i < l->count(); ++i)
-       retList->push(ClassMap::Instance()->getRunTimeEnumValue(t, l->at(i)));
+       retList->push(ClassMap::Instance()->getRunTimeEnumValue(name.constData(), l->at(i)));
     return retList.release();
 }
 
