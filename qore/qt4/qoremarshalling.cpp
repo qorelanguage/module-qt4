@@ -551,7 +551,7 @@ QoreToQtContainer::QoreToQtContainer() {
 //     m_map["QVector<QTextLength>
 }
 
-
+// delete me when possible
 QoreQVariant *qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * node, ExceptionSink * xsink) {
 //     printd(0, "Marshalling::qoreToQVariant %s %d\n", t.name, node ? node->getType() : 0);
     std::auto_ptr<QoreQVariant> ret(new QoreQVariant());

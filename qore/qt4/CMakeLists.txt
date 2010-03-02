@@ -18,6 +18,7 @@ set(qoreqt_LIB_SRCS
     qoreqtenumnode.cpp
     qtfunctions.cpp
     qoreqtdynamicmethod.cpp
+    typeinfohelpers.cpp
 )
 
 SET (module_name "qt4")

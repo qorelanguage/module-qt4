@@ -168,6 +168,9 @@ public:
 };
 
 //! Convert Qore to QVaraint
+DLLLOCAL QoreObject *qoreToQVariantObject(const AbstractQoreNode *node, ExceptionSink *xsink);
+DLLLOCAL bool canConvertToQVariant(qore_type_t t);
+
 DLLLOCAL QoreQVariant * qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * node, ExceptionSink * xsink);
 
 /*! Helper function for CommonQoreMethod::getScore().
