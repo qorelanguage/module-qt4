@@ -91,6 +91,42 @@ public:
    }
 };
 
+class QBrushTypeHelper : public AbstractQoreClassTypeInfoHelper {
+public:
+   DLLLOCAL QBrushTypeHelper() : AbstractQoreClassTypeInfoHelper("QBrush", QDOM_GUI) {
+   }
+
+   DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+      const QoreBigIntNode *in = dynamic_cast<QoreBigIntNode *>(n);
+      if (!in)
+	 return false;
+
+      QBrush *br;
+      if (n->getType() == NT_QTENUM && reinterpret_cast<QoreQtEnumNode *>(n)->isEnum("Qt::BrushStyle")) {
+	 Qt::BrushStyle i = (Qt::BrushStyle)in->val;
+	 br = new QBrush(i);
+      }
+      else {
+	 // assume Qt::GlobalColor
+	 Qt::GlobalColor i = (Qt::GlobalColor)in->val;
+	 br = new QBrush(i);
+      }
+
+      QoreObject *rv = new QoreObject(QC_QBRUSH, getProgram());
+      QoreSmokePrivateData *data = new QoreSmokePrivateData(SCI_QBRUSH, br, rv);
+      rv->setPrivate(QC_QBRUSH->getID(), data);
+      n->deref(xsink);
+      n = rv;
+      return true;
+   }
+   DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
+      return dynamic_cast<const QoreBigIntNode *>(n) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+   }
+   DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
+      return typeInfo && (typeInfoGetType(typeInfo) == NT_INT || typeInfoGetType(typeInfo) == NT_QTENUM) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+   }
+};
+
 class QWidgetTypeHelper : public AbstractQoreClassTypeInfoHelper {
 public:
    DLLLOCAL QWidgetTypeHelper() : AbstractQoreClassTypeInfoHelper("QWidget", QDOM_GUI) {

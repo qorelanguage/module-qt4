@@ -44,11 +44,15 @@ public:
     DLLLOCAL ~QoreQtEnumNode() {
     }
 
-    Smoke::Type smokeType() const {
+    DLLLOCAL Smoke::Type smokeType() const {
         return m_type;
     }
 
-    int64 value() const {
+    DLLLOCAL bool isEnum(const char *n) const {
+       return !strcmp(n, m_type.name);
+    }
+
+    DLLLOCAL int64 value() const {
         return val;
     }
 

@@ -73,7 +73,8 @@ const QoreClass *QC_QOBJECT = 0, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIA
    *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QTREEWIDGETITEM, *QC_QLISTWIDGETITEM, *QC_QBYTEARRAY,
    *QC_QRECT, *QC_QREGION;
 
-Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON, SCI_QRECT, SCI_QREGION, SCI_QCOLOR, SCI_QPIXMAP;
+Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON, SCI_QRECT, SCI_QREGION, SCI_QCOLOR, SCI_QPIXMAP,
+   SCI_QBRUSH;
 
 extern Smoke* qt_Smoke;
 
@@ -529,7 +530,7 @@ static QoreStringNode *qt_module_init() {
     setClassInfo(QC_QVARIANT, SCI_QVARIANT, "QVariant");
     setClassInfo(QC_QLOCALE, SCI_QLOCALE, "QLocale");
     setClassInfo(QC_QCOLOR, SCI_QCOLOR, "QColor");
-    setClassInfo(QC_QBRUSH, "QBrush");
+    setClassInfo(QC_QBRUSH, SCI_QBRUSH, "QBrush");
     setClassInfo(QC_QDATE, "QDate");
     setClassInfo(QC_QDATETIME, "QDateTime");
     setClassInfo(QC_QTIME, "QTime");

@@ -19,38 +19,38 @@ class Window inherits QWidget {
         $.createGeneralOptionsGroupBox();
         $.createDatesGroupBox();
         $.createTextFormatsGroupBox();
-        
-        my $layout = new QGridLayout();
+
+        my QGridLayout $layout();
         $layout.addWidget($.previewGroupBox, 0, 0);
         $layout.addWidget($.generalOptionsGroupBox, 0, 1);
         $layout.addWidget($.datesGroupBox, 1, 0);
         $layout.addWidget($.textFormatsGroupBox, 1, 1);
         $layout.setSizeConstraint(QLayout::SetFixedSize);
         $.setLayout($layout);
-        
+
         $.previewLayout.setRowMinimumHeight(0, $.calendar.sizeHint().height());
         $.previewLayout.setColumnMinimumWidth(0, $.calendar.sizeHint().width());
-        
-        $.setWindowTitle($.tr("Calendar Widget"));        
+
+        $.setWindowTitle($.tr("Calendar Widget"));
     }
 
-    localeChanged($index) {
+    localeChanged(int $index) {
 	$.calendar.setLocale($.localeCombo.itemData($index).toQore());
     }
 
-    firstDayChanged($index) {
+    firstDayChanged(int $index) {
         $.calendar.setFirstDayOfWeek($.firstDayCombo.itemData($index).toQore());
     }
 
-    selectionModeChanged($index) {
+    selectionModeChanged(int $index) {
         $.calendar.setSelectionMode($.selectionModeCombo.itemData($index).toQore());
     }
 
-    horizontalHeaderChanged($index) {
+    horizontalHeaderChanged(int $index) {
         $.calendar.setHorizontalHeaderFormat($.horizontalHeaderCombo.itemData($index).toQore());
     }
 
-    verticalHeaderChanged($index) {
+    verticalHeaderChanged(int $index) {
         $.calendar.setVerticalHeaderFormat($.verticalHeaderCombo.itemData($index).toQore());
     }
 
@@ -69,7 +69,7 @@ class Window inherits QWidget {
     }
 
     weekdayFormatChanged() {
-        my $format = new QTextCharFormat();
+        my QTextCharFormat $format(); 
         
         $format.setForeground(new QBrush($.weekdayColorCombo.itemData($.weekdayColorCombo.currentIndex()).toQore()));
         $.calendar.setWeekdayTextFormat(Qt::Monday, $format);
@@ -80,7 +80,7 @@ class Window inherits QWidget {
     }
 
     weekendFormatChanged() {
-        my $format = new QTextCharFormat();
+        my QTextCharFormat $format();
         
         $format.setForeground(new QBrush($.weekendColorCombo.itemData($.weekendColorCombo.currentIndex()).toQore()));
         $.calendar.setWeekdayTextFormat(Qt::Saturday, $format);
@@ -89,7 +89,7 @@ class Window inherits QWidget {
 
     reformatHeaders() {
         my $text = $.headerTextFormatCombo.currentText();
-        my $format = new QTextCharFormat();
+        my QTextCharFormat $format(); 
         
         if ($text == $.tr("Bold")) {
             $format.setFontWeight(QFont::Bold);
@@ -103,15 +103,15 @@ class Window inherits QWidget {
     }
 
     reformatCalendarPage() {
-        my $mayFirstFormat = new QTextCharFormat();
+        my QTextCharFormat $mayFirstFormat();
         if ($.mayFirstCheckBox.isChecked())
             $mayFirstFormat.setForeground(Qt::red);
         
-        my $firstFridayFormat = new QTextCharFormat();
+        my QTextCharFormat $firstFridayFormat();
         if ($.firstFridayCheckBox.isChecked())
             $firstFridayFormat.setForeground(Qt::blue);
         
-        my $date = new QDate($.calendar.selectedDate());
+        my QDate $date($.calendar.selectedDate());
 
         $.calendar.setDateTextFormat(new QDate($date.year(), 5, 1), $mayFirstFormat);
         
@@ -172,7 +172,7 @@ class Window inherits QWidget {
         
         $.firstDayLabel = new QLabel($.tr("Wee&k starts on:"));
         $.firstDayLabel.setBuddy($.firstDayCombo);
-        
+
         $.selectionModeCombo = new QComboBox();
         $.selectionModeCombo.addItem($.tr("Single selection"), QCalendarWidget::SingleSelection);
         $.selectionModeCombo.addItem($.tr("None"), QCalendarWidget::NoSelection);
@@ -210,12 +210,12 @@ class Window inherits QWidget {
         $.connect($.horizontalHeaderCombo,       SIGNAL("currentIndexChanged(int)"), SLOT("horizontalHeaderChanged(int)"));
         $.connect($.verticalHeaderCombo,         SIGNAL("currentIndexChanged(int)"), SLOT("verticalHeaderChanged(int)"));
         
-        my $checkBoxLayout = new QHBoxLayout();
+        my QHBoxLayout $checkBoxLayout(); 
         $checkBoxLayout.addWidget($.gridCheckBox);
         $checkBoxLayout.addStretch();
         $checkBoxLayout.addWidget($.navigationCheckBox);
-        
-        my $outerLayout = new QGridLayout();
+					     
+        my QGridLayout $outerLayout();
         $outerLayout.addWidget($.localeLabel, 0, 0);
         $outerLayout.addWidget($.localeCombo, 0, 1);
         $outerLayout.addWidget($.firstDayLabel, 1, 0);

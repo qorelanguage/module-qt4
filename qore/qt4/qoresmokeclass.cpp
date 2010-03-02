@@ -61,6 +61,7 @@ QRegionTypeHelper typeHelperQRegion;
 QWidgetTypeHelper typeHelperQWidget;
 QColorTypeHelper  typeHelperQColor;
 QVariantTypeHelper typeHelperQVariant;
+QBrushTypeHelper typeHelperQBrush;
 
 const QoreMethod *findUserMethod(const QoreClass *qc, const char *name) {
     const QoreMethod *m = qc->findMethod(name);
@@ -193,6 +194,7 @@ void ClassMap::addMethod(QoreClass *qc, const Smoke::Class &c, const Smoke::Meth
       
       //printd(0, "adding enum constant %s::%s (%d)\n", c.className, methodName, arg[0].s_enum);
       Smoke::Type t = qt_Smoke->types[method.ret];
+      
       ns->addConstant(methodName, new QoreQtEnumNode(arg[0].s_enum, t), enumTypeInfo);
       return;
    }
@@ -466,6 +468,8 @@ static QoreClass *getNewClass(Smoke::Index ix, const Smoke::Class &c) {
       qc = typeHelperQColor.getClass();
    else if (typeHelperQVariant.hasClass() && !strcmp(name, "QVariant"))
       qc = typeHelperQVariant.getClass();
+   else if (typeHelperQBrush.hasClass() && !strcmp(name, "QBrush"))
+      qc = typeHelperQBrush.getClass();
    else
       qc = new QoreClass(name, QDOM_GUI);
 
