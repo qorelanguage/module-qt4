@@ -732,7 +732,9 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
             cqm->getRefEntry(index - 1)->assign(v ? v->getAsBool() : false);
         } else if (isptrtype(name, "QKeySequence")
                    && v
-                   && (v->getType() == NT_QTENUM || v->getType() == NT_INT || v->getType() == NT_STRING)) {
+                   && ( //v->getType() == NT_QTENUM || 
+		      v->getType() == NT_INT || v->getType() == NT_STRING)) {
+	   /*
             if (v->getType() == NT_QTENUM) {
                 const QoreQtEnumNode *en = reinterpret_cast<const QoreQtEnumNode *>(v);
                 if (strcmp(en->smokeType().name, "Qt::Key")) {
@@ -740,6 +742,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                     return -1;
                 }
             }
+	   */
             if (v->getType() == NT_STRING) {
                 if (cqm) {
                     ref_store_s *re = cqm->getRefEntry(index - 1);
@@ -761,7 +764,9 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
             }
             return 0;
         } else if (v && isptrtype(name, "QBrush")) {
-            if ((v->getType() == NT_QTENUM || v->getType() == NT_INT)) {
+	   if (           //v->getType() == NT_QTENUM ||
+	      v->getType() == NT_INT) {
+	      /*
                 if (v->getType() == NT_QTENUM) {
                     const QoreQtEnumNode *en = reinterpret_cast<const QoreQtEnumNode *>(v);
                     if (strcmp(en->smokeType().name, "Qt::GlobalColor")) {
@@ -769,6 +774,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                         return -1;
                     }
                 }
+	      */
                 if (cqm) {
                     ref_store_s *re = cqm->getRefEntry(index - 1);
                     re->assign(new QBrush((Qt::GlobalColor)v->getAsInt()));
@@ -795,8 +801,10 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                 }
             }
             return returnQtObjectOnStack(si, className, methodName, v, t, index, xsink, temp);
-        } else if (isptrtype(name, "QPen") && v && (v->getType() == NT_QTENUM || v->getType() == NT_INT)) {
+        } else if (isptrtype(name, "QPen") && v && (//v->getType() == NT_QTENUM || 
+		      v->getType() == NT_INT)) {
             assert(iconst);
+/*
             if (v->getType() == NT_QTENUM) {
                 const QoreQtEnumNode *en = reinterpret_cast<const QoreQtEnumNode *>(v);
                 if (!strcmp(en->smokeType().name, "Qt::GlobalColor")) {
@@ -824,8 +832,11 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                 xsink->raiseException("QT-ARGUMENT-ERROR", "%s::%s() expects QPen, cannot convert from %s value passed", className, methodName, en->smokeType().name);
                 return -1;
             }
-        } else if (isptrtype(name, "QColor") && v && (v->getType() == NT_QTENUM || v->getType() == NT_INT)) {
+*/
+        } else if (isptrtype(name, "QColor") && v && (//v->getType() == NT_QTENUM || 
+		      v->getType() == NT_INT)) {
             assert(iconst);
+/*
             if (v->getType() == NT_QTENUM) {
                 const QoreQtEnumNode *en = reinterpret_cast<const QoreQtEnumNode *>(v);
                 if (strcmp(en->smokeType().name, "Qt::GlobalColor")) {
@@ -833,6 +844,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                     return -1;
                 }
             }
+*/
             if (cqm) {
                 ref_store_s *re = cqm->getRefEntry(index - 1);
                 re->assign(new QColor((Qt::GlobalColor)v->getAsInt()));

@@ -35,30 +35,13 @@ public:
    }
    DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
       //printd(0, "QoreQtIntCompatibleTypeInfoHelper::checkTypeInstantiationImpl() this=%p n=%p (%s)\n", this, n, n ? n->getTypeName() : "NOTHING");
-      if (!n)
-	 return false;
-
-      if (n->getType() == NT_QTENUM) {
-	 QoreBigIntNode *rv = new QoreBigIntNode(reinterpret_cast<QoreQtEnumNode *>(n)->value());
-	 n->deref(xsink);
-	 n = rv;
-	 return true;
-      }
-      return n->getType() == NT_INT ? true : false;
+      return dynamic_cast<QoreBigIntNode *>(n) ? true : false;
    }
    DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
       //printd(0, "QoreQtIntCompatibleTypeInfoHelper::testTypeCompatibilityImpl() this=%p n=%p (%s)\n", this, n, n ? n->getTypeName() : "NOTHING");
-      if (!n) return QTI_NOT_EQUAL;
-      if (n->getType() == NT_INT) return QTI_IDENT;
-      return n->getType() == NT_QTENUM ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      return dynamic_cast<const QoreBigIntNode *>(n) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
-   DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
-      //printd(0, "QoreQtIntCompatibleTypeInfoHelper::parseEqualImpl() this=%p typeInfo=%s\n", this, typeInfoGetName(typeInfo));
-      if (!typeInfo) return QTI_NOT_EQUAL;
-      qore_type_t t = typeInfoGetType(typeInfo);
-      if (t == NT_INT) return QTI_IDENT;
-      return t == NT_QTENUM ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
-   }
+   DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const;
 };
 
 class QRegionTypeHelper : public AbstractQoreClassTypeInfoHelper {
@@ -86,10 +69,16 @@ public:
    DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
 
    DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
-      return dynamic_cast<const QoreBigIntNode *>(n) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      if (!n) return QTI_NOT_EQUAL;
+      const char *tn = n->getTypeName();
+      //printd(0, "QBrushTypeHelper::testTypeCompatibilityImpl() this=%p checking %s\n", this, tn);
+      return !strcmp(tn, "Qt::GlobalColor") || !strcmp(tn, "Qt::BrushStyle") ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
    DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
-      return typeInfo && (typeInfoGetType(typeInfo) == NT_INT || typeInfoGetType(typeInfo) == NT_QTENUM) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      if (!typeInfo) return QTI_NOT_EQUAL;
+      const char *tn = typeInfoGetName(typeInfo);
+      //printd(0, "QBrushTypeHelper::parseEqualImpl() this=%p checking %s\n", this, tn);
+      return !strcmp(tn, "Qt::GlobalColor") || !strcmp(tn, "Qt::BrushStyle") ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
 };
 
@@ -118,18 +107,17 @@ public:
 
    DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
       if (!n) return QTI_NOT_EQUAL;
-      return n->getType() == NT_QTENUM ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      return !strcmp(n->getTypeName(), "Qt::GlobalColor") ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
    DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
       if (!typeInfo) return QTI_NOT_EQUAL;
-      qore_type_t t = typeInfoGetType(typeInfo);
-      return t == NT_QTENUM ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      return !strcmp(typeInfoGetName(typeInfo), "Qt::GlobalColor") ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
 };
 
 class QVariantTypeHelper : public AbstractQoreClassTypeInfoHelper {
 protected:
-   DLLLOCAL bool canConvertIntern(qore_type_t t, const QoreClass *qc) const;
+   DLLLOCAL bool canConvertIntern(qore_type_t t, const QoreClass *qc, const char *name) const;
 
 public:
    DLLLOCAL QVariantTypeHelper() : AbstractQoreClassTypeInfoHelper("QVariant", QDOM_GUI) {
@@ -139,12 +127,12 @@ public:
    DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
       qore_type_t t = n ? n->getType() : NT_NOTHING;
       const QoreClass *qc = t == NT_OBJECT ? reinterpret_cast<const QoreObject *>(n)->getClass() : 0;
-      return canConvertIntern(t, qc) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      return canConvertIntern(t, qc, qc ? 0 : n->getTypeName()) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
    DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
       qore_type_t t = typeInfo ? typeInfoGetType(typeInfo) : NT_NOTHING;
       const QoreClass *qc = typeInfo ? typeInfoGetClass(typeInfo) : 0;
-      return canConvertIntern(t, qc) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      return canConvertIntern(t, qc, qc ? 0 : typeInfoGetName(typeInfo)) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
 };
 

@@ -113,7 +113,7 @@ AbstractQoreNode * QtContainerToQore::listToEnum(const Smoke::Type &t, void* ptr
     ReferenceHolder<QoreListNode> retList(new QoreListNode(), xsink);
     QLISTT* l = static_cast<QLISTT*>(ptr);
     for (int i = 0; i < l->count(); ++i)
-        retList->push(new QoreQtEnumNode(l->at(i), t));
+       retList->push(ClassMap::Instance()->getRunTimeEnumValue(t, l->at(i)));
     return retList.release();
 }
 
@@ -562,10 +562,12 @@ QoreQVariant *qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * nod
         return ret.release();
     }
 
+/*
     if (node->getType() == NT_QTENUM) {
         ret->qvariant = QVariant(node->getAsInt());
         return ret.release();
     }
+*/
 
     switch (node->getType()) {
     case NT_INT:
@@ -652,10 +654,11 @@ QoreQVariant *qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * nod
 }
 
 QoreQVariant::Status qoreToQVariantScore(const Smoke::Type & t, const AbstractQoreNode * node, ExceptionSink * xsink) {
+/*
     if (node->getType() == NT_QTENUM) {
         return QoreQVariant::Valid;
     }
-
+*/
     switch (node->getType()) {
     case 0: // NOTHING
     case NT_INT:
@@ -841,7 +844,7 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
     case Smoke::t_double:
         return new QoreFloatNode(i.s_double);
     case Smoke::t_enum:
-        return new QoreQtEnumNode(i.s_enum, t);
+       return ClassMap::Instance()->getRunTimeEnumValue(t, i.s_enum);
     case Smoke::t_voidp: {
         QByteArray tname(t.name);
 

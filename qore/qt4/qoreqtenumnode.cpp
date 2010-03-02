@@ -20,8 +20,6 @@
 
 #include "qoreqtenumnode.h"
 
-qore_type_t NT_QTENUM = -1;
-
 QoreString * QoreQtEnumNode::getStringRepresentation(bool &del) const {
     del = true;
     QoreString *str = new QoreString();
@@ -58,9 +56,9 @@ int QoreQtEnumNode::getAsString(QoreString &str, int foff, class ExceptionSink *
     return 0;
 }
 
-class AbstractQoreNode *QoreQtEnumNode::realCopy() const {
-        return new QoreQtEnumNode(val, m_type);
-    }
+AbstractQoreNode *QoreQtEnumNode::realCopy() const {
+   return new QoreQtEnumNode(type, val, m_type);
+}
 
 bool QoreQtEnumNode::is_equal_soft(const AbstractQoreNode *v, ExceptionSink *xsink) const {
     return (v ? v->getAsInt() : 0) == val;
@@ -78,7 +76,7 @@ bool QoreQtEnumNode::is_equal_hard(const AbstractQoreNode *v, ExceptionSink *xsi
 
 // returns the type name as a c string
 const char * QoreQtEnumNode::getTypeName() const {
-    return getStaticTypeName();
+   return m_type.name;
 }
 
 const char * QoreQtEnumNode::getStaticTypeName() {

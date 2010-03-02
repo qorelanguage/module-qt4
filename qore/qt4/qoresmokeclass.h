@@ -35,6 +35,7 @@
 #include <set>
 
 #include "qoreqtdynamicmethod.h"
+#include "qoreqtenumnode.h"
 
 // Custom AbstractPrivateData for any Qt object to be used as
 // a Qore object private member. See Qore object/classes implementation.
@@ -466,6 +467,7 @@ public:
    typedef QMultiMap<QByteArray,TypeHandler> MungledToTypes;
    typedef QMap<QByteArray,MungledToTypes> MethodToMungleds;
    typedef QMap<QByteArray,MethodToMungleds> ClassToMethods;
+   typedef QMap<QByteArray,QoreEnumTypeInfoHelper *> NameToEnumType;
 
 #ifdef DEBUG
     // "unit" test
@@ -480,6 +482,31 @@ public:
       return &m_map[className][methodName];
    }
 
+   DLLLOCAL const QoreTypeInfo *getEnumTypeInfo(const Smoke::Type &t) {
+      return internGetEnumTypeInfoHelper(t)->getTypeInfo();
+   }
+
+   DLLLOCAL QoreQtEnumNode *getEnumValue(const Smoke::Type &t, int64 value) {
+      return internGetEnumTypeInfoHelper(t)->newValue(value);
+   }
+
+   DLLLOCAL bool checkEnum(const char *name) {
+      NameToEnumType::iterator i = enummap.find(name);
+      return i != enummap.end() ? true : false;
+   }
+  
+   DLLLOCAL const QoreTypeInfo *getEnumType(const char *name) {
+      NameToEnumType::iterator i = enummap.find(name);
+      return i != enummap.end() ? i.value()->getTypeInfo() : 0;
+   }
+  
+   // enum type must already exist, otherwise we have to use locking for all accesses to the list
+   DLLLOCAL QoreQtEnumNode *getRunTimeEnumValue(const Smoke::Type &t, int64 val) {
+      NameToEnumType::iterator i = enummap.find(t.name);
+      assert(i != enummap.end());
+      return i.value()->newValue(val);
+   }
+
 //     TypeList *availableTypes(const char *className, const char *methodName, const char *mungedName) {
 //         assert(m_map[className][methodName][mungedName].types.count() != 0);
 //         return &m_map[className][methodName][mungedName].types;
@@ -488,29 +515,25 @@ public:
 
    DLLLOCAL static void init() {
       assert(!m_instance);
-      m_instance = new ClassMap();
+      new ClassMap();
    }
    DLLLOCAL static ClassMap* Instance() {
       assert(m_instance);
       return m_instance;
    }
-   DLLLOCAL const TypeHandler *findHandler(const char *cls, const char *meth, Smoke::Index method) {
-      for (MungledToTypes::iterator i = m_map[cls][meth].begin(), e = m_map[cls][meth].end(); i != e; ++i) 
-	 if (i.value().method == method)
-	    return &i.value();
-      
-      printd(0, "ClassMap::findHandler(cls=%s, meth=%s, method=%d) NOT FOUND!!!!!!!!!\n", cls, meth, method);
-      assert(false);
-      return 0;
-   }
 
    DLLLOCAL void addArgHandler(const char *cls, const char *meth, const char *munged, arg_handler_t arg_handler);
    DLLLOCAL void addArgHandler(const char *cls, const char *meth, arg_handler_t arg_handler);
    DLLLOCAL void registerMethod(const char *class_name, const char *method_name, const char *munged_name, Smoke::Index method_index, TypeHandler &type_handler, const QoreTypeInfo *returnType = 0, const type_vec_t &argTypeList = type_vec_t());
+
+   DLLLOCAL static void del() {
+      delete m_instance;
+   }
    
 private:
    ClassToMethods m_map;
    NameToNamespace nsmap;
+   NameToEnumType enummap;
 
    DLLLOCAL static ClassMap * m_instance;
 
@@ -522,7 +545,10 @@ private:
    DLLLOCAL ClassMap(const ClassMap &);
    //ClassMap& operator=(const ClassMap&) {};
    DLLLOCAL ~ClassMap() {
-      delete m_instance;
+      for (NameToEnumType::iterator i = enummap.begin(), e = enummap.end(); i != e; ++i)
+	 delete i.value();
+
+      m_instance = 0;
    }
    
    DLLLOCAL static void addBaseClasses();
@@ -535,7 +561,14 @@ private:
       nsmap[name] = ns;
       return ns;
    }
-  
+
+   DLLLOCAL const QoreEnumTypeInfoHelper *internGetEnumTypeInfoHelper(const Smoke::Type &t) {
+      NameToEnumType::iterator i = enummap.find(t.name);
+      if (i == enummap.end())
+	 i = enummap.insert(t.name, new QoreEnumTypeInfoHelper(t));
+      return i.value();
+   }
+
    DLLLOCAL void addMethod(QoreClass *qc, const Smoke::Class &c, const Smoke::Method &method, const TypeHandler *th);
 };
 
@@ -544,28 +577,32 @@ private:
 // from Qt library.
 class ClassNamesMap {
 public:
-    bool contains(Smoke::Index ix) {
+   DLLLOCAL bool contains(Smoke::Index ix) {
         return m_map.contains(ix);
     };
-    bool contains(const QByteArray & name) {
+   DLLLOCAL bool contains(const QByteArray & name) {
         return contains(qt_Smoke->findClass(name.constData()).index);
     }
-    void addItem(Smoke::Index key, QoreClass* value) {
+   DLLLOCAL void addItem(Smoke::Index key, QoreClass* value) {
         m_map[key] = value;
     };
-    QoreClass* value(Smoke::Index key) {
+   DLLLOCAL QoreClass* value(Smoke::Index key) {
         return m_map.value(key);
     };
-    QoreClass* value(const QByteArray & name) {
+   DLLLOCAL QoreClass* value(const QByteArray & name) {
         return value(qt_Smoke->findClass(name.constData()).index);
     };
 
-    static ClassNamesMap* Instance() {
+   DLLLOCAL static ClassNamesMap* Instance() {
         if (!m_instance) {
             m_instance = new ClassNamesMap();
         }
         return m_instance;
     }
+   
+   DLLLOCAL static void del() {
+      delete m_instance;
+   }
 
 private:
     static ClassNamesMap * m_instance;
@@ -575,7 +612,7 @@ private:
     ClassNamesMap(const ClassNamesMap &);
     //ClassNamesMap& operator=(const ClassNamesMap&) {};
     ~ClassNamesMap() {
-        delete m_instance;
+       m_instance = 0;
     }
 };
 

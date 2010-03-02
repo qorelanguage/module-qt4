@@ -62,9 +62,6 @@ DLLEXPORT qore_license_t qore_module_license = QL_GPL;
 
 qore_type_t QoreQtIntCompatibleTypeInfoHelper::fake_id = 0;
 
-static QoreEnumTypeInfoHelper enumTypeInfoHelper;
-const QoreTypeInfo *enumTypeInfo;
-
 static QoreQtIntCompatibleTypeInfoHelper qtIntTypeInfoHelper;
 const QoreTypeInfo *qtIntTypeInfo;
 
@@ -508,11 +505,6 @@ static QoreStringNode *qt_module_init() {
         return 0;
     }
 
-    // register special nodes
-    QoreQtEnumNode::registerType();
-    enumTypeInfoHelper.assign(NT_QTENUM);
-    enumTypeInfo = enumTypeInfoHelper.getTypeInfo();
-
     // register all classes and methods
     ClassMap::init();
 
@@ -675,6 +667,8 @@ static void qt_module_ns_init(QoreNamespace *rns, QoreNamespace *qns) {
 }
 
 static void qt_module_delete() {
+   ClassNamesMap::del();
+   ClassMap::del();
 //     printd(0, "Qt module delete\n");
-    delete qt_Smoke;
+   delete qt_Smoke;
 }

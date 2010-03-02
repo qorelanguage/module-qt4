@@ -73,6 +73,7 @@ static QoreClass *newClass(Smoke::Index ix, const Smoke::Class &c);
 static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool &valid, bool param = false);
 
 ClassMap::ClassMap() {
+   m_instance = this;
    QoreClass *qc = 0;
    QByteArray mname;
    for (int i = 1; i < qt_Smoke->numMethodMaps; ++i) {
@@ -195,7 +196,7 @@ void ClassMap::addMethod(QoreClass *qc, const Smoke::Class &c, const Smoke::Meth
       //printd(0, "adding enum constant %s::%s (%d)\n", c.className, methodName, arg[0].s_enum);
       Smoke::Type t = qt_Smoke->types[method.ret];
       
-      ns->addConstant(methodName, new QoreQtEnumNode(arg[0].s_enum, t), enumTypeInfo);
+      ns->addConstant(methodName, getEnumValue(t, arg[0].s_enum));
       return;
    }
 
@@ -532,7 +533,7 @@ static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool &valid, bool p
       case Smoke::t_double:
 	 return floatTypeInfo;
       case Smoke::t_enum:
-	 return enumTypeInfo;
+	 return ClassMap::Instance()->getEnumTypeInfo(t);
       case Smoke::t_voidp:
       case Smoke::t_class:
 	 break;

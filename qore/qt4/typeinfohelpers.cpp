@@ -25,6 +25,14 @@
 
 #include <QIcon>
 
+int QoreQtIntCompatibleTypeInfoHelper::parseEqualImpl(const QoreTypeInfo *typeInfo) const {
+   //printd(0, "QoreQtIntCompatibleTypeInfoHelper::parseEqualImpl() this=%p typeInfo=%s\n", this, typeInfoGetName(typeInfo));
+   if (!typeInfo) return QTI_NOT_EQUAL;
+   qore_type_t t = typeInfoGetType(typeInfo);
+   if (t == NT_INT) return QTI_IDENT;
+   return ClassMap::Instance()->checkEnum(typeInfoGetName(typeInfo)) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+}
+
 bool QRegionTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
    if (!n || n->getType() != NT_OBJECT)
       return false;
@@ -49,16 +57,20 @@ bool QBrushTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Exceptio
       return false;
 
    QBrush *br;
-   if (n->getType() == NT_QTENUM && reinterpret_cast<QoreQtEnumNode *>(n)->isEnum("Qt::BrushStyle")) {
+    
+   const char *name = n->getTypeName();
+   printd(0, "QBrushTypeHelper::checkTypeInstantiationImpl() this=%p checking %s\n", this, name);
+   if (!strcmp(name, "Qt::BrushStyle")) {
       Qt::BrushStyle i = (Qt::BrushStyle)in->val;
       br = new QBrush(i);
    }
-   else {
-      // assume Qt::GlobalColor
+   else if (!strcmp(name, "Qt::GlobalColor")) {
       Qt::GlobalColor i = (Qt::GlobalColor)in->val;
       br = new QBrush(i);
    }
-
+   else
+      return false;
+   
    QoreObject *rv = new QoreObject(QC_QBRUSH, getProgram());
    QoreSmokePrivateData *data = new QoreSmokePrivateData(SCI_QBRUSH, br, rv);
    rv->setPrivate(QC_QBRUSH->getID(), data);
@@ -71,27 +83,24 @@ bool QColorTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Exceptio
    if (!n)
       return false;
 
-   if (n->getType() == NT_QTENUM) {
-      // FIXME: check enum type here
-      Qt::GlobalColor gc = (Qt::GlobalColor)reinterpret_cast<QoreQtEnumNode *>(n)->value();
-      n->deref(xsink);
+   const char *name = n->getTypeName();
+   if (strcmp(name, "Qt::GlobalColor"))
+      return false;
 
-      QColor *qc = new QColor(gc);
-      QoreObject *rv = new QoreObject(QC_QCOLOR, getProgram());
-      QoreSmokePrivateData *data = new QoreSmokePrivateData(SCI_QCOLOR, qc, rv);
-      rv->setPrivate(QC_QCOLOR->getID(), data);
-      n = rv;
-      return true;
-   }
-   return false;
+   Qt::GlobalColor gc = (Qt::GlobalColor)reinterpret_cast<QoreQtEnumNode *>(n)->value();
+   n->deref(xsink);
+
+   QColor *qc = new QColor(gc);
+   QoreObject *rv = new QoreObject(QC_QCOLOR, getProgram());
+   QoreSmokePrivateData *data = new QoreSmokePrivateData(SCI_QCOLOR, qc, rv);
+   rv->setPrivate(QC_QCOLOR->getID(), data);
+   n = rv;
+   return true;
 }
 
 
-bool QVariantTypeHelper::canConvertIntern(qore_type_t t, const QoreClass *qc) const {
+bool QVariantTypeHelper::canConvertIntern(qore_type_t t, const QoreClass *qc, const char *name) const {
    //printd(5, "QVariantTypeHelper::canConvertIntern() t=%d qc=%s\n", t, qc ? qc->getName() : "n/a");
-   if (t == NT_QTENUM)
-      return true;
-
    switch (t) {
       case NT_NOTHING: // NOTHING
       case NT_INT:
@@ -100,8 +109,9 @@ bool QVariantTypeHelper::canConvertIntern(qore_type_t t, const QoreClass *qc) co
       case NT_BOOLEAN:
 	 return true;
    }
+
    if (t != NT_OBJECT)
-      return false;
+      return ClassMap::Instance()->checkEnum(name) ? true : false;
       
    if (qc->getClass(QC_QLOCALE->getID())
        || qc->getClass(QC_QICON->getID())
@@ -115,7 +125,7 @@ bool QVariantTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Except
    QVariant *q = 0;
 
    qore_type_t t = n ? n->getType() : NT_NOTHING;
-   if (t == NT_QTENUM)
+   if (dynamic_cast<QoreBigIntNode *>(n))
       t = NT_INT;
 
    // FIXME: implement all conversions
