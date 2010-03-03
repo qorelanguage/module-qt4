@@ -64,7 +64,7 @@ bool QBrushTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Exceptio
       Qt::BrushStyle i = (Qt::BrushStyle)in->val;
       br = new QBrush(i);
    }
-   else if (!strcmp(name, "Qt::GlobalColor")) {
+   else if (!strcmp(name, "Qt::GlobalColor") || in->getType() == NT_INT) {
       Qt::GlobalColor i = (Qt::GlobalColor)in->val;
       br = new QBrush(i);
    }
@@ -83,11 +83,10 @@ bool QColorTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Exceptio
    if (!n)
       return false;
 
-   const char *name = n->getTypeName();
-   if (strcmp(name, "Qt::GlobalColor"))
+   if (n->getType() != NT_INT && strcmp(n->getTypeName(), "Qt::GlobalColor"))
       return false;
 
-   Qt::GlobalColor gc = (Qt::GlobalColor)reinterpret_cast<QoreQtEnumNode *>(n)->value();
+   Qt::GlobalColor gc = (Qt::GlobalColor)n->getAsInt();
    n->deref(xsink);
 
    QColor *qc = new QColor(gc);

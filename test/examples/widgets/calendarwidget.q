@@ -70,7 +70,7 @@ class Window inherits QWidget {
 
     weekdayFormatChanged() {
         my QTextCharFormat $format(); 
-        
+
         $format.setForeground(new QBrush($.weekdayColorCombo.itemData($.weekdayColorCombo.currentIndex()).toQore()));
         $.calendar.setWeekdayTextFormat(Qt::Monday, $format);
         $.calendar.setWeekdayTextFormat(Qt::Tuesday, $format);
@@ -264,7 +264,7 @@ class Window inherits QWidget {
         $.connect($.minimumDateEdit, SIGNAL("dateChanged(const QDate &)"), SLOT("minimumDateChanged(const QDate &)"));
         $.connect($.maximumDateEdit, SIGNAL("dateChanged(const QDate &)"), SLOT("maximumDateChanged(const QDate &)"));
         
-        my $dateBoxLayout = new QGridLayout();
+        my QGridLayout $dateBoxLayout();
         $dateBoxLayout.addWidget($.currentDateLabel, 1, 0);
         $dateBoxLayout.addWidget($.currentDateEdit, 1, 1);
         $dateBoxLayout.addWidget($.minimumDateLabel, 0, 0);
@@ -309,12 +309,12 @@ class Window inherits QWidget {
         $.connect($.firstFridayCheckBox,   SIGNAL("toggled(bool)"),                        SLOT("reformatCalendarPage()"));
         $.connect($.mayFirstCheckBox,      SIGNAL("toggled(bool)"),                        SLOT("reformatCalendarPage()"));
 
-        my $checkBoxLayout = new QHBoxLayout();
+        my QHBoxLayout $checkBoxLayout();
         $checkBoxLayout.addWidget($.firstFridayCheckBox);
         $checkBoxLayout.addStretch();
         $checkBoxLayout.addWidget($.mayFirstCheckBox);
 
-        my $outerLayout = new QGridLayout();
+        my QGridLayout $outerLayout();
         $outerLayout.addWidget($.weekdayColorLabel, 0, 0);
         $outerLayout.addWidget($.weekdayColorCombo, 0, 1);
         $outerLayout.addWidget($.weekendColorLabel, 1, 0);
@@ -331,7 +331,7 @@ class Window inherits QWidget {
     }
 
     createColorComboBox() {
-        my $comboBox = new QComboBox();
+        my QComboBox $comboBox();
         $comboBox.addItem($.tr("Red"), Qt::red);
         $comboBox.addItem($.tr("Blue"), Qt::blue);
         $comboBox.addItem($.tr("Black"), Qt::black);
@@ -342,7 +342,7 @@ class Window inherits QWidget {
 
 class calendarwidget_example inherits QApplication {
     constructor() {
-        my $window = new Window();
+        my Window $window();
         $window.show();
         $.exec();
     }

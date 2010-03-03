@@ -72,13 +72,15 @@ public:
       if (!n) return QTI_NOT_EQUAL;
       const char *tn = n->getTypeName();
       //printd(0, "QBrushTypeHelper::testTypeCompatibilityImpl() this=%p checking %s\n", this, tn);
-      return !strcmp(tn, "Qt::GlobalColor") || !strcmp(tn, "Qt::BrushStyle") ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      return n->getType() == NT_INT || !strcmp(tn, "Qt::GlobalColor") || !strcmp(tn, "Qt::BrushStyle") ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
    DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
       if (!typeInfo) return QTI_NOT_EQUAL;
       const char *tn = typeInfoGetName(typeInfo);
       //printd(0, "QBrushTypeHelper::parseEqualImpl() this=%p checking %s\n", this, tn);
-      return !strcmp(tn, "Qt::GlobalColor") || !strcmp(tn, "Qt::BrushStyle") ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      return typeInfoGetType(typeInfo) == NT_INT 
+	 || !strcmp(tn, "Qt::GlobalColor") 
+	 || !strcmp(tn, "Qt::BrushStyle") ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
 };
 
@@ -107,11 +109,12 @@ public:
 
    DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
       if (!n) return QTI_NOT_EQUAL;
-      return !strcmp(n->getTypeName(), "Qt::GlobalColor") ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      return n->getType() == NT_INT || !strcmp(n->getTypeName(), "Qt::GlobalColor") ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
    DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
       if (!typeInfo) return QTI_NOT_EQUAL;
-      return !strcmp(typeInfoGetName(typeInfo), "Qt::GlobalColor") ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      return typeInfoGetType(typeInfo) == NT_INT 
+	 || !strcmp(typeInfoGetName(typeInfo), "Qt::GlobalColor") ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
 };
 
