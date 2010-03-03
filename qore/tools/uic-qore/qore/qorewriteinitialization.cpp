@@ -463,7 +463,7 @@ void WriteInitialization::acceptUI(DomUI *node)
 
     const QString widgetClassName = node->elementWidget()->attributeClass();
 
-    m_output << m_option.indent << "setupUi( $" << m_mainWidget << " ) returns nothing {\n";
+    m_output << m_option.indent << "setupUi( any $" << m_mainWidget << " ) returns nothing {\n";
 
     const QStringList connections = m_uic->databaseInfo()->connections();
     for (int i=0; i<connections.size(); ++i) {
@@ -513,7 +513,7 @@ void WriteInitialization::acceptUI(DomUI *node)
 
     m_output << m_option.indent << "} # setupUi\n\n";
 
-    m_output << m_option.indent << "retranslateUi( $" << m_mainWidget << ") returns nothing {\n"
+    m_output << m_option.indent << "retranslateUi( any $" << m_mainWidget << ") returns nothing {\n"
            << m_refreshInitialization
            << m_option.indent << "} # retranslateUi\n\n";
 

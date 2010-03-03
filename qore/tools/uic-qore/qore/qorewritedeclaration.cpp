@@ -101,7 +101,7 @@ void WriteDeclaration::acceptUI(DomUI *node)
         if (connection == QLatin1String("(default)"))
             continue;
 
-        m_output << m_option.indent << "my $" << connection << "Connection = new QSqlDatabase();\n";
+        m_output << m_option.indent << "my QSqlDatabase $" << connection << "Connection();\n";
     }
 
     TreeWalker::acceptWidget(node->elementWidget());
