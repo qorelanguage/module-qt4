@@ -545,13 +545,16 @@ static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool &valid, bool p
    if (!t.name)
       return 0;
 
-   QByteArray cname(t.name);
-   if (cname.startsWith("QList<"))
-      return listTypeInfo;
-
-   char *f = cname.data();
-   if (cname.startsWith("const "))
+   const char *f = t.name;
+   if (!strncmp(f, "const ", 6))
       f += 6;
+
+   QByteArray cname(f);
+   if (cname.startsWith("QList<")) {
+      return listTypeInfo;
+   }
+
+   f = cname.data();
    char *p = strchrs(f, "&*");
    if (p)
       *p = '\0';
