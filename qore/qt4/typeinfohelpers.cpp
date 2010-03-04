@@ -33,6 +33,22 @@ int QoreQtIntCompatibleTypeInfoHelper::parseEqualImpl(const QoreTypeInfo *typeIn
    return ClassMap::Instance()->checkEnum(typeInfoGetName(typeInfo)) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
 }
 
+bool QoreQtStringCompatibleTypeInfoHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+   if (!n)
+      return false;
+
+   if (n->getType() == NT_STRING)
+      return true;
+
+   if (n->getType() != NT_OBJECT)
+      return false;
+
+   QoreObject *o = reinterpret_cast<QoreObject *>(n);
+   // see if we can get a QChar
+   // if so, we let it get converted to the type needed by Qt in commonqoremethod.cpp
+   return o->getClass(QC_QCHAR->getID()) ? true : false;
+}
+
 bool QRegionTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
    if (!n || n->getType() != NT_OBJECT)
       return false;

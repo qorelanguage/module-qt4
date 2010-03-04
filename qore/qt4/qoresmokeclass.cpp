@@ -561,11 +561,13 @@ static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool &valid, bool p
 
    if (tid == Smoke::t_voidp) {
       if (!strcmp(f, "QString")
+	  || !strcmp(f, "QChar")
 	  || isptrtype(f, "QString")
+	  || isptrtype(f, "QChar")
 	  || !strcmp(f, "char")
 	  || !strcmp(f, "uchar")
 	  || !strcmp(f, "unsigned char"))
-	 return stringTypeInfo;
+	 return param ? qtStringTypeInfo : stringTypeInfo;
 
       if (!strcmp(f, "QStringList"))
 	 return listTypeInfo;

@@ -45,6 +45,28 @@ public:
    DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const;
 };
 
+class QoreQtStringCompatibleTypeInfoHelper : public QoreTypeInfoHelper {
+protected:
+   DLLLOCAL static qore_type_t fake_id;
+public:
+   DLLLOCAL QoreQtStringCompatibleTypeInfoHelper() : QoreTypeInfoHelper("string") {
+      assert(!fake_id);
+      fake_id = get_next_type_id();
+      assign(fake_id);
+      qtStringTypeInfo = getTypeInfo();
+   }
+   DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
+   DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
+      if (!n || (n->getType() != NT_STRING && (n->getType() != NT_OBJECT || !testObjectClassAccess(reinterpret_cast<const QoreObject *>(n), QC_QCHAR))))
+	 return QTI_NOT_EQUAL;
+      return QTI_AMBIGUOUS;      
+   }
+   DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
+      return typeInfoGetType(typeInfo) == NT_STRING 
+         || typeInfoGetClass(typeInfo) == QC_QCHAR ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+   }
+};
+
 class QRegionTypeHelper : public AbstractQoreClassTypeInfoHelper {
 public:
    DLLLOCAL QRegionTypeHelper() : AbstractQoreClassTypeInfoHelper("QRegion", QDOM_GUI) {
@@ -53,12 +75,12 @@ public:
    DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
 
    DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
-      if (!n || n->getType() != NT_OBJECT || !testObjectClassAccess(reinterpret_cast<const QoreObject *>(n), QC_QREGION))
+      if (!n || n->getType() != NT_OBJECT || !testObjectClassAccess(reinterpret_cast<const QoreObject *>(n), QC_QRECT))
 	 return QTI_NOT_EQUAL;
       return QTI_AMBIGUOUS;
    }
    DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
-      return typeInfoGetClass(typeInfo) == QC_QREGION ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      return typeInfoGetClass(typeInfo) == QC_QRECT ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
 };
 
