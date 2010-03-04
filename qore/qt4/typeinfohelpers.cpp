@@ -68,24 +68,34 @@ bool QRegionTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Excepti
 }
 
 bool QBrushTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
-   const QoreBigIntNode *in = dynamic_cast<QoreBigIntNode *>(n);
-   if (!in)
-      return false;
-
    QBrush *br;
+
+   if (n && n->getType() == NT_OBJECT) {
+      QoreObject *o = reinterpret_cast<QoreObject *>(n);
+      // see if we can get a QColor
+      PrivateDataRefHolder<QoreSmokePrivateData> pd(o, QC_QCOLOR->getID(), xsink);
+      if (!pd)
+	 return false;
+      br = new QBrush(*(pd->getObject<QColor>()));
+   }
+   else {
+      const QoreBigIntNode *in = dynamic_cast<QoreBigIntNode *>(n);
+      if (!in)
+	 return false;
     
-   const char *name = n->getTypeName();
-   //printd(0, "QBrushTypeHelper::checkTypeInstantiationImpl() this=%p checking %s\n", this, name);
-   if (!strcmp(name, "Qt::BrushStyle")) {
-      Qt::BrushStyle i = (Qt::BrushStyle)in->val;
-      br = new QBrush(i);
+      const char *name = n->getTypeName();
+      //printd(0, "QBrushTypeHelper::checkTypeInstantiationImpl() this=%p checking %s\n", this, name);
+      if (!strcmp(name, "Qt::BrushStyle")) {
+	 Qt::BrushStyle i = (Qt::BrushStyle)in->val;
+	 br = new QBrush(i);
+      }
+      else if (!strcmp(name, "Qt::GlobalColor") || in->getType() == NT_INT) {
+	 Qt::GlobalColor i = (Qt::GlobalColor)in->val;
+	 br = new QBrush(i);
+      }
+      else
+	 return false;
    }
-   else if (!strcmp(name, "Qt::GlobalColor") || in->getType() == NT_INT) {
-      Qt::GlobalColor i = (Qt::GlobalColor)in->val;
-      br = new QBrush(i);
-   }
-   else
-      return false;
    
    QoreObject *rv = new QoreObject(QC_QBRUSH, getProgram());
    QoreSmokePrivateData *data = new QoreSmokePrivateData(SCI_QBRUSH, br, rv);
