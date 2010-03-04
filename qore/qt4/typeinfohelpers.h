@@ -36,11 +36,17 @@ public:
    }
    DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
       //printd(0, "QoreQtIntCompatibleTypeInfoHelper::checkTypeInstantiationImpl() this=%p n=%p (%s)\n", this, n, n ? n->getTypeName() : "NOTHING");
+      if (n && n->getType() == NT_FLOAT) {
+         int64 val = n->getAsBigInt();
+         n->deref(xsink);
+         n = new QoreBigIntNode(val);
+         return true;
+      }
       return dynamic_cast<QoreBigIntNode *>(n) ? true : false;
    }
    DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
       //printd(0, "QoreQtIntCompatibleTypeInfoHelper::testTypeCompatibilityImpl() this=%p n=%p (%s)\n", this, n, n ? n->getTypeName() : "NOTHING");
-      return dynamic_cast<const QoreBigIntNode *>(n) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      return n && (n->getType() == NT_FLOAT || dynamic_cast<const QoreBigIntNode *>(n)) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
    DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const;
 };

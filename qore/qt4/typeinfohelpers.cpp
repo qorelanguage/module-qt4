@@ -30,7 +30,7 @@ int QoreQtIntCompatibleTypeInfoHelper::parseEqualImpl(const QoreTypeInfo *typeIn
    if (!typeInfo) return QTI_NOT_EQUAL;
    qore_type_t t = typeInfoGetType(typeInfo);
    if (t == NT_INT) return QTI_IDENT;
-   return ClassMap::Instance()->checkEnum(typeInfoGetName(typeInfo)) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+   return t == NT_FLOAT || ClassMap::Instance()->checkEnum(typeInfoGetName(typeInfo)) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
 }
 
 bool QoreQtStringCompatibleTypeInfoHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {

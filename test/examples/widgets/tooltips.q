@@ -161,8 +161,8 @@ class SortingBox inherits QWidget {
             - $.style().pixelMetric(QStyle::PM_DefaultLayoutSpacing);
     }
 
-    private createShapeItem($path, $toolTip, $pos, $color) {
-        my $shapeItem = new ShapeItem();
+    private createShapeItem(QPainterPath $path, $toolTip, QPoint $pos, $color) {
+        my ShapeItem $shapeItem();
         $shapeItem.setPath($path);
         $shapeItem.setToolTip($toolTip);
         $shapeItem.setPosition($pos);
@@ -171,8 +171,8 @@ class SortingBox inherits QWidget {
         $.update();
     }
 
-    private createToolButton($toolTip, $icon, $member) {
-        my $button = new QToolButton($self);
+    private createToolButton($toolTip, $icon, $member) returns QToolButton {
+        my QToolButton $button($self);
         $button.setToolTip($toolTip);
         $button.setIcon($icon);
         $button.setIconSize(new QSize(32, 32));
@@ -181,7 +181,7 @@ class SortingBox inherits QWidget {
         return $button;
     }
 
-    private initialItemPosition($path) {
+    private initialItemPosition($path) returns QPoint {
         my $x;
         my $y = ($.height() - $path.controlPointRect().height()) / 2;
         if (!elements $.shapeItems)
@@ -189,19 +189,19 @@ class SortingBox inherits QWidget {
         else
             $x = ($.width() / (elements $.shapeItems)
                   - $path.controlPointRect().width()) / 2;
-        
+
         return new QPoint($x, $y);
     }
     
-    private randomItemPosition() {
+    private randomItemPosition() returns QPoint {
         return new QPoint(qrand() % ($.width() - 120), qrand() % ($.height() - 120));
     }
     
-    private initialItemColor() {
+    private initialItemColor() returns QColor {
         return QColor::fromHsv((((elements $.shapeItems) + 1) * 85) % 256, 255, 190);
     }
     
-    private randomItemColor() {
+    private randomItemColor() returns QColor {
         return QColor::fromHsv(qrand() % 256, 255, 190);
     }
 }
