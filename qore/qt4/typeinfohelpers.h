@@ -194,4 +194,31 @@ public:
    DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const;
 };
 
+// for classes that should also be equivalent to a null ptr
+class NullPtrClassTypeHelper : public AbstractQoreClassTypeInfoHelper {
+public:
+   DLLLOCAL NullPtrClassTypeHelper(const char *name) : AbstractQoreClassTypeInfoHelper(name, QDOM_GUI) {
+   }
+
+   DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+      return is_nothing(n) ? true : false;
+   }
+   DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
+      return is_nothing(n) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+   }
+   DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
+      return typeInfo && typeInfoGetType(typeInfo) == NT_NOTHING ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+   }
+};
+
+class QValidatorTypeHelper : public NullPtrClassTypeHelper {
+public:
+   DLLLOCAL QValidatorTypeHelper() : NullPtrClassTypeHelper("QValidator") {}
+};
+
+class QCompleterTypeHelper : public NullPtrClassTypeHelper {
+public:
+   DLLLOCAL QCompleterTypeHelper() : NullPtrClassTypeHelper("QCompleter") {}
+};
+
 #endif

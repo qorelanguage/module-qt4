@@ -18,16 +18,17 @@
 const NumModes = 4;
 const NumStates = 2;
 
-class IconPreviewArea inherits QWidget
-{
-    constructor($parent) : QWidget($parent)
-    {
-        $.icon = new QIcon();
-        $.size = new QSize();
+class IconPreviewArea inherits QWidget {
+    public {
+	QIcon $.icon();
+	QSize $.size();
+	list $.pixmapLabels;
+    }
 
-        my $mainLayout = new QGridLayout();
+    constructor($parent) : QWidget($parent) {
+        my QGridLayout $mainLayout();
 
-        my $stateLabels[0] = $.createHeaderLabel($.tr("Off"));
+        my $stateLabels[0] = $.createHeaderLabel(QObject::tr("Off"));
         $stateLabels[1] = $.createHeaderLabel($.tr("On"));
         #Q_ASSERT(NumStates == 2);
 
@@ -51,29 +52,25 @@ class IconPreviewArea inherits QWidget
         $.setLayout($mainLayout);
     }
 
-    setIcon($icon)
-    {
+    setIcon($icon) {
         $.icon = $icon;
         $.updatePixmapLabels();
     }
 
-    setSize($size)
-    {
+    setSize($size) {
         if ($size.height() != $.size.height() || $size.width() != $.size.width()) {
             $.size = $size;
             $.updatePixmapLabels();
         }
     }
 
-    createHeaderLabel($text)
-    {
+    createHeaderLabel($text) {
         my $label = new QLabel($.tr(sprintf("<b>%s</b>", $text)));
         $label.setAlignment(Qt::AlignCenter);
         return $label;
     }
 
-    createPixmapLabel()
-    {
+    createPixmapLabel() {
         my $label = new QLabel();
         $label.setEnabled(False);
         $label.setAlignment(Qt::AlignCenter);
@@ -85,8 +82,7 @@ class IconPreviewArea inherits QWidget
         return $label;
     }
 
-    updatePixmapLabels()
-    {
+    updatePixmapLabels() {
         for (my $i = 0; $i < NumModes; ++$i) {
             my $mode;
             if ($i == 0) {
@@ -109,33 +105,25 @@ class IconPreviewArea inherits QWidget
     }
 }
 
-class IconSizeSpinBox inherits QSpinBox
-{
-    constructor($parent) : QSpinBox($parent)
-    {
+class IconSizeSpinBox inherits QSpinBox {
+    constructor($parent) : QSpinBox($parent) {
     }
 
-    valueFromText($text)
-    {
+    valueFromText($text) {
         return int($text =~ x/(\\d+)(\\s*[xx]\\s*\\d+)?/)[0];
     }
 
-    textFromValue($value)
-    {
+    textFromValue($value) {
         return $.tr(sprintf("%d x %d", $value, $value));
     }
-
 }
 
-class ImageDelegate inherits QItemDelegate
-{
-    constructor($parent) : QItemDelegate($parent)
-    {
+class ImageDelegate inherits QItemDelegate {
+    constructor($parent) : QItemDelegate($parent) {
         $.createSignal("emitCommitData()");
     }
 
-    createEditor($parent, $option, $index)
-    {
+    createEditor($parent, $option, $index) {
         my $comboBox = new QComboBox($parent);
         if ($index.column() == 1) {
             $comboBox.addItem($.tr("Normal"));
@@ -152,8 +140,7 @@ class ImageDelegate inherits QItemDelegate
         return $comboBox;
     }
     
-    setEditorData($comboBox, $index)
-    {
+    setEditorData($comboBox, $index) {
         if (getClassName($comboBox) != "QComboBox")
             return;
 
@@ -161,24 +148,20 @@ class ImageDelegate inherits QItemDelegate
         $comboBox.setCurrentIndex($pos);
     }
 
-    setModelData($comboBox, $model, $index)
-    {
+    setModelData($comboBox, $model, $index){
         if (getClassName($comboBox) != "QComboBox")
             return;
 
         $model.setData($index, $comboBox.currentText());
     }
     
-    emitCommitData()
-    {
+    emitCommitData() {
         $.emit("commitData(QWidget *)", $.sender());
     }
 }
 
-class MainWindow inherits QMainWindow
-{
-    constructor()
-    {
+class MainWindow inherits QMainWindow {
+    constructor() {
         my $centralWidget = new QWidget();
         $.setCentralWidget($centralWidget);
         
@@ -202,18 +185,16 @@ class MainWindow inherits QMainWindow
 
         $.resize($.minimumSizeHint());
     }
-    about()
-    {
+    about() {
         QMessageBox::about($self, $.tr("About Icons"), $.tr("The <b>Icons</b> example illustrates how Qt renders an icon in different modes (active, normal, disabled, and selected) and states (on and off) based on a set of images."));
     }
 
-    changeStyle($checked)
-    {
+    changeStyle($checked) {
         if (!$checked)
             return;
 
         my $action = $.sender();
-        my $style = QStyleFactory::create($action.data());
+        my $style = QStyleFactory::create($action.data().toString());
         #Q_ASSERT(style);
 
         QApplication::setStyle($style);
@@ -239,8 +220,7 @@ class MainWindow inherits QMainWindow
         $.changeSize(True);
     }
 
-    changeSize($checked)
-    {
+    changeSize($checked) {
         if (!$checked)
             return;
 
@@ -270,9 +250,8 @@ class MainWindow inherits QMainWindow
         $.otherSpinBox.setEnabled($.otherRadioButton.isChecked());
     }
 
-    changeIcon()
-    {
-        my $icon = new QIcon();
+    changeIcon() {
+        my QIcon $icon();
 
         for (my $row = 0; $row < $.imagesTable.rowCount(); ++$row) {
             my $item0 = $.imagesTable.item($row, 0);
@@ -308,8 +287,7 @@ class MainWindow inherits QMainWindow
         $.previewArea.setIcon($icon);
     }
 
-    addImages()
-    {
+    addImages() {
         my $fileNames = QFileDialog::getOpenFileNames($self, $.tr("Open Images"), "", $.tr("Images (*.png *.xpm *.jpg);;All Files (*)"));
         foreach my $fileName in ($fileNames) {
             my $row = $.imagesTable.rowCount();
@@ -347,14 +325,12 @@ class MainWindow inherits QMainWindow
         }
     }
 
-    removeAllImages()
-    {
+    removeAllImages() {
         $.imagesTable.setRowCount(0);
         $.changeIcon();
     }
 
-    createPreviewGroupBox()
-    {
+    createPreviewGroupBox() {
         $.previewGroupBox = new QGroupBox($.tr("Preview"));
 
         $.previewArea = new IconPreviewArea();
@@ -364,8 +340,7 @@ class MainWindow inherits QMainWindow
         $.previewGroupBox.setLayout($layout);
     }
 
-    createImagesGroupBox()
-    {
+    createImagesGroupBox() {
         $.imagesGroupBox = new QGroupBox($.tr("Images"));
 
         $.imagesTable = new QTableWidget();
@@ -392,8 +367,7 @@ class MainWindow inherits QMainWindow
         $.imagesGroupBox.setLayout($layout);
     }
 
-    createIconSizeGroupBox()
-    {
+    createIconSizeGroupBox() {
         $.iconSizeGroupBox = new QGroupBox($.tr("Icon Size"));
 
         $.smallRadioButton = new QRadioButton();
@@ -434,8 +408,7 @@ class MainWindow inherits QMainWindow
         $.iconSizeGroupBox.setLayout($layout);
     }
 
-    createActions()
-    {
+    createActions() {
         $.addImagesAct = new QAction($.tr("&Add Images..."), $self);
         $.addImagesAct.setShortcut($.tr("Ctrl+A"));
         $.connect($.addImagesAct, SIGNAL("triggered()"), SLOT("addImages()"));
@@ -468,8 +441,7 @@ class MainWindow inherits QMainWindow
         qApp().connect($.aboutQtAct, SIGNAL("triggered()"), SLOT("aboutQt()"));
     }
 
-    createMenus()
-    {
+    createMenus() {
         $.fileMenu = $.menuBar().addMenu($.tr("&File"));
         $.fileMenu.addAction($.addImagesAct);
         $.fileMenu.addAction($.removeAllImagesAct);
@@ -477,7 +449,7 @@ class MainWindow inherits QMainWindow
         $.fileMenu.addAction($.exitAct);
 
         $.viewMenu = $.menuBar().addMenu($.tr("&View"));
-        foreach my $action in ($.styleActionGroup.actions())
+        foreach my QAction $action in ($.styleActionGroup.actions())
             $.viewMenu.addAction($action);
         $.viewMenu.addSeparator();
         $.viewMenu.addAction($.guessModeStateAct);
@@ -489,21 +461,23 @@ class MainWindow inherits QMainWindow
         $.helpMenu.addAction($.aboutQtAct);
     }
 
-    createContextMenu()
-    {
+    createContextMenu() {
         $.imagesTable.setContextMenuPolicy(Qt::ActionsContextMenu);
         $.imagesTable.addAction($.addImagesAct);
         $.imagesTable.addAction($.removeAllImagesAct);
     }
 
-    checkCurrentStyle()
-    {
-        foreach my $action in ($.styleActionGroup.actions()) {
+    checkCurrentStyle() {
+        foreach my QAction $action in ($.styleActionGroup.actions()) {
             my $styleName = $action.data();
-            my $candidate = QStyleFactory::create($styleName);
-            #Q_ASSERT(candidate);
+            my $candidate = QStyleFactory::create($styleName.toString());
+
+	    my $v = QApplication::style().metaObject().className();
+	    printf("checkCurrentStyle() style=%s (%s)\n", $v, type($v));
+
             if ($candidate.metaObject().className()
                 == QApplication::style().metaObject().className()) {
+                #"
                 $action.trigger();
                 return;
             }
@@ -512,11 +486,9 @@ class MainWindow inherits QMainWindow
     }
 }
 
-class icons_example inherits QApplication
-{
-    constructor()
-    {
-        my $mainwin = new MainWindow();
+class icons_example inherits QApplication {
+    constructor() {
+        my MainWindow $mainwin();
         $mainwin.show();
         $.exec();
     }
