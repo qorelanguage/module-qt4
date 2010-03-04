@@ -1390,10 +1390,10 @@ QString  WriteInitialization::writeSizePolicy(const DomSizePolicy *sp)
 
 
     // insert with new name
-    const QString spName = QString("$.") + m_driver->unique(QLatin1String("sizePolicy"));
+    const QString spName = QString("$") + m_driver->unique(QLatin1String("sizePolicy"));
     m_sizePolicyNameMap.insert(sizePolicyHandle, spName);
 
-    m_output << m_option.indent << spName << " = new QSizePolicy";
+    m_output << m_option.indent << "my QSizePolicy " << spName;
     do {
         if (sp->hasElementHSizeType() && sp->hasElementVSizeType()) {
             m_output << "(" << sp->elementHSizeType()
