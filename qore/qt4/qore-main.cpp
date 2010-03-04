@@ -205,13 +205,16 @@ static int createIndex_handler(Smoke::Stack &stack, const ClassMap::TypeList &ty
 
     stack[3].s_voidp = const_cast<AbstractQoreNode *>(n);
 
-    QoreObject *self = cqm.getQoreObject();
-    assert(self);
-    // get QoreSmokePrivateQAbstractItemModelData ptr
-    ReferenceHolder<QoreSmokePrivateQAbstractItemModelData> data(reinterpret_cast<QoreSmokePrivateQAbstractItemModelData *>(self->getReferencedPrivateData(QC_QABSTRACTITEMMODEL->getID(), xsink)), xsink);
-    if (*xsink)
-        return -1;
-    data->storeIndex(n, xsink);
+    if (n) {
+       QoreObject *self = cqm.getQoreObject();
+       assert(self);
+       // get QoreSmokePrivateQAbstractItemModelData ptr
+       ReferenceHolder<QoreSmokePrivateQAbstractItemModelData> data(reinterpret_cast<QoreSmokePrivateQAbstractItemModelData *>(self->getReferencedPrivateData(QC_QABSTRACTITEMMODEL->getID(), xsink)), xsink);
+       if (*xsink)
+          return -1;
+
+       data->storeIndex(n, xsink);
+    }
 
     return (*xsink) ? -1 : 0;
 }
