@@ -13,11 +13,9 @@
 # enable all parse warnings
 %enable-all-warnings
 
-class AnalogClock inherits QWidget
-{
-    constructor($parent) : QWidget($parent)
-    {
-        my $timer = new QTimer($self);
+class AnalogClock inherits QWidget {
+    constructor(any $parent) : QWidget($parent) {
+        my QTimer $timer($self);
         $.connect($timer, SIGNAL("timeout()"), SLOT("update()"));
         $timer.start(1000);
         
@@ -25,18 +23,18 @@ class AnalogClock inherits QWidget
         $.resize(200, 200);
     }
 
-    paintEvent($event) {
-        my $side = min($.width(), $.height());
-        my $time = now();
+    paintEvent(QPaintEvent $event) {
+        my int $side = min($.width(), $.height());
+        my date $time = now();
 
-        my $painter = new QPainter($self);
+        my QPainter $painter = new QPainter($self);
 
         $painter.setRenderHint(QPainter::Antialiasing);
         $painter.translate($.width() / 2, $.height() / 2);
         $painter.scale($side / 200.0, $side / 200.0);
         
         $painter.setPen(Qt::NoPen);
-        $painter.setBrush(new QBrush($hourColor));
+	$painter.setBrush(new QBrush($hourColor));
 
         $painter.save();
         $painter.rotate(30.0 * ((get_hours($time) + get_minutes($time) / 60.0)));
@@ -45,7 +43,7 @@ class AnalogClock inherits QWidget
         
         $painter.setPen($hourColor);
         
-        for (my $i = 0; $i < 12; ++$i) {
+        for (my int $i = 0; $i < 12; ++$i) {
             $painter.drawLine(88, 0, 96, 0);
             $painter.rotate(30.0);
         }
@@ -60,7 +58,7 @@ class AnalogClock inherits QWidget
         
         $painter.setPen($minuteColor);
         
-        for (my $j = 0; $j < 60; ++$j) {
+        for (my int $j = 0; $j < 60; ++$j) {
             if (($j % 5) != 0)
                 $painter.drawLine(92, 0, 96, 0);
             $painter.rotate(6.0);
@@ -68,22 +66,20 @@ class AnalogClock inherits QWidget
     }
 }
 
-class analog_clock_example inherits QApplication 
-{
-    constructor()
-    {
+class analog_clock_example inherits QApplication {
+    constructor() {
         # declare global variables
-        our $hourHand   = new QPolygon((new QPoint(7, 8), 
-                                        new QPoint(-7, 8), 
-                                        new QPoint(0, -40)));
-        our $minuteHand = new QPolygon((new QPoint(7, 8),
-                                        new QPoint(-7, 8),
-                                        new QPoint(0, -70)));
+        our QPolygon $hourHand((new QPoint(7, 8), 
+				new QPoint(-7, 8), 
+				new QPoint(0, -40)));
+        our QPolygon $minuteHand((new QPoint(7, 8),
+				  new QPoint(-7, 8),
+				  new QPoint(0, -70)));
 
-        our $hourColor   = new QColor(127, 0, 127);
-        our $minuteColor = new QColor(0, 127, 127, 191);
+        our QColor $hourColor(127, 0, 127);
+        our QColor $minuteColor(0, 127, 127, 191);
 
-        my $clock = new AnalogClock();
+        my AnalogClock $clock();
         $clock.show();
         $.exec();
     }

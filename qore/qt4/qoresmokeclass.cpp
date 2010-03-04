@@ -62,6 +62,7 @@ QWidgetTypeHelper typeHelperQWidget;
 QColorTypeHelper  typeHelperQColor;
 QVariantTypeHelper typeHelperQVariant;
 QBrushTypeHelper typeHelperQBrush;
+QKeySequenceTypeHelper typeHelperQKeySequence;
 
 const QoreMethod *findUserMethod(const QoreClass *qc, const char *name) {
     const QoreMethod *m = qc->findMethod(name);
@@ -464,6 +465,8 @@ static QoreClass *getNewClass(Smoke::Index ix, const Smoke::Class &c) {
       qc = typeHelperQVariant.getClass();
    else if (typeHelperQBrush.hasClass() && !strcmp(name, "QBrush"))
       qc = typeHelperQBrush.getClass();
+   else if (typeHelperQKeySequence.hasClass() && !strcmp(name, "QKeySequence"))
+      qc = typeHelperQKeySequence.getClass();
    else
       qc = new QoreClass(name, QDOM_GUI);
 

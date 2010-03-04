@@ -216,3 +216,18 @@ bool QVariantTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Except
    return true;
 }
 
+bool QKeySequenceTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+   if (!n)
+      return false;
+   qore_type_t t = n->getType();
+   return t == NT_STRING || t == NT_INT || ClassMap::Instance()->checkEnum(n->getTypeName())
+      ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;   
+}
+
+int QKeySequenceTypeHelper::parseEqualImpl(const QoreTypeInfo *typeInfo) const {
+   qore_type_t t = typeInfo ? typeInfoGetType(typeInfo) : NT_NOTHING;
+   //const QoreClass *qc = typeInfo ? typeInfoGetClass(typeInfo) : 0;
+   return t == NT_STRING || t == NT_INT || ClassMap::Instance()->checkEnum(typeInfoGetName(typeInfo))
+      ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+}
+
