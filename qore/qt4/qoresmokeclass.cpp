@@ -65,6 +65,9 @@ QBrushTypeHelper typeHelperQBrush;
 QKeySequenceTypeHelper typeHelperQKeySequence;
 QValidatorTypeHelper typeHelperQValidator;
 QCompleterTypeHelper typeHelperQCompleter;
+QDateTypeHelper typeHelperQDate;
+QDateTimeTypeHelper typeHelperQDateTime;
+QTimeTypeHelper typeHelperQTime;
 
 const QoreMethod *findUserMethod(const QoreClass *qc, const char *name) {
     const QoreMethod *m = qc->findMethod(name);
@@ -473,6 +476,12 @@ static QoreClass *getNewClass(Smoke::Index ix, const Smoke::Class &c) {
       qc = typeHelperQValidator.getClass();
    else if (typeHelperQCompleter.hasClass() && !strcmp(name, "QCompleter"))
       qc = typeHelperQCompleter.getClass();
+   else if (typeHelperQDate.hasClass() && !strcmp(name, "QDate"))
+      qc = typeHelperQDate.getClass();
+   else if (typeHelperQDateTime.hasClass() && !strcmp(name, "QDateTime"))
+      qc = typeHelperQDateTime.getClass();
+   else if (typeHelperQTime.hasClass() && !strcmp(name, "QTime"))
+      qc = typeHelperQTime.getClass();
    else
       qc = new QoreClass(name, QDOM_GUI);
 

@@ -24,6 +24,9 @@
 #include "qoremarshalling.h"
 
 #include <QIcon>
+#include <QDate>
+#include <QDateTime>
+#include <QTime>
 
 // FIXME: add function to create enums from smoke - do not automatically convert from int
 
@@ -61,11 +64,9 @@ bool QRegionTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Excepti
    if (!pd)
       return false;
    QRegion *qr = new QRegion(*(pd->getObject<QRect>()));
-   QoreObject *rv = new QoreObject(QC_QREGION, getProgram());
-   QoreSmokePrivateData *data = new QoreSmokePrivateData(SCI_QREGION, qr, rv);
-   rv->setPrivate(QC_QREGION->getID(), data);
+
    n->deref(xsink);
-   n = rv;
+   n = Marshalling::createQoreObjectFromNonQObject(QC_QREGION, SCI_QREGION, qr);
    return true;
 }
 
@@ -98,12 +99,9 @@ bool QBrushTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Exceptio
       else
 	 return false;
    }
-   
-   QoreObject *rv = new QoreObject(QC_QBRUSH, getProgram());
-   QoreSmokePrivateData *data = new QoreSmokePrivateData(SCI_QBRUSH, br, rv);
-   rv->setPrivate(QC_QBRUSH->getID(), data);
+
    n->deref(xsink);
-   n = rv;
+   n = Marshalling::createQoreObjectFromNonQObject(QC_QBRUSH, SCI_QBRUSH, br);
    return true;
 }
 
@@ -127,10 +125,7 @@ bool QColorTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Exceptio
    }
 
    n->deref(xsink);
-   QoreObject *rv = new QoreObject(QC_QCOLOR, getProgram());
-   QoreSmokePrivateData *data = new QoreSmokePrivateData(SCI_QCOLOR, qc, rv);
-   rv->setPrivate(QC_QCOLOR->getID(), data);
-   n = rv;
+   n = Marshalling::createQoreObjectFromNonQObject(QC_QCOLOR, SCI_QCOLOR, qc);
    return true;
 }
 
@@ -241,8 +236,20 @@ bool QKeySequenceTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Ex
    if (!n)
       return false;
    qore_type_t t = n->getType();
-   return t == NT_STRING || t == NT_INT || ClassMap::Instance()->checkEnum(n->getTypeName())
-      ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;   
+
+   QKeySequence *qks;
+   if (t == NT_STRING)
+      qks = new QKeySequence(reinterpret_cast<const QoreStringNode*>(n)->getBuffer());
+   else if (t == NT_INT)
+      qks = new QKeySequence(reinterpret_cast<const QoreBigIntNode*>(n)->val);
+   else if (n && !strcmp(n->getTypeName(), "QKeySequence::StandardKey"))
+      qks = new QKeySequence((QKeySequence::StandardKey)(reinterpret_cast<const QoreBigIntNode*>(n)->val));
+   else
+      return false;
+
+   n->deref(xsink);
+   n = Marshalling::createQoreObjectFromNonQObject(QC_QKEYSEQUENCE, SCI_QKEYSEQUENCE, qks);
+   return true;
 }
 
 int QKeySequenceTypeHelper::parseEqualImpl(const QoreTypeInfo *typeInfo) const {
@@ -252,3 +259,40 @@ int QKeySequenceTypeHelper::parseEqualImpl(const QoreTypeInfo *typeInfo) const {
       ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
 }
 
+bool QDateTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+   if (!n || n->getType() != NT_DATE)
+      return false;
+
+   const DateTimeNode *d = reinterpret_cast<const DateTimeNode *>(n);
+   QDate *date = new QDate(d->getYear(), d->getMonth(), d->getDay());
+
+   n->deref(xsink);
+   n = Marshalling::createQoreObjectFromNonQObject(QC_QDATE, SCI_QDATE, date);
+   return true;
+}
+
+bool QDateTimeTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+   if (!n || n->getType() != NT_DATE)
+      return false;
+
+   const DateTimeNode *d = reinterpret_cast<const DateTimeNode *>(n);
+   QDateTime *date = new QDateTime;
+   date->setDate(QDate(d->getYear(), d->getMonth(), d->getDay()));
+   date->setTime(QTime(d->getHour(), d->getMinute(), d->getSecond(), d->getMillisecond()));
+
+   n->deref(xsink);
+   n = Marshalling::createQoreObjectFromNonQObject(QC_QDATETIME, SCI_QDATETIME, date);
+   return true;
+}
+
+bool QTimeTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+   if (!n || n->getType() != NT_DATE)
+      return false;
+
+   const DateTimeNode *d = reinterpret_cast<const DateTimeNode *>(n);
+   QTime *time = new QTime(d->getHour(), d->getMinute(), d->getSecond(), d->getMillisecond());
+
+   n->deref(xsink);
+   n = Marshalling::createQoreObjectFromNonQObject(QC_QTIME, SCI_QTIME, time);
+   return true;
+}

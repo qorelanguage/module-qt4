@@ -194,6 +194,40 @@ public:
    DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const;
 };
 
+// don't really need to tag this class with QDOM_GUI...
+class QDateTypeHelper : public AbstractQoreClassTypeInfoHelper {
+protected:
+   // only for subclasses
+   DLLLOCAL QDateTypeHelper(const char *name) : AbstractQoreClassTypeInfoHelper(name, QDOM_GUI) {
+   }
+
+public:
+   DLLLOCAL QDateTypeHelper() : AbstractQoreClassTypeInfoHelper("QDate", QDOM_GUI) {
+   }
+   DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
+   DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
+      qore_type_t t = n ? n->getType() : NT_NOTHING;
+      return t == NT_DATE ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+   }
+   DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
+      return typeInfo && typeInfoGetType(typeInfo) == NT_DATE ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+   }
+};
+
+class QDateTimeTypeHelper : public QDateTypeHelper {
+public:
+   DLLLOCAL QDateTimeTypeHelper() : QDateTypeHelper("QDateTime") {
+   }
+   DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
+};
+
+class QTimeTypeHelper : public QDateTypeHelper {
+public:
+   DLLLOCAL QTimeTypeHelper() : QDateTypeHelper("QTime") {
+   }
+   DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
+};
+
 // for classes that should also be equivalent to a null ptr
 class NullPtrClassTypeHelper : public AbstractQoreClassTypeInfoHelper {
 public:

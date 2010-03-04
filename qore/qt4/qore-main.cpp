@@ -73,7 +73,7 @@ const QoreClass *QC_QOBJECT = 0, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIA
    *QC_QRECT, *QC_QREGION, *QC_QCHAR, *QC_QKEYSEQUENCE;
 
 Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON, SCI_QRECT, SCI_QREGION, SCI_QCOLOR, SCI_QPIXMAP,
-   SCI_QBRUSH;
+   SCI_QBRUSH, SCI_QDATE, SCI_QDATETIME, SCI_QTIME, SCI_QKEYSEQUENCE;
 
 extern Smoke* qt_Smoke;
 
@@ -528,9 +528,9 @@ static QoreStringNode *qt_module_init() {
     setClassInfo(QC_QLOCALE, SCI_QLOCALE, "QLocale");
     setClassInfo(QC_QCOLOR, SCI_QCOLOR, "QColor");
     setClassInfo(QC_QBRUSH, SCI_QBRUSH, "QBrush");
-    setClassInfo(QC_QDATE, "QDate");
-    setClassInfo(QC_QDATETIME, "QDateTime");
-    setClassInfo(QC_QTIME, "QTime");
+    setClassInfo(QC_QDATE, SCI_QDATE, "QDate");
+    setClassInfo(QC_QDATETIME, SCI_QDATETIME, "QDateTime");
+    setClassInfo(QC_QTIME, SCI_QTIME, "QTime");
     setClassInfo(QC_QICON, SCI_QICON, "QIcon");
     setClassInfo(QC_QPIXMAP, SCI_QPIXMAP, "QPixmap");
     setClassInfo(QC_QAPPLICATION, "QApplication");
@@ -540,7 +540,7 @@ static QoreStringNode *qt_module_init() {
     setClassInfo(QC_QRECT, SCI_QRECT, "QRect");
     setClassInfo(QC_QREGION, SCI_QREGION, "QRegion");
     setClassInfo(QC_QCHAR, "QChar");
-    setClassInfo(QC_QKEYSEQUENCE, "QKeySequence");
+    setClassInfo(QC_QKEYSEQUENCE, SCI_QKEYSEQUENCE, "QKeySequence");
 
     // add alternate method argument handlers
     ClassMap &cm = *(ClassMap::Instance());
