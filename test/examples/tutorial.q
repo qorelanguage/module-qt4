@@ -286,7 +286,7 @@ class CannonField inherits QWidget {
     }
 
     mouseReleaseEvent(QMouseEvent $event) {
-	printf("mouseReleaseEvent() arg=%N\n", $event);
+    	#printf("mouseReleaseEvent() arg=%N\n", $event);
 	if ($event.button() == Qt::LeftButton)
 	    $.barrelPressed = False;
     }
@@ -374,13 +374,9 @@ class GameBoard inherits QWidget {
 	my QLabel $hitsLabel = new QLabel($.tr("HITS"));
 	my QLabel $shotsLeftLabel = new QLabel($.tr("SHOTS LEFT"));
 
-        #new QShortcut(Qt::Key_Enter, $self, SLOT("fire()"));
-	#new QShortcut(Qt::Key_Return, $self, SLOT("fire()"));
-	#new QShortcut(Qt::CTRL | Qt::Key_Q, $self, SLOT("close()"));
-	#new QShortcut(new QKeySequence(Qt::Key_Enter), $self, SLOT("fire()"));
-	#new QShortcut(new QKeySequence(Qt::Key_Return), $self, SLOT("fire()"));
-	#printf("Qt::CTRL + Qt::Key_Q = %N\n", Qt::CTRL + Qt::Key_Q);
-	#new QShortcut(new QKeySequence(Qt::CTRL | Qt::Key_Q), $self, SLOT("close()"));
+	new QShortcut(Qt::Key_Enter, $self, SLOT("fire()"));
+	new QShortcut(Qt::Key_Return, $self, SLOT("fire()"));
+	new QShortcut(Qt::CTRL | Qt::Key_Q, $self, SLOT("close()"));
 
 	my QHBoxLayout $topLayout = new QHBoxLayout();
 	$topLayout.addWidget($shoot);
