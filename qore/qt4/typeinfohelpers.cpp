@@ -25,6 +25,8 @@
 
 #include <QIcon>
 
+// FIXME: add function to create enums from smoke - do not automatically convert from int
+
 int QoreQtIntCompatibleTypeInfoHelper::parseEqualImpl(const QoreTypeInfo *typeInfo) const {
    //printd(0, "QoreQtIntCompatibleTypeInfoHelper::parseEqualImpl() this=%p typeInfo=%s\n", this, typeInfoGetName(typeInfo));
    if (!typeInfo) return QTI_NOT_EQUAL;

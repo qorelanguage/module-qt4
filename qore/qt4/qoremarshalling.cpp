@@ -849,21 +849,24 @@ AbstractQoreNode * stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Except
     case Smoke::t_enum:
        return ClassMap::Instance()->getRunTimeEnumValue(t, i.s_enum);
     case Smoke::t_voidp: {
-        QByteArray tname(t.name);
+       const char *f = t.name;
+       if (!strncmp(f, "const ", 6))
+	  f += 6;
+       QByteArray tname(f);
 
         if (tname == "uchar*" || tname == "unsigned char*") {
        //printd(0, "stackToQore() tname=%s %p='%s'\n", t.name, i.s_voidp, (const char*)i.s_voidp);
             return new QoreStringNode((uchar*)i.s_voidp);
     }
 
-        if (tname == "const char*" || tname == "char*") {
-       //printd(0, "stackToQore() tname=%s %p='%s'\n", t.name, i.s_voidp, (const char*)i.s_voidp);
-            return new QoreStringNode((const char*)i.s_voidp);
-    }
+        if (tname == "char*") {
+	   //printd(0, "stackToQore() tname=%s %p='%s'\n", t.name, i.s_voidp, (const char*)i.s_voidp);
+	   return new QoreStringNode((const char*)i.s_voidp);
+	}
 
         if (tname == "QString" || tname == "QString&")
-            return new QoreStringNode(reinterpret_cast<QString*>(i.s_voidp)->toUtf8().data(), QCS_UTF8);
-
+	   return new QoreStringNode(reinterpret_cast<QString*>(i.s_voidp)->toUtf8().data(), QCS_UTF8);
+	
         if (tname.startsWith("QList<")
                 || tname.startsWith("QVector<")
                 || tname == "QStringList"
