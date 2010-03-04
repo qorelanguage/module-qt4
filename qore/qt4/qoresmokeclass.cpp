@@ -563,6 +563,12 @@ static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool &valid, bool p
       return listTypeInfo;
    }
 
+   // find references
+   if (isptrtype(f, "bool")
+       || isptrtype(f, "int")) {
+      return referenceTypeInfo;
+   }
+
    f = cname.data();
    char *p = strchrs(f, "&*");
    if (p)

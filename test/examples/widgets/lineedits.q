@@ -142,7 +142,7 @@ class Window inherits QWidget
     {
         switch ($index) {
             case 0:
-            $.validatorLineEdit.setValidator(NOTHING);
+            $.validatorLineEdit.setValidator();
             break;
             case 1:
             $.validatorLineEdit.setValidator(new QIntValidator($.validatorLineEdit));

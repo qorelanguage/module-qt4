@@ -1,11 +1,11 @@
 #!/usr/bin/env qore
 
 # This is basically a direct port of the QT widget example
-# "scribble" to Qore using Qore's "qt" module.  
+# "scribble" to Qore using Qore's "qt4" module.  
 
-# Note that Qore's "qt" module requires QT 4.3 or above 
+# Note that Qore's "qt4" module requires QT 4.3 or above 
 
-# use the "qt-gui" module
+# use the "qt4" module
 %requires qt4
 
 # this is an object-oriented program, the application class is "scribble_example"
@@ -15,10 +15,13 @@
 # enable all parse warnings
 %enable-all-warnings
 
-class MainWindow inherits QMainWindow
-{
-    constructor()
-    {
+class MainWindow inherits QMainWindow {
+    private {
+	QMenu $.optionMenu;
+	QMenu $.fileMenu;
+	QMenu $.helpMenu;
+    }
+    constructor() {
         $.saveAsActs = ();
 
         $.scribbleArea = new ScribbleArea();
@@ -31,8 +34,7 @@ class MainWindow inherits QMainWindow
         $.resize(500, 500);
     }
 
-    closeEvent($event)
-    {
+    closeEvent(QCloseEvent $event) {
         if ($.maybeSave()) {
             $event.accept();
         } else {
@@ -40,53 +42,47 @@ class MainWindow inherits QMainWindow
         }
     }
 
-    open()
-    {
+    open() {
         if ($.maybeSave()) {
-            my $fileName = QFileDialog::getOpenFileName($self, $.tr("Open File"), QDir::currentPath());
+            my string $fileName = QFileDialog::getOpenFileName($self, $.tr("Open File"), QDir::currentPath());
             if (strlen($fileName))
                 $.scribbleArea.openImage($fileName);
         }
     }
 
-    save()
-    {
-        my $action = $.sender();
+    save() {
+        my any $action = $.sender();
         my $fileFormat = $action.data();
         $.saveFile($fileFormat);
     }
 
-    penColor()
-    {
-        my $newColor = QColorDialog::getColor($.scribbleArea.penColor());
+    penColor() {
+        my QColor $newColor = QColorDialog::getColor($.scribbleArea.penColor());
         if ($newColor.isValid())
             $.scribbleArea.setPenColor($newColor);
     }
 
-    penWidth()
-    {
+    penWidth() {
         my $ok;
         my $newWidth = QInputDialog::getInteger($self, $.tr("Scribble"), $.tr("Select pen width:"), $.scribbleArea.penWidth(), 1, 50, 1, \$ok);
         if ($ok)
             $.scribbleArea.setPenWidth($newWidth);
     }
 
-    about()
-    {
+    about() {
         QMessageBox::about($self, $.tr("About Scribble"),
                           $.tr("<p>The <b>Scribble</b> example shows how to use QMainWindow as the base widget for an application, and how to reimplement some of QWidget's event handlers to receive the events generated for the application's widgets:</p><p> We reimplement the mouse event handlers to facilitate drawing, the paint event handler to update the application and the resize event handler to optimize the application's appearance. In addition we reimplement the close event handler to intercept the close events before terminating the application.</p><p> The example also demonstrates how to use QPainter to draw an image in real time, as well as to repaint widgets.</p>"));
-    }
+    } # DELETEME '
 
-    createActions()
-    {
+    createActions() {
         $.openAct = new QAction($.tr("&Open..."), $self);
         $.openAct.setShortcut($.tr("Ctrl+O"));
         $.connect($.openAct, SIGNAL("triggered()"), SLOT("open()"));
 
-        foreach my $format in (QImageWriter::supportedImageFormats()) {
+        foreach my string $format in (QImageWriter::supportedImageFormats()) {
             my $text = $.tr(sprintf("%s...", toupper($format)));
 
-            my $action = new QAction($text, $self);
+            my QAction $action($text, $self);
             $action.setData($format);
             $.connect($action, SIGNAL("triggered()"), SLOT("save()"));
             $.saveAsActs += $action;
@@ -116,10 +112,9 @@ class MainWindow inherits QMainWindow
         qApp().connect($.aboutQtAct, SIGNAL("triggered()"), SLOT("aboutQt()"));
     }
 
-    createMenus()
-    {
+    createMenus() {
         $.saveAsMenu = new QMenu($.tr("&Save As"), $self);
-        foreach my $action in ($.saveAsActs)
+        foreach my QAction $action in ($.saveAsActs)
             $.saveAsMenu.addAction($action);
 
         $.fileMenu = new QMenu($.tr("&File"), $self);
@@ -144,8 +139,7 @@ class MainWindow inherits QMainWindow
         $.menuBar().addMenu($.helpMenu);
     }
 
-    maybeSave()
-    {
+    maybeSave() returns bool {
         if ($.scribbleArea.isModified()) {
             my $ret = QMessageBox::warning($self, $.tr("Scribble"),
                                           $.tr("The image has been modified.\nDo you want to save your changes?"),
@@ -160,11 +154,10 @@ class MainWindow inherits QMainWindow
         return True;
     }
 
-    saveFile($fileFormat)
-    {
-        my $initialPath = QDir::currentPath() + "/untitled." + $fileFormat;
+    saveFile($fileFormat) returns bool {
+        my string $initialPath = QDir::currentPath() + "/untitled." + $fileFormat;
 
-        my $fileName = QFileDialog::getSaveFileName($self, $.tr("Save As"),
+        my string $fileName = QFileDialog::getSaveFileName($self, $.tr("Save As"),
                                                    $initialPath,
                                                    $.tr(sprintf("%s Files (*.%s);;All Files (*)", 
                                                               toupper($fileFormat), $fileFormat)));
@@ -176,40 +169,36 @@ class MainWindow inherits QMainWindow
     }
 }
 
-class ScribbleArea inherits QWidget
-{
-    constructor($parent) : QWidget($parent)
-    {
-        $.image = new QImage();
+class ScribbleArea inherits QWidget {
+    private {
+        QImage $.image();
+        QColor $.myPenColor = Qt::blue;
+        int $.myPenWidth = 1;
+        bool $.modified = False;
+        bool $.scribbling = False;
+    }
+    constructor($parent) : QWidget($parent) {
         $.setAttribute(Qt::WA_StaticContents);
-        $.modified = False;
-        $.scribbling = False;
-        $.myPenWidth = 1;
-        $.myPenColor = Qt::blue;
     }
 
     destructor() {
-	printf("ScribbleArea::destructor() %N\n", $self);
+	#printf("ScribbleArea::destructor() %N\n", $self);
     }
 
-    isModified()
-    { 
+    isModified() { 
         return $.modified; 
     }
 
-    penColor()
-    {
+    penColor() {
         return $.myPenColor; 
     }
 
-    penWidth()
-    {
+    penWidth() {
         return $.myPenWidth; 
     }
 
-    openImage($fileName)
-    {
-        my $loadedImage = new QImage();
+    openImage(string $fileName) {
+        my QImage $loadedImage();
         if (!$loadedImage.load($fileName))
             return False;
 
@@ -221,8 +210,7 @@ class ScribbleArea inherits QWidget
         return True;
     }
 
-    saveImage($fileName, $fileFormat)
-    {
+    saveImage(string $fileName, $fileFormat) returns bool {
         my $visibleImage = $.image;
         $.resizeImage(\$visibleImage, $.size());
         
@@ -234,53 +222,45 @@ class ScribbleArea inherits QWidget
         }
     }
     
-    setPenColor($newColor)
-    {
+    setPenColor(QColor $newColor) {
         $.myPenColor = $newColor;
     }
     
-    setPenWidth($newWidth)
-    {
+    setPenWidth(int $newWidth) {
         $.myPenWidth = $newWidth;
     }
     
-    clearImage()
-    {
+    clearImage() {
         $.image.fill(0xffffff);
         $.modified = True;
         $.update();
     }
     
-    mousePressEvent($event)
-    {
+    mousePressEvent(QMouseEvent $event) {
         if ($event.button() == Qt::LeftButton) {
             $.lastPoint = $event.pos();
             $.scribbling = True;
         }
     }
     
-    mouseMoveEvent($event)
-    {
+    mouseMoveEvent(QMouseEvent $event){
         if (($event.buttons() & Qt::LeftButton) && $.scribbling)
             $.drawLineTo($event.pos());
     }
     
-    mouseReleaseEvent($event)
-    {
+    mouseReleaseEvent(QMouseEvent $event) {
         if ($event.button() == Qt::LeftButton && $.scribbling) {
             $.drawLineTo($event.pos());
             $.scribbling = False;
         }
     }
     
-    paintEvent($event)
-    {
-        my $painter = new QPainter($self);
+    paintEvent(QPaintEvent $event) {
+        my QPainter $painter($self);
         $painter.drawImage(new QPoint(0, 0), $.image);
     }
     
-    resizeEvent($event)
-    {
+    resizeEvent(QResizeEvent $event) {
         if ($.width() > $.image.width() || $.height() > $.image.height()) {
             my $newWidth = max($.width() + 128, $.image.width());
             my $newHeight = max($.height() + 128, $.image.height());
@@ -290,9 +270,8 @@ class ScribbleArea inherits QWidget
         QWidget::$.resizeEvent($event);
     }
     
-    drawLineTo($endPoint)
-    {
-        my $painter = new QPainter($.image);
+    drawLineTo(QPoint $endPoint) {
+        my QPainter $painter($.image);
         $painter.setPen(new QPen($.myPenColor, $.myPenWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
         $painter.drawLine($.lastPoint, $endPoint);
         $.modified = True;
@@ -302,28 +281,26 @@ class ScribbleArea inherits QWidget
         $.lastPoint = $endPoint;
     }
     
-    resizeImage($image, $newSize)
-    {
+    resizeImage($image, $newSize) {
         if ($image.size().width() == $newSize.width() && 
             $image.size().height() == $newSize.height())
             return;
         
-        my $newImage = new QImage($newSize, QImage::Format_RGB32);
+        my QImage $newImage = new QImage($newSize, QImage::Format_RGB32);
         $newImage.fill(0xffffff);
-        my $painter = new QPainter($newImage);
+        my QPainter $painter($newImage);
         $painter.drawImage(new QPoint(0, 0), $image);
         $image = $newImage;
     }
     
-    print()
-    {
-        my $printer = new QPrinter(QPrinter::HighResolution);
+    print() {
+        my QPrinter $printer(QPrinter::HighResolution);
         
-        my $printDialog = new QPrintDialog($printer, $self);
+        my QPrintDialog $printDialog($printer, $self);
         if ($printDialog.exec() == QDialog::Accepted) {
-            my $painter = new QPainter($printer);
-            my $rect = $painter.viewport();
-            my $size = $.image.size();
+            my QPainter $painter($printer);
+            my QRect $rect = $painter.viewport();
+            my QSize $size = $.image.size();
             $size.scale($rect.size(), Qt::KeepAspectRatio);
             $painter.setViewport($rect.x(), $rect.y(), $size.width(), $size.height());
             $painter.setWindow($.image.rect());
@@ -332,11 +309,9 @@ class ScribbleArea inherits QWidget
     }    
 }
 
-class scribble_example inherits QApplication
-{
-    constructor()
-    {
-        my $window = new MainWindow();
+class scribble_example inherits QApplication {
+    constructor() {
+        my MainWindow $window();
         $window.show();
         $.exec();
     }
