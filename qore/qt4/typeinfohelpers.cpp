@@ -89,7 +89,7 @@ bool QBrushTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Exceptio
 	 Qt::BrushStyle i = (Qt::BrushStyle)in->val;
 	 br = new QBrush(i);
       }
-      else if (!strcmp(name, "Qt::GlobalColor") || in->getType() == NT_INT) {
+      else if (!strcmp(name, "Qt::GlobalColor") || (in->getType() == NT_INT && in->val >= 0 && in->val < 20)) {
 	 Qt::GlobalColor i = (Qt::GlobalColor)in->val;
 	 br = new QBrush(i);
       }
@@ -112,10 +112,19 @@ bool QColorTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Exceptio
    if (n->getType() != NT_INT && strcmp(n->getTypeName(), "Qt::GlobalColor"))
       return false;
 
-   Qt::GlobalColor gc = (Qt::GlobalColor)n->getAsInt();
-   n->deref(xsink);
+   QColor *qc;
 
-   QColor *qc = new QColor(gc);
+   int v = n->getAsInt();
+   // treat as RGB value
+   if (n->getType() == NT_INT && (v < 0 || v >= 20)) {
+      qc = new QColor(QRgb(v));
+   }
+   else {
+      Qt::GlobalColor gc = (Qt::GlobalColor)v;
+      qc = new QColor(gc);
+   }
+
+   n->deref(xsink);
    QoreObject *rv = new QoreObject(QC_QCOLOR, getProgram());
    QoreSmokePrivateData *data = new QoreSmokePrivateData(SCI_QCOLOR, qc, rv);
    rv->setPrivate(QC_QCOLOR->getID(), data);
