@@ -145,8 +145,8 @@ AbstractQoreNode * QtContainerToQore::listToQObject(const Smoke::Type &t, void* 
             o->ref();
         } else {
             o = new QoreObject(qc, getProgram());
-//             QObject * qtObj = reinterpret_cast<QObject*>(origObj);
-            QoreSmokePrivate * p = new QoreSmokePrivateQObjectData(sc.index, qtObj);
+	    //QObject * qtObj = reinterpret_cast<QObject*>(origObj);
+            QoreSmokePrivate * p = new QoreSmokePrivateQObjectData(sc.index, qtObj, o);
             QoreQtVirtualFlagHelper vfh;
             qtObj->setProperty(QORESMOKEPROPERTY, reinterpret_cast<qulonglong>(o));
             o->setPrivate(qc->getID(), p);
@@ -680,19 +680,19 @@ QoreObject *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0) {
     }
     Smoke::ModuleIndex cid = qt_Smoke->findClass(cname);
     // New qoreobject for really required Qt class/object
-    ReferenceHolder<QoreObject> qto(new QoreObject(qc, getProgram()), xsink);
+    QoreObject *qto = new QoreObject(qc, getProgram());
     assert(cid.smoke);
 
-    T *data = new T(cid.index, qtObj);
+    T *data = new T(cid.index, qtObj, qto);
     // QObject based obj
     {
         QoreQtVirtualFlagHelper vfh;
-        qtObj->setProperty(QORESMOKEPROPERTY, reinterpret_cast<qulonglong>(*qto));
+        qtObj->setProperty(QORESMOKEPROPERTY, reinterpret_cast<qulonglong>(qto));
     }
     qto->setPrivate(qc->getID(), data);
     if (p)
         *p = data;
-    return qto.release();
+    return qto;
 }
 
 AbstractQoreNode *return_qvariant(const QoreMethod &method,

@@ -240,7 +240,7 @@ bool QKeySequenceTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Ex
    QKeySequence *qks;
    if (t == NT_STRING)
       qks = new QKeySequence(reinterpret_cast<const QoreStringNode*>(n)->getBuffer());
-   else if (t == NT_INT)
+   else if (t == NT_INT || !strcmp(n->getTypeName(), "Qt::Key"))
       qks = new QKeySequence(reinterpret_cast<const QoreBigIntNode*>(n)->val);
    else if (n && !strcmp(n->getTypeName(), "QKeySequence::StandardKey"))
       qks = new QKeySequence((QKeySequence::StandardKey)(reinterpret_cast<const QoreBigIntNode*>(n)->val));
@@ -252,11 +252,11 @@ bool QKeySequenceTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Ex
    return true;
 }
 
-int QKeySequenceTypeHelper::parseEqualImpl(const QoreTypeInfo *typeInfo) const {
-   qore_type_t t = typeInfo ? typeInfoGetType(typeInfo) : NT_NOTHING;
-   //const QoreClass *qc = typeInfo ? typeInfoGetClass(typeInfo) : 0;
-   return t == NT_STRING || t == NT_INT || ClassMap::Instance()->checkEnum(typeInfoGetName(typeInfo))
-      ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+bool QKeySequenceTypeHelper::canConvertIntern(qore_type_t t, const char *name) const {
+   if (t == NT_STRING || t == NT_INT)
+      return true;
+
+   return !strcmp(name, "QKeySequence::StandardKey") || !strcmp(name, "Qt::Key") ? true : false;
 }
 
 bool QDateTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {

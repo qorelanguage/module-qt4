@@ -33,6 +33,7 @@
 #include <QMetaObject>
 #include <QMetaProperty>
 #include <QObject>
+#include <QLayout>
 
 using namespace std;
 
@@ -41,12 +42,12 @@ QoreSmokeBinding* QoreSmokeBinding::m_instance = NULL;
 QoreObject *getQoreQObject(const QObject *qtObj) {
     QVariant ptr;
     {
-        QoreQtVirtualFlagHelper vfh;
-        ptr = qtObj->property(QORESMOKEPROPERTY);
+       QoreQtVirtualFlagHelper vfh;
+       ptr = qtObj->property(QORESMOKEPROPERTY);
     }
     if (!ptr.isValid()) {
-        //printd(0, "getQoreQObject(%p) property %s not set\n", qtObj, QORESMOKEPROPERTY);
-        return 0;
+       //printd(0, "getQoreQObject(%p) property %s not set\n", qtObj, QORESMOKEPROPERTY);
+       return 0;
     }
 
     QoreObject *o = reinterpret_cast<QoreObject*>(ptr.toULongLong());
@@ -62,11 +63,27 @@ QoreObject *getQoreObject(Smoke::Index classId, void *obj, QoreClass *&qc) {
     if (!qc)
        return 0;
 
+    return qt_qore_map.get(obj);
+/*
     //printd(0, "getQoreObject() qc=%s qobject=%s\n", qc->getName(), qc->getClass(QC_QOBJECT->getID()) ? "true" : "false");
+    // see if it a QLayoutItem is a QLayout
+    if (classId == SCI_QLAYOUTITEM) {
+       QLayoutItem *qli = dynamic_cast<QLayoutItem *>(reinterpret_cast<QLayoutItem *>(obj));
+       bool is_layout;
+       {
+	  QoreQtVirtualFlagHelper vfh;
+	  is_layout = !(qli->spacerItem() || qli->widget());
+       }
+       printd(0, "getQoreObject() %s qli=%p ql=%d\n", qc->getName(), qli, is_layout);
+       if (is_layout)
+	  return getQoreQObject(reinterpret_cast<QLayout *>(obj));
+    }
+
     if (!qc->getClass(QC_QOBJECT->getID()))
         return qt_qore_map.get(obj);
 
     return getQoreQObject(reinterpret_cast<QObject*>(obj));
+*/
 }
 
 void QoreSmokeBinding::deleted(Smoke::Index classId, void *obj) {
@@ -117,7 +134,7 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
         // we must have an implementation for abstract methods
 #ifdef DEBUG
         if (isAbstract)
-            printd(0, "trying to execute pure virtual method %s::%s()\n", cname, mname);
+	   printd(0, "trying to execute pure virtual method %s::%s() obj=%p\n", cname, mname, obj);
 #endif
         assert(!isAbstract);
         return false;

@@ -740,9 +740,9 @@ void common_constructor(const QoreClass &myclass,
     bool is_qobject = false;
     if (myclass.getClass(QC_QOBJECT->getID())) {
        if (myclass.getClass(QC_QABSTRACTITEMMODEL->getID()))
-	  obj = new QoreSmokePrivateQAbstractItemModelData(cqm.method().classId, (QObject *)qtObj);
+	  obj = new QoreSmokePrivateQAbstractItemModelData(cqm.method().classId, (QObject *)qtObj, self);
        else
-	  obj = new QoreSmokePrivateQObjectData(cqm.method().classId, (QObject *)qtObj);
+	  obj = new QoreSmokePrivateQObjectData(cqm.method().classId, (QObject *)qtObj, self);
 
        is_qobject = true;
     } else {
@@ -763,8 +763,7 @@ void common_constructor(const QoreClass &myclass,
 
     assert(!*xsink);
 
-    //printd(0, "common_constructor() %s setting private data %p for classid %d objclassid %d self:%p\n",
-    //       className, obj, myclass.getID(), self->getClass()->getID(), self);
+    //printd(0, "common_constructor() %s private %p (%p) cid %d objcid %d self %p\n", className, obj, qtObj, myclass.getID(), self->getClass()->getID(), self);
 }
 
 // a helper function to handle conflicting names
@@ -818,6 +817,8 @@ void common_destructor(const QoreClass &thisclass, ClassMap::TypeHandler *type_h
     QoreSmokePrivate *p = reinterpret_cast<QoreSmokePrivate*>(private_data);
 
     void *pobj = p->object();
+
+    //printd(0, "common_destructor() %s self=%p (%s) pobj=%p qobject=%d externally_owned=%d\n", thisclass.getName(), self, self->getClassName(), pobj, p->isQObject(), p->externallyOwned());
 
     if (!pobj) {
         //printd(0, "common_destructor (WW) QoreSmokePrivate's Qt object does not exist anymore\n");

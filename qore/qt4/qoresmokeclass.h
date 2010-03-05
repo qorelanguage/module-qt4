@@ -77,7 +77,7 @@ class QoreSmokePrivateData : public QoreSmokePrivate {
     bool save_map;
 public:
     DLLLOCAL QoreSmokePrivateData(Smoke::Index classID, void *p, QoreObject *self) : QoreSmokePrivate(classID), m_object(p) {
-        // register in object map if object is not derived from QObject and has virtual functions
+        // register in object map if object has virtual functions
         save_map = qt_Smoke->classes[classID].flags & Smoke::cf_virtual;
         if (save_map)
             qt_qore_map.add(p, self);
@@ -111,7 +111,7 @@ private:
 
 class QoreSmokePrivateQObjectData : public QoreSmokePrivate {
 public:
-   DLLLOCAL QoreSmokePrivateQObjectData(Smoke::Index classID, QObject *p) : QoreSmokePrivate(classID, true), m_qobject(p), obj_ref(false) {
+   DLLLOCAL QoreSmokePrivateQObjectData(Smoke::Index classID, QObject *p, QoreObject *self) : QoreSmokePrivate(classID, true), m_qobject(p), obj_ref(false) {
       qt_metaobject_method_count = getParentMetaObject()->methodCount();
       Smoke::ModuleIndex mi = qt_Smoke->findMethod(qt_Smoke->classes[classID].className, "qt_metacall$$?");
       assert(mi.smoke);
@@ -126,6 +126,8 @@ public:
 	 if (!qw->parent())
 	    QWM.add(qw);
       }
+
+      qt_qore_map.add(p, self);
    }
    DLLLOCAL virtual ~QoreSmokePrivateQObjectData() {
       //printd(0, "QoreSmokePrivateQObjectData::~QoreSmokePrivateQObjectData() this=%p obj=%p (%s)\n", this, m_qobject.data(), getClassName());
@@ -140,6 +142,8 @@ public:
 	    QoreQtVirtualFlagHelper vfh;
 	    m_qobject->setProperty(QORESMOKEPROPERTY, (qulonglong)0);
 	 }
+
+	 qt_qore_map.del(qo);
 	 
 	 if (!externallyOwned() && !m_qobject->parent()) {
 	    delete m_qobject;
@@ -164,11 +168,13 @@ public:
         return m_qobject.data();
     }
     DLLLOCAL virtual void clear() {
-        m_qobject = 0;
+       assert(m_qobject.data());
+       qt_qore_map.del(m_qobject.data());
+       m_qobject = 0;
     }
     DLLLOCAL virtual void *takeObject() {
         void *p = (void *)m_qobject.data();
-        m_qobject = 0;
+	clear();
         return p;
     }
 
@@ -409,7 +415,7 @@ protected:
     }
 
 public:
-    DLLLOCAL QoreSmokePrivateQAbstractItemModelData(Smoke::Index classID, QObject *p) : QoreSmokePrivateQObjectData(classID, p) {
+    DLLLOCAL QoreSmokePrivateQAbstractItemModelData(Smoke::Index classID, QObject *p, QoreObject *self) : QoreSmokePrivateQObjectData(classID, p, self) {
     }
     DLLLOCAL virtual ~QoreSmokePrivateQAbstractItemModelData() {
         // dereference all stored data ptrs

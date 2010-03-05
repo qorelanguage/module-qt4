@@ -25,26 +25,31 @@ const MinimumSize = 0;
 const SizeHint = 1;
 
 class ItemWrapper {
-    constructor($i, $p) {
+    public {
+        QLayoutItem $.item;
+        int $.position;
+    }
+    constructor(QLayoutItem $i, int $p) {
         $.item = $i;
         $.position = $p;
     }
 }
 
 class BorderLayout inherits QLayout {
-    private $.list;
+    private { 
+        list $.list = (); 
+    }
 
-    constructor($parent, $margin, $spacing) : QLayout($parent instanceof QObject ? $parent : NOTHING) {
-        $.list = ();
-        $.setMargin($margin);
+    constructor(any $parent, int $margin = 0, int $spacing = -1) : QLayout($parent) {
+        $.setContentsMargins($margin, $margin, $margin, $margin);
         $.setSpacing($spacing);
     }
 
-    addItem($item) {
+    addItem(QLayoutItem $item) {
         $.add($item, West);
     }
 
-    addWidget($widget, $position) {
+    addWidget(QWidget $widget, int $position) {
         $.add(new QWidgetItem($widget), $position);
     }
 
@@ -52,37 +57,37 @@ class BorderLayout inherits QLayout {
         return Qt::Horizontal | Qt::Vertical;
     }
 
-    hasHeightForWidth() {
+    hasHeightForWidth() returns bool {
         return False;
     }
 
-    count() {
+    count() returns int {
         return elements $.list;
     }
 
-    itemAt($index) {
+    itemAt(int $index) {
         my $wrapper = $.list[$index];
         if (exists $wrapper)
             return $wrapper.item;
     }
 
-    minimumSize() {
+    minimumSize() returns QSize {
         return $.calculateSize(MinimumSize);
     }
 
-    setGeometry($rect) {
-        my $center;
-        my $eastWidth;
-        my $westWidth;
-        my $northHeight;
-        my $southHeight = 0;
-        my $centerHeight = 0;
-        my $i;
+    setGeometry(QRect $rect) {
+        my ItemWrapper $center;
+        my int $eastWidth = 0;
+        my int $westWidth = 0;
+        my int $northHeight = 0;
+        my int $southHeight = 0;
+        my int $centerHeight = 0;
+        my int $i;
 
         QLayout::$.setGeometry($rect);
 
         for ($i = 0; $i < elements $.list; ++$i) {
-            my $wrapper = $.list[$i];
+            my ItemWrapper $wrapper = $.list[$i];
             my $item = $wrapper.item;
             my $position = $wrapper.position;
             
@@ -93,15 +98,13 @@ class BorderLayout inherits QLayout {
                 $northHeight += $item.geometry().height() + $.spacing();
             } else if ($position == South) {
                 $item.setGeometry(new QRect($item.geometry().x(),
-                                            $item.geometry().y 
-                                            (), $rect.width(),
+                                            $item.geometry().y(), $rect.width(),
                                             $item.sizeHint().height()));
                 
                 $southHeight += $item.geometry().height() + $.spacing();
 
                 $item.setGeometry(new QRect($rect.x(),
-                                            $rect.y
-                                            () + $rect.height() - $southHeight + $.spacing(),
+                                            $rect.y() + $rect.height() - $southHeight + $.spacing(),
                                             $item.geometry().width(),
                                             $item.geometry().height()));
             } else if ($position == Center) {
@@ -112,7 +115,7 @@ class BorderLayout inherits QLayout {
         $centerHeight = $rect.height() - $northHeight - $southHeight;
 
         for ($i = 0; $i < elements $.list; ++$i) {
-            my $wrapper = $.list[$i];
+            my ItemWrapper $wrapper = $.list[$i];
             my $item = $wrapper.item;
             my $position = $wrapper.position;
 
@@ -122,8 +125,7 @@ class BorderLayout inherits QLayout {
                 
                 $westWidth += $item.geometry().width() + $.spacing();
             } else if ($position == East) {
-                $item.setGeometry(new QRect($item.geometry().x(), $item.geometry().y
-                                            (),
+                $item.setGeometry(new QRect($item.geometry().x(), $item.geometry().y(),
                                             $item.sizeHint().width(), $centerHeight));
                 
                 $eastWidth += $item.geometry().width() + $.spacing();
@@ -141,31 +143,31 @@ class BorderLayout inherits QLayout {
         }
     }
 
-    sizeHint() {
-	return $.calculateSize(SizeHint);
+    sizeHint() returns QSize {
+        return $.calculateSize(SizeHint);
     }
 
-    takeAt($index) {
+    takeAt(int $index = -1) returns QLayoutItem {
         if ($index >= 0 && $index < elements $.list) {
-            my $layoutStruct = $.list[$index];
+            my ItemWrapper $layoutStruct = $.list[$index];
             splice $.list, $index, 1;
             return $layoutStruct.item;
         }
     }
 
-    add($item, $position) {
+    add(QLayoutItem $item, $position) {
         $.list += new ItemWrapper($item, $position);
     }
 
-    calculateSize($sizeType) {
-        my ($height, $width);
+    calculateSize($sizeType) returns QSize {
+        my (int $height, int $width);
 
         for (my $i = 0; $i < elements $.list; ++$i) {
             my $wrapper = $.list[$i];
             my $item = $wrapper.item;
             my $position = $wrapper.position;
 
-            my $itemSize;
+            my QSize $itemSize;
 
             if ($sizeType == MinimumSize)
                 $itemSize = $item.minimumSize();
@@ -184,23 +186,23 @@ class BorderLayout inherits QLayout {
 
 class Window inherits QWidget {
     constructor() {
-        my $centralWidget = new QTextBrowser();
+        my QTextBrowser $centralWidget();
         $centralWidget.setPlainText($.tr("Central widget"));
 
-        my $layout = new BorderLayout();
+        my BorderLayout $layout();
         $layout.addWidget($centralWidget, Center);
         $layout.addWidget($.createLabel("North"), North);
         $layout.addWidget($.createLabel("West"), West);
         $layout.addWidget($.createLabel("East 1"), East);
         $layout.addWidget($.createLabel("East 2") , East);
-        $layout.addWidget($.createLabel("South"), South);
+        $layout.addWidget($.createLabel("South"), South);        
         $.setLayout($layout);
 
         $.setWindowTitle($.tr("Border Layout"));
     }
 
     createLabel($text) {
-        my $label = new QLabel($text);
+        my QLabel $label($text);
         $label.setFrameStyle(QFrame::Box | QFrame::Raised);
         return $label;
     }
@@ -208,8 +210,8 @@ class Window inherits QWidget {
 
 class borderlayout inherits QApplication {
     constructor() {
-        my $window = new Window();        
+        my Window $window();        
         $window.show();
-        return $.exec();
+        $.exec();
     }
 }
