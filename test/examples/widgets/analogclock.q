@@ -23,7 +23,7 @@ class AnalogClock inherits QWidget {
         $.resize(200, 200);
     }
 
-    paintEvent(QPaintEvent $event) {
+    paintEvent(QPaintEvent $event) {        
         my int $side = min($.width(), $.height());
         my date $time = now();
 
@@ -31,12 +31,11 @@ class AnalogClock inherits QWidget {
 
         $painter.setRenderHint(QPainter::Antialiasing);
         $painter.translate($.width() / 2, $.height() / 2);
-        $painter.scale($side / 200.0, $side / 200.0);
-        
+        $painter.scale($side / 200.0, $side / 200.0);        
         $painter.setPen(Qt::NoPen);
-	$painter.setBrush(new QBrush($hourColor));
-
-        $painter.save();
+        $painter.setBrush(new QBrush($hourColor));
+        
+        $painter.save();        
         $painter.rotate(30.0 * ((get_hours($time) + get_minutes($time) / 60.0)));
         $painter.drawConvexPolygon($hourHand);
         $painter.restore();

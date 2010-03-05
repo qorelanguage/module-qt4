@@ -568,7 +568,7 @@ static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool &valid, bool p
       f += 6;
 
    QByteArray cname(f);
-   if (cname.startsWith("QList<")) {
+   if (cname.startsWith("QList<") || cname.startsWith("QVector<")) {
       return listTypeInfo;
    }
 
