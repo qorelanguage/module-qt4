@@ -635,6 +635,8 @@ static QoreStringNode *qt_module_init() {
     cm.addArgHandler("QWidgetItem", "QWidgetItem", setExternallyOwned_handler);
     cm.addArgHandler("QTreeWidget", "addTopLevelItem", setExternallyOwned_handler);
     cm.addArgHandler("QTreeWidget", "insertTopLevelItem", setExternallyOwned_handler);
+    cm.addArgHandler("QTableWidget", "setItem", setExternallyOwned_handler);
+    cm.addArgHandler("QStandardItemModel", "setItem", setExternallyOwned_handler);
 
     // QShortcut handlers
     cm.addArgHandler("QShortcut", "QShortcut", arg_handler_QShortcut);
