@@ -33,6 +33,7 @@
 #include <QtDebug>
 #include <QVariant>
 #include <QAbstractItemModel>
+#include <QApplication>
 #include <map>
 
 // map from class names to QoreClass pointers
@@ -845,15 +846,27 @@ void common_destructor(const QoreClass &thisclass, ClassMap::TypeHandler *type_h
 
     if (p->externallyOwned()) {
        //printd(0, "common_destructor() %s::destructor(): QT object %p is externally owned\n", thisclass.getName(), p->object());
-        p->clear();
-        return;
+       p->clear();
+       return;
     }
 
     // if the QApplication object is being deleted, then delete all QWidget objects that still exist
     // because the QApplication destructor will free windowing resources and subsequently deleting
     // any QWidget objects will cause a crash
-    if (&thisclass == QC_QAPPLICATION)
+    if (&thisclass == QC_QAPPLICATION) {
        QWM.deleteAll();
+       // delete all top-level widgets belonging to the application as well
+       QWidgetList l = QApplication::topLevelWidgets();
+       //printd(5, "QApplication::destructor() pobj=%p private_data=%p l size=%d\n", pobj, private_data, l.size());
+       foreach (QWidget *widget, l) {
+	  //printd(0, "deleting widget %p (%p)\n", widget, pobj);
+	  delete widget;
+       }
+       // do not delete the QApplication object directly or it can cause a crash
+       p->clear();
+       return;
+    }
+    //printd(5, "deleting object of class %s %p pobj=%p private_data=%p\n", thisclass.getName(), &thisclass, pobj, private_data);
 
     const char * className = qt_Smoke->classes[p->smokeClass()].className;
     QByteArray methodName("~");
@@ -861,10 +874,11 @@ void common_destructor(const QoreClass &thisclass, ClassMap::TypeHandler *type_h
 
     CommonQoreMethod cqm(type_handler, self, p, className, methodName.constData(), 0, xsink);
 
-    //printd(0, "common_destructor %s::destructor() Qt: %p\n", thisclass.getName(), p->object());
+    //printd(5, "common_destructor %s::destructor() Qt: %p\n", thisclass.getName(), pobj);
     assert(cqm.isValid());
     // call the destructor -- and take the object from the private data first
     (* cqm.smokeClass().classFn)(cqm.method().method, p->takeObject(), cqm.Stack);
+    //printd(5, "common_destructor %s::destructor() Qt: %p returned from smoke destructor\n", thisclass.getName(), pobj);
 }
 
 void emitStaticSignal(QObject *sender, int signalId, const QMetaMethod &qmm, const QoreListNode *args, ExceptionSink *xsink) {

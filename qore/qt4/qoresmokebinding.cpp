@@ -58,10 +58,9 @@ QoreObject *getQoreObject(Smoke::Index classId, void *obj, QoreClass *&qc) {
     assert(obj);
 
     qc = ClassNamesMap::Instance()->value(classId);
-
-//     printd(0, "getQoreObject() qc=%s qobject=%s\n", qc->getName(), qc->getClass(QC_QOBJECT->getID()) ? "true" : "false");
-
     assert(qc);
+
+    //printd(0, "getQoreObject() qc=%s qobject=%s\n", qc->getName(), qc->getClass(QC_QOBJECT->getID()) ? "true" : "false");
     if (!qc->getClass(QC_QOBJECT->getID()))
         return qt_qore_map.get(obj);
 
