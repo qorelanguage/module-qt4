@@ -15,10 +15,8 @@
 # enable all parse warnings
 %enable-all-warnings
 
-class ClassWizard inherits QWizard
-{
-    constructor($parent) : QWizard($parent)
-    {
+class ClassWizard inherits QWizard {
+    constructor($parent) : QWizard($parent) {
         $.addPage(new IntroPage());
         $.addPage(new ClassInfoPage());
         $.addPage(new CodeStylePage());
@@ -30,12 +28,10 @@ class ClassWizard inherits QWizard
 
         $.setWindowTitle($.tr("Class Wizard"));
 
-        $.connect($.button(QWizard::FinishButton), SIGNAL("clicked()"),
-                  $self, SLOT("accept()"));
+        QObject::connect($.button(QWizard::FinishButton), SIGNAL("clicked()"), $self, SLOT("accept()"));
     }
 
-    accept()
-    {
+    accept() {
         my $className = $.field("className");
         my $baseClass = $.field("baseClass");
         my $macroName = $.field("macroName");
@@ -45,7 +41,7 @@ class ClassWizard inherits QWizard
         my $header = $.field("header");
         my $implementation = $.field("implementation");
 
-        my $block;
+        my string $block;
 
         if ($.field("comment")) {
             $block += "/*\n";
@@ -95,7 +91,7 @@ class ClassWizard inherits QWizard
         }
 
         my $filename = $outputDir + "/" + $header;
-        my $headerFile = new File();
+        my File $headerFile();
         if ($headerFile.open($filename, O_CREAT | O_TRUNC | O_WRONLY)) {
             QMessageBox::warning($self, $.tr("Simple Wizard"),
                                 sprintf($.tr("Cannot write file %s:\n%s"), $filename, strerror(errno())));
@@ -149,7 +145,7 @@ class ClassWizard inherits QWizard
         }
         
         $filename = $outputDir + "/" + $implementation;
-        my $implementationFile = new File();
+        my File $implementationFile();
         if ($implementationFile.open($filename, O_CREAT | O_WRONLY | O_TRUNC)) {
             QMessageBox::warning($self, $.tr("Simple Wizard"), sprintf($.tr("Cannot write file %s:\n%s"), $filename, strerror(errno())));
             return;
@@ -161,12 +157,10 @@ class ClassWizard inherits QWizard
 
 }
 
-class IntroPage inherits QWizardPage
-{
+class IntroPage inherits QWizardPage {
     private $.label;
 
-    constructor($parent) : QWizardPage($parent)
-    {
+    constructor($parent) : QWizardPage($parent) {
         $.setTitle($.tr("Introduction"));
         $.setPixmap(QWizard::WatermarkPixmap, new QPixmap($dir + "images/watermark1.png"));
 
@@ -177,21 +171,19 @@ class IntroPage inherits QWizardPage
                                 "implementation file for your new C++ class."));
         $.label.setWordWrap(True);
 
-        my $layout = new QVBoxLayout();
+        my QVBoxLayout $layout();
         $layout.addWidget($.label);
         $.setLayout($layout);
     }
 
 }
 
-class ClassInfoPage inherits QWizardPage
-{
+class ClassInfoPage inherits QWizardPage {
      private $.classNameLabel, $.baseClassLabel, $.classNameLineEdit, $.baseClassLineEdit, 
      $.qobjectMacroCheckBox, $.groupBox, $.qobjectCtorRadioButton, $.qwidgetCtorRadioButton,
      $.defaultCtorRadioButton, $.copyCtorCheckBox;
 
-     constructor($parent) : QWizardPage($parent)
-     {
+     constructor($parent) : QWizardPage($parent) {
          $.setTitle($.tr("Class Information"));
          $.setSubTitle($.tr("Specify basic information about the class for which you "
                           "want to generate skeleton source code files."));
@@ -214,7 +206,7 @@ class ClassInfoPage inherits QWizardPage
          $.defaultCtorRadioButton = new QRadioButton($.tr("&Default constructor"));
          $.copyCtorCheckBox = new QCheckBox($.tr("&Generate copy constructor and "
                                                "operator="));
-
+	 
          $.defaultCtorRadioButton.setChecked(True);
 
          $.copyCtorCheckBox.connect($.defaultCtorRadioButton, SIGNAL("toggled(bool)"), SLOT("setEnabled(bool)"));
@@ -227,14 +219,14 @@ class ClassInfoPage inherits QWizardPage
          $.registerField("defaultCtor", $.defaultCtorRadioButton);
          $.registerField("copyCtor", $.copyCtorCheckBox);
 
-         my $groupBoxLayout = new QVBoxLayout();
+         my QVBoxLayout $groupBoxLayout();
          $groupBoxLayout.addWidget($.qobjectCtorRadioButton);
          $groupBoxLayout.addWidget($.qwidgetCtorRadioButton);
          $groupBoxLayout.addWidget($.defaultCtorRadioButton);
          $groupBoxLayout.addWidget($.copyCtorCheckBox);
          $.groupBox.setLayout($groupBoxLayout);
 
-         my $layout = new QGridLayout();
+         my QGridLayout $layout();
          $layout.addWidget($.classNameLabel, 0, 0);
          $layout.addWidget($.classNameLineEdit, 0, 1);
          $layout.addWidget($.baseClassLabel, 1, 0);
@@ -245,13 +237,11 @@ class ClassInfoPage inherits QWizardPage
      }
 }
 
-class CodeStylePage inherits QWizardPage
-{
+class CodeStylePage inherits QWizardPage {
      private $.commentCheckBox, $.protectCheckBox, $.includeBaseCheckBox, $.macroNameLabel,
      $.baseIncludeLabel, $.macroNameLineEdit, $.baseIncludeLineEdit;
      
-     constructor($parent) : QWizardPage($parent)
-     {
+     constructor($parent) : QWizardPage($parent) {
          $.setTitle($.tr("Code Style Options"));
          $.setSubTitle($.tr("Choose the formatting of the generated code."));
          $.setPixmap(QWizard::LogoPixmap, new QPixmap($dir + "images/logo2.png"));
@@ -284,7 +274,7 @@ class CodeStylePage inherits QWizardPage
          $.registerField("includeBase", $.includeBaseCheckBox);
          $.registerField("baseInclude", $.baseIncludeLineEdit);
 
-         my $layout = new QGridLayout();
+         my QGridLayout $layout();
          $layout.setColumnMinimumWidth(0, 20);
          $layout.addWidget($.commentCheckBox, 0, 0, 1, 3);
          $layout.addWidget($.protectCheckBox, 1, 0, 1, 3);
@@ -296,8 +286,7 @@ class CodeStylePage inherits QWizardPage
          $.setLayout($layout);
      }
      
-     initializePage()
-     {
+     initializePage() {
          my $className = $.field("className");
          $.macroNameLineEdit.setText(toupper($className) + "_H");
 
@@ -318,13 +307,11 @@ class CodeStylePage inherits QWizardPage
      }
 }
 
-class OutputFilesPage inherits QWizardPage
-{
+class OutputFilesPage inherits QWizardPage {
     private $.outputDirLabel, $.headerLabel, $.implementationLabel, $.outputDirLineEdit,
     $.headerLineEdit, $.implementationLineEdit;
 
-    constructor($parent) : QWizardPage($parent)
-    {
+    constructor($parent) : QWizardPage($parent) {
         $.setTitle($.tr("Output Files"));
         $.setSubTitle($.tr("Specify where you want the wizard to put the generated "
                          "skeleton code."));
@@ -346,7 +333,7 @@ class OutputFilesPage inherits QWizardPage
         $.registerField("header*", $.headerLineEdit);
         $.registerField("implementation*", $.implementationLineEdit);
 
-        my $layout = new QGridLayout();
+        my QGridLayout $layout();
         $layout.addWidget($.outputDirLabel, 0, 0);
         $layout.addWidget($.outputDirLineEdit, 0, 1);
         $layout.addWidget($.headerLabel, 1, 0);
@@ -356,8 +343,7 @@ class OutputFilesPage inherits QWizardPage
         $.setLayout($layout);
     }
 
-    initializePage()
-    {
+    initializePage() {
         my $className = $.field("className");
         $.headerLineEdit.setText(tolower($className) + ".h");
         $.implementationLineEdit.setText(tolower($className) + ".cpp");
@@ -365,46 +351,40 @@ class OutputFilesPage inherits QWizardPage
     }
 }
 
-class ConclusionPage inherits QWizardPage
-{
+class ConclusionPage inherits QWizardPage {
     private $.label;
 
-    constructor($parent) : QWizardPage($parent)
-    {
+    constructor($parent) : QWizardPage($parent) {
         $.setTitle($.tr("Conclusion"));
         $.setPixmap(QWizard::WatermarkPixmap, new QPixmap($dir + "images/watermark2.png"));
 
         $.label = new QLabel();
         $.label.setWordWrap(True);
 
-        my $layout = new QVBoxLayout();
+        my QVBoxLayout $layout();
         $layout.addWidget($.label);
         $.setLayout($layout);
     }
 
-    initializePage()
-    {
+    initializePage() {
         my $finishText = $.wizard().buttonText(QWizard::FinishButton);
         $finishText =~ s/&//g;
         $.label.setText(sprintf($.tr("Click %s to generate the class skeleton."), $finishText));
     }
 }
 
-class classwizard_example inherits QApplication
-{
-    constructor()
-    {      
+class classwizard_example inherits QApplication {
+    constructor() {      
         our $dir = get_script_dir();
 
-        my $translatorFileName = "qt_";
-        $translatorFileName += QLocale::system().name();
-        my $translator = new QTranslator(qApp());
+        my string $translatorFileName = "qt_" + QLocale::system().name();
+        my QTranslator $translator(qApp());
         if ($translator.load($translatorFileName, QLibraryInfo::location(QLibraryInfo::TranslationsPath)))
             QCoreApplication::installTranslator($translator);
         
-        my $wizard = new ClassWizard();
+        my ClassWizard $wizard();
         $wizard.show();
         
-            $.exec();
+	$.exec();
     }
 }
