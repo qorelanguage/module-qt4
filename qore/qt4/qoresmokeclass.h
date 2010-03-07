@@ -112,6 +112,8 @@ private:
 class QoreSmokePrivateQObjectData : public QoreSmokePrivate {
 public:
    DLLLOCAL QoreSmokePrivateQObjectData(Smoke::Index classID, QObject *p, QoreObject *self) : QoreSmokePrivate(classID, true), m_qobject(p), obj_ref(false) {
+      //printd(0, "QoreSmokePrivateQObjectData::QoreSmokePrivateQObjectData() %s qobject=%p self=%p this=%p\n", getClassName(), p, self, this);
+
       qt_metaobject_method_count = getParentMetaObject()->methodCount();
       Smoke::ModuleIndex mi = qt_Smoke->findMethod(qt_Smoke->classes[classID].className, "qt_metacall$$?");
       assert(mi.smoke);
@@ -120,10 +122,12 @@ public:
       assert(!strcmp(qt_Smoke->methodNames[qt_Smoke->methods[qt_metacall_index].name], "qt_metacall"));
       
       if (p->isWidgetType()) {
+	 assert(strcmp(qt_Smoke->classes[classID].className, "QApplication"));
 	 QWidget *qw = reinterpret_cast<QWidget *>(p);
 	 // add to QoreWidgetManager if it's a window - so it can be deleted if necessary
 	 // when the QApplication object is deleted
-	 if (!qw->parent())
+	 // but do not delete the QDesktopWidget
+	 if (!qw->parent() && classID != SCI_QDESKTOPWIDGET)
 	    QWM.add(qw);
       }
 
@@ -135,9 +139,6 @@ public:
 
       QObject *qo = m_qobject.data();
       if (qo) {
-	 if (qo->isWidgetType())
-	    QWM.remove(reinterpret_cast<QWidget *>(qo));
-
 	 {
 	    QoreQtVirtualFlagHelper vfh;
 	    m_qobject->setProperty(QORESMOKEPROPERTY, (qulonglong)0);
@@ -168,7 +169,12 @@ public:
         return m_qobject.data();
     }
     DLLLOCAL virtual void clear() {
+       //printd(0, "QoreSmokePrivateQObjectData::clear() this=%p obj=%p (%s)\n", this, m_qobject.data(), getClassName());
+
        assert(m_qobject.data());
+       if (m_qobject.data()->isWidgetType())
+	  QWM.remove(reinterpret_cast<QWidget *>(m_qobject.data()));
+
        qt_qore_map.del(m_qobject.data());
        m_qobject = 0;
     }

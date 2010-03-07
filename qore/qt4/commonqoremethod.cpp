@@ -738,7 +738,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
             }
             // finally the generic Q stuff
             else {
-                return returnQtObjectOnStack(si, className, methodName, v, t, index, xsink);
+	       return returnQtObjectOnStack(si, className, methodName, v, t, index, xsink, temp);
             }
         } else {
 //             printd(0, "can't handle ref type '%s'\n", t.name);
@@ -817,8 +817,10 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
     // QString has no class in smoke
     // TODO/FIXME: There we should avoid code duplication
     if (!strcmp(t.name, "QString")) {
+#ifdef DEBUG
         if (cqm)
             Q_ASSERT_X(0, "QString as a value, not ptr or ref", "never should go here");
+#endif
         std::auto_ptr<QString> qstr(new QString());
         if (get_qstring(t, *(qstr.get()), node, xsink))
             return -1;
@@ -830,7 +832,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
         xsink->raiseException("QT-ARGUMENT-ERROR", "DEBUG: need special handler for void* argument to %s::%s()", className, methodName);
         printd(0, "void * (%s) in %s::%s()\n", t.name, className, methodName);
         assert(false);
-        return 0;
+        return -1;
     }
 
     if (t.name[0] == 'Q')

@@ -38,7 +38,7 @@ static AbstractQoreNode* f_qApp(const QoreListNode *params, class ExceptionSink 
         return 0;
     }
     o->ref();
-    printd(0, "f_qApp classId %d qoreobject %p\n", ix, o);
+    //printd(0, "f_qApp classId %d qoreobject %p\n", ix, o);
     return o;
 }
 

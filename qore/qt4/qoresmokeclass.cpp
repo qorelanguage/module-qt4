@@ -53,6 +53,7 @@ ClassMap * ClassMap::m_instance = NULL;
 // FIXME: add type information when adding these first 2 functions
 static AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *ptr, const QoreListNode *params, ExceptionSink *xsink);
 static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *ptr, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink);
+//static AbstractQoreNode *QOBJECT_connect_static(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *ptr, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink);
 
 static AbstractQoreNode *QOBJECT_createSignal(QoreObject *self, QoreSmokePrivateQObjectData *qo, const QoreListNode *args, ExceptionSink *xsink);
 static AbstractQoreNode *QOBJECT_emit(QoreObject *self, QoreSmokePrivateQObjectData *qo, const QoreListNode *args, ExceptionSink *xsink);
@@ -672,11 +673,14 @@ static AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const type_
     return 0;
 }
 
-static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *type_handler, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink) {
+/*
+static AbstractQoreNode *QOBJECT_connect_static(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *type_handler, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink) {
     // HACK: workaround for $.connect(o, sig, o, slot) call type
-    if (num_params(params) == 4)
-       return f_QOBJECT_connect(method, typeList, type_handler, params, xsink);
+   return f_QOBJECT_connect(method, typeList, type_handler, params, xsink);
+}
+*/
 
+static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *type_handler, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink) {
     QoreObject *p = test_object_param(params, 0);
     ReferenceHolder<QoreSmokePrivateQObjectData> sender(p ? (QoreSmokePrivateQObjectData *)p->getReferencedPrivateData(QC_QOBJECT->getID(), xsink) : 0, xsink);
 
@@ -738,11 +742,12 @@ void common_constructor(const QoreClass &myclass,
     QoreSmokePrivate *obj;
 
     bool is_qobject = false;
-    if (myclass.getClass(QC_QOBJECT->getID())) {
+    if (myclass.getClass(QC_QOBJECT->getID())) {       
+       QObject *qobj = reinterpret_cast<QObject *>(qtObj);
        if (myclass.getClass(QC_QABSTRACTITEMMODEL->getID()))
-	  obj = new QoreSmokePrivateQAbstractItemModelData(cqm.method().classId, (QObject *)qtObj, self);
+	  obj = new QoreSmokePrivateQAbstractItemModelData(cqm.method().classId, qobj, self);
        else
-	  obj = new QoreSmokePrivateQObjectData(cqm.method().classId, (QObject *)qtObj, self);
+	  obj = new QoreSmokePrivateQObjectData(cqm.method().classId, qobj, self);
 
        is_qobject = true;
     } else {
@@ -785,6 +790,9 @@ AbstractQoreNode * common_method(const QoreMethod &method,
     const char * className = method.getClass()->getName();
 
     QoreSmokePrivate * smc = reinterpret_cast<QoreSmokePrivate*>(apd);
+    if (!smc->object())
+       return 0;
+
     CommonQoreMethod cqm(type_handler, self, smc, className, methodName, params, xsink);
 
     Q_ASSERT_X(smc!=0, "cast", "cannot get QoreSmokeClass from QoreObject");
@@ -809,77 +817,78 @@ AbstractQoreNode * common_static_method(const QoreMethod &method,
 }
 
 void common_destructor(const QoreClass &thisclass, ClassMap::TypeHandler *type_handler, QoreObject *self, AbstractPrivateData *private_data, ExceptionSink *xsink) {
-    // unconditionally deref private data on exit to avoid a memory leak
-    ReferenceHolder<AbstractPrivateData> ref_helper(private_data, xsink);
+   // unconditionally deref private data on exit to avoid a memory leak
+   ReferenceHolder<AbstractPrivateData> ref_helper(private_data, xsink);
 
-    assert(dynamic_cast<QoreSmokePrivate*>(private_data));
+   assert(dynamic_cast<QoreSmokePrivate*>(private_data));
 
-    QoreSmokePrivate *p = reinterpret_cast<QoreSmokePrivate*>(private_data);
+   QoreSmokePrivate *p = reinterpret_cast<QoreSmokePrivate*>(private_data);
 
-    void *pobj = p->object();
+   void *pobj = p->object();
 
-    //printd(0, "common_destructor() %s self=%p (%s) pobj=%p qobject=%d externally_owned=%d\n", thisclass.getName(), self, self->getClassName(), pobj, p->isQObject(), p->externallyOwned());
+   //printd(0, "common_destructor() %s self=%p (%s) pobj=%p qobject=%d externally_owned=%d\n", thisclass.getName(), self, self->getClassName(), pobj, p->isQObject(), p->externallyOwned());
 
-    if (!pobj) {
-        //printd(0, "common_destructor (WW) QoreSmokePrivate's Qt object does not exist anymore\n");
-        return;
-    }
+   if (!pobj) {
+      //printd(0, "common_destructor (WW) QoreSmokePrivate's Qt object does not exist anymore\n");
+      return;
+   }
 
-    if (p->isQObject()) {
-        QObject * qtObj = reinterpret_cast<QObject*>(pobj);
-        // set property to 0 because QoreObject is being deleted
-        {
-            QoreQtVirtualFlagHelper vfh;
-            qtObj->setProperty(QORESMOKEPROPERTY, (qulonglong)0);
-        }
+   // if the QApplication object is being deleted, then delete all QWidget objects that still exist
+   // because the QApplication destructor will free windowing resources and subsequently deleting
+   // any QWidget objects will cause a crash
+   if (&thisclass == QC_QAPPLICATION) {
+      //printd(0, "QApplication::destructor() pobj=%p private_data=%p\n", pobj, private_data);
+      QWM.deleteAll();
+      
+      /*
+      // delete all top-level widgets belonging to the application
+      QWidgetList l = QApplication::topLevelWidgets();
+      //printd(0, "QApplication::destructor() pobj=%p private_data=%p l size=%d\n", pobj, private_data, l.size());
+      foreach (QWidget *widget, l) {
+	 //printd(0, "deleting widget %p (%p)\n", widget, pobj);
+	 delete widget;
+      }
+      */
+   }
+   //printd(5, "deleting object of class %s %p pobj=%p private_data=%p\n", thisclass.getName(), &thisclass, pobj, private_data);
 
-        if (qtObj->parent()) {
-	   //printd(0, "common_destructor() %s::destructor() object %p not deleted; has parent\n", thisclass.getName(), qtObj);
-            // clear the private data
-            p->clear();
-            return;
-        }
-	else if (qtObj->isWidgetType()) {
-	   // delete from QoreWidgetManager
-	   QWM.remove(reinterpret_cast<QWidget*>(qtObj));
-	}
-    }
+   if (p->isQObject()) {
+      QObject * qtObj = reinterpret_cast<QObject*>(pobj);
+      // set property to 0 because QoreObject is being deleted
+      {
+	 QoreQtVirtualFlagHelper vfh;
+	 qtObj->setProperty(QORESMOKEPROPERTY, (qulonglong)0);
+      }
+      
+      if (qtObj->parent()) {
+	 //printd(0, "common_destructor() %s::destructor() object %p not deleted; has parent\n", thisclass.getName(), qtObj);
+	 // clear the private data
+	 p->clear();
+	 return;
+      }
+      else if (qtObj->isWidgetType()) {
+	 // delete from QoreWidgetManager
+	 QWM.remove(reinterpret_cast<QWidget*>(qtObj));
+      }
+   }
 
-    if (p->externallyOwned()) {
-       //printd(0, "common_destructor() %s::destructor(): QT object %p is externally owned\n", thisclass.getName(), p->object());
-       p->clear();
-       return;
-    }
+   if (p->externallyOwned()) {
+      //printd(0, "common_destructor() %s::destructor(): QT object %p is externally owned\n", thisclass.getName(), p->object());
+      p->clear();
+      return;
+   }
+   
+   const char * className = qt_Smoke->classes[p->smokeClass()].className;
+   QByteArray methodName("~");
+   methodName += className;
 
-    // if the QApplication object is being deleted, then delete all QWidget objects that still exist
-    // because the QApplication destructor will free windowing resources and subsequently deleting
-    // any QWidget objects will cause a crash
-    if (&thisclass == QC_QAPPLICATION) {
-       QWM.deleteAll();
-       // delete all top-level widgets belonging to the application as well
-       QWidgetList l = QApplication::topLevelWidgets();
-       //printd(5, "QApplication::destructor() pobj=%p private_data=%p l size=%d\n", pobj, private_data, l.size());
-       foreach (QWidget *widget, l) {
-	  //printd(0, "deleting widget %p (%p)\n", widget, pobj);
-	  delete widget;
-       }
-       // do not delete the QApplication object directly or it can cause a crash
-       p->clear();
-       return;
-    }
-    //printd(5, "deleting object of class %s %p pobj=%p private_data=%p\n", thisclass.getName(), &thisclass, pobj, private_data);
+   CommonQoreMethod cqm(type_handler, self, p, className, methodName.constData(), 0, xsink);
 
-    const char * className = qt_Smoke->classes[p->smokeClass()].className;
-    QByteArray methodName("~");
-    methodName += className;
-
-    CommonQoreMethod cqm(type_handler, self, p, className, methodName.constData(), 0, xsink);
-
-    //printd(5, "common_destructor %s::destructor() Qt: %p\n", thisclass.getName(), pobj);
-    assert(cqm.isValid());
-    // call the destructor -- and take the object from the private data first
-    (* cqm.smokeClass().classFn)(cqm.method().method, p->takeObject(), cqm.Stack);
-    //printd(5, "common_destructor %s::destructor() Qt: %p returned from smoke destructor\n", thisclass.getName(), pobj);
+   //printd(0, "common_destructor %s::destructor() Qt: %p\n", thisclass.getName(), pobj);
+   assert(cqm.isValid());
+   // call the destructor -- and take the object from the private data first
+   (* cqm.smokeClass().classFn)(cqm.method().method, p->takeObject(), cqm.Stack);
+   //printd(0, "common_destructor %s::destructor() Qt: %p returned from smoke destructor\n", thisclass.getName(), pobj);
 }
 
 void emitStaticSignal(QObject *sender, int signalId, const QMetaMethod &qmm, const QoreListNode *args, ExceptionSink *xsink) {

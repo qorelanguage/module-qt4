@@ -41,13 +41,13 @@
 DLLLOCAL extern const QoreClass *QC_QOBJECT, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT,
    *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME, *QC_QICON,
    *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QBYTEARRAY, *QC_QRECT, *QC_QREGION, *QC_QCHAR,
-   *QC_QKEYSEQUENCE, *QC_QLAYOUTITEM;
+   *QC_QKEYSEQUENCE, *QC_QLAYOUTITEM, *QC_QDESKTOPWIDGET;
 
 DLLLOCAL extern const QoreTypeInfo *qtIntTypeInfo, *qtStringTypeInfo;
 
 DLLLOCAL extern Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON, SCI_QRECT, SCI_QREGION,
    SCI_QCOLOR, SCI_QPIXMAP, SCI_QBRUSH, SCI_QDATE, SCI_QDATETIME, SCI_QTIME,
-   SCI_QKEYSEQUENCE, SCI_QLAYOUTITEM;
+   SCI_QKEYSEQUENCE, SCI_QLAYOUTITEM, SCI_QDESKTOPWIDGET;
 
 DLLLOCAL QoreObject *getQoreQObject(const QObject *obj);
 DLLLOCAL QoreObject *getQoreObject(Smoke::Index classId, void *obj, QoreClass *&qc);
@@ -133,11 +133,13 @@ public:
       widget_set.erase(w);
    }
    DLLLOCAL void deleteAll() {
+      assert(!done);
       done = true;
       for (widget_set_t::iterator i = widget_set.begin(), e = widget_set.end(); i != e; ++i) {
 	 if (!(*i)->parent())
 	    delete *i;
       }
+
    }
 };
 

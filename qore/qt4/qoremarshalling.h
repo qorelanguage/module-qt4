@@ -43,32 +43,32 @@ public:
         return m_instance;
     }
 
-    DLLLOCAL AbstractQoreNode * marshall(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+    DLLLOCAL AbstractQoreNode * marshall(const Smoke::Type &t, void* ptr, bool delete_temp, ExceptionSink *xsink);
 
 private:
-    typedef AbstractQoreNode* (*qlist_handler_t)(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+    typedef AbstractQoreNode* (*qlist_handler_t)(const Smoke::Type &t, void* ptr, bool delete_temp, ExceptionSink *xsink);
 
     DLLLOCAL static QByteArray getSubType(const char * name);
 
     template<class QLISTT, class QORET>
-    DLLLOCAL static AbstractQoreNode * listToSimpleValue(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+       DLLLOCAL static AbstractQoreNode * listToSimpleValue(const Smoke::Type &t, void* ptr, bool delete_temp, ExceptionSink *xsink);
 
-    DLLLOCAL static AbstractQoreNode * listToQStringList(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
-    DLLLOCAL static AbstractQoreNode * listToQByteArray(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
-
-    template<class QLISTT>
-    DLLLOCAL static AbstractQoreNode * listToEnum(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+    DLLLOCAL static AbstractQoreNode * listToQStringList(const Smoke::Type &t, void* ptr, bool delete_temp, ExceptionSink *xsink);
+    DLLLOCAL static AbstractQoreNode * listToQByteArray(const Smoke::Type &t, void* ptr, bool delete_temp, ExceptionSink *xsink);
 
     template<class QLISTT>
-    DLLLOCAL static AbstractQoreNode * listToQObject(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+       DLLLOCAL static AbstractQoreNode * listToEnum(const Smoke::Type &t, void* ptr, bool delete_temp, ExceptionSink *xsink);
+
+    template<class QLISTT>
+       DLLLOCAL static AbstractQoreNode * listToQObject(const Smoke::Type &t, void* ptr, bool delete_temp, ExceptionSink *xsink);
 
     //! QList<Foo>
     template<class QLISTT>
-    DLLLOCAL static AbstractQoreNode * listToObject(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+       DLLLOCAL static AbstractQoreNode * listToObject(const Smoke::Type &t, void* ptr, bool delete_temp, ExceptionSink *xsink);
 
     //! QList<Foo*>
     template<class QLISTT>
-    DLLLOCAL static AbstractQoreNode * listToObjectPtr(const Smoke::Type &t, void* ptr, ExceptionSink *xsink);
+       DLLLOCAL static AbstractQoreNode * listToObjectPtr(const Smoke::Type &t, void* ptr, bool delete_temp, ExceptionSink *xsink);
 
     QMap<QByteArray,qlist_handler_t> m_map;
     static QtContainerToQore * m_instance;
@@ -123,18 +123,18 @@ private:
     DLLLOCAL static QByteArray getSubType(const char * name);
 
     template<class QLISTT>
-    DLLLOCAL static QoreQListBase * listToSimpleValue(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
+       DLLLOCAL static QoreQListBase * listToSimpleValue(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
 
     DLLLOCAL static QoreQListBase * listToQStringList(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
 
     template<class QLISTT, class SUBTYPET>
-    DLLLOCAL static QoreQListBase * listToEnum(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
+       DLLLOCAL static QoreQListBase * listToEnum(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
 
     template<class QLISTT, class SUBTYPET>
-    DLLLOCAL static QoreQListBase * listToObject(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
+       DLLLOCAL static QoreQListBase * listToObject(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
 
     template<class QLISTT, class SUBTYPET>
-    DLLLOCAL static QoreQListBase * listToQObject(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
+       DLLLOCAL static QoreQListBase * listToQObject(const Smoke::Type &t, const AbstractQoreNode * ptr, ExceptionSink *xsink);
 
     QMap<QByteArray,qlist_handler_t> m_map;
     DLLLOCAL static QoreToQtContainer * m_instance;
