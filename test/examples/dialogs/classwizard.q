@@ -1,11 +1,11 @@
 #!/usr/bin/env qore
 
 # this is basically a direct port of the QT widget example
-# "classwizard" to Qore using Qore's "qt" module.  
+# "classwizard" to Qore using Qore's "qt4" module.  
 
-# Note that Qore's "qt" module requires QT 4.3 or above 
+# Note that Qore's "qt4" module requires QT 4.3 or above 
 
-# use the "qt-gui" module
+# use the "qt4" module
 %requires qt4
 
 # this is an object-oriented program; the application class is "classwizard_example"
@@ -32,29 +32,29 @@ class ClassWizard inherits QWizard {
     }
 
     accept() {
-        my $className = $.field("className");
-        my $baseClass = $.field("baseClass");
-        my $macroName = $.field("macroName");
-        my $baseInclude = $.field("baseInclude");
+        my $className = $.field("className").toString();
+        my $baseClass = $.field("baseClass").toString();
+        my $macroName = $.field("macroName").toString();
+        my $baseInclude = $.field("baseInclude").toString();
 
-        my $outputDir = $.field("outputDir");
-        my $header = $.field("header");
-        my $implementation = $.field("implementation");
+        my $outputDir = $.field("outputDir").toString();
+        my $header = $.field("header").toString();
+        my $implementation = $.field("implementation").toString();
 
         my string $block;
 
-        if ($.field("comment")) {
+        if ($.field("comment").toBool()) {
             $block += "/*\n";
             $block += "    " + $header + "\n";
             $block += "*/\n";
             $block += "\n";
         }
-        if ($.field("protect")) {
+        if ($.field("protect").toBool()) {
             $block += "#ifndef " + $macroName + "\n";
             $block += "#define " + $macroName + "\n";
             $block += "\n";
         }
-        if ($.field("includeBase")) {
+        if ($.field("includeBase").toBool()) {
             $block += "#include " + $baseInclude + "\n";
             $block += "\n";
         }
@@ -65,19 +65,19 @@ class ClassWizard inherits QWizard {
         $block += "\n";
         $block += "{\n";
 
-        if ($.field("qobjectMacro")) {
+        if ($.field("qobjectMacro").toBool()) {
                 $block += "    Q_OBJECT\n";
                 $block += "\n";
         }
         $block += "public:\n";
 
-        if ($.field("qobjectCtor")) {
+        if ($.field("qobjectCtor").toBool()) {
             $block += "    " + $className + "(QObject *parent);\n";
-        } else if ($.field("qwidgetCtor")) {
+        } else if ($.field("qwidgetCtor").toBool()) {
             $block += "    " + $className + "(QWidget *parent);\n";
-        } else if ($.field("defaultCtor")) {
+        } else if ($.field("defaultCtor").toBool()) {
             $block += "    " + $className + "();\n";
-            if ($.field("copyCtor")) {
+            if ($.field("copyCtor").toBool()) {
                 $block += "    " + $className + "(const " + $className + " &other);\n";
                 $block += "\n";
                 $block += "    " + $className + " &operator=" + "(const " + $className + " &other);\n";
@@ -85,7 +85,7 @@ class ClassWizard inherits QWizard {
         }
         $block += "};\n";
 
-        if ($.field("protect")) {
+        if ($.field("protect").toBool()) {
             $block += "\n";
             $block += "#endif\n";
         }
@@ -94,14 +94,14 @@ class ClassWizard inherits QWizard {
         my File $headerFile();
         if ($headerFile.open($filename, O_CREAT | O_TRUNC | O_WRONLY)) {
             QMessageBox::warning($self, $.tr("Simple Wizard"),
-                                sprintf($.tr("Cannot write file %s:\n%s"), $filename, strerror(errno())));
+                                sprintf($.tr("Cannot write file %n:\n%s"), $filename, strerror(errno())));
             return;
         }
         $headerFile.write($block);
 
         delete $block;
 
-        if ($.field("comment")) {
+        if ($.field("comment").toBool()) {
             $block += "/*\n";
             $block += "    " + $implementation + "\n";
             $block += "*/\n";
@@ -110,23 +110,23 @@ class ClassWizard inherits QWizard {
         $block += "#include \"" + $header + "\"\n";
         $block += "\n";
 
-        if ($.field("qobjectCtor")) {
+        if ($.field("qobjectCtor").toBool()) {
             $block += $className + "::" + $className + "(QObject *parent)\n";
             $block += "    : " + $baseClass + "(parent)\n";
             $block += "{\n";
             $block += "}\n";
-        } else if ($.field("qwidgetCtor")) {
+        } else if ($.field("qwidgetCtor").toBool()) {
             $block += $className + "::" + $className + "(QWidget *parent)\n";
             $block += "    : " + $baseClass + "(parent)\n";
             $block += "{\n";
             $block += "}\n";
-        } else if ($.field("defaultCtor")) {
+        } else if ($.field("defaultCtor").toBool()) {
             $block += $className + "::" + $className + "()\n";
             $block += "{\n";
             $block += "    // missing code\n";
             $block += "}\n";
 
-            if ($.field("copyCtor")) {
+            if ($.field("copyCtor").toBool()) {
                 $block += "\n";
                 $block += $className + "::" + $className + "(const " + $className
                     + " &other)\n";
@@ -147,7 +147,7 @@ class ClassWizard inherits QWizard {
         $filename = $outputDir + "/" + $implementation;
         my File $implementationFile();
         if ($implementationFile.open($filename, O_CREAT | O_WRONLY | O_TRUNC)) {
-            QMessageBox::warning($self, $.tr("Simple Wizard"), sprintf($.tr("Cannot write file %s:\n%s"), $filename, strerror(errno())));
+            QMessageBox::warning($self, $.tr("Simple Wizard"), sprintf($.tr("Cannot write file %n:\n%s"), $filename, strerror(errno())));
             return;
         }
         $implementationFile.write($block);
@@ -287,15 +287,15 @@ class CodeStylePage inherits QWizardPage {
      }
      
      initializePage() {
-         my $className = $.field("className");
+         my $className = $.field("className").toString();
          $.macroNameLineEdit.setText(toupper($className) + "_H");
 
-         my $baseClass = $.field("baseClass");
+         my $baseClass = $.field("baseClass").toString();
 
-         $.includeBaseCheckBox.setChecked(strlen($baseClass));
-         $.includeBaseCheckBox.setEnabled(strlen($baseClass));
-         $.baseIncludeLabel.setEnabled(strlen($baseClass));
-         $.baseIncludeLineEdit.setEnabled(strlen($baseClass));
+         $.includeBaseCheckBox.setChecked(boolean(strlen($baseClass)));
+         $.includeBaseCheckBox.setEnabled(boolean(strlen($baseClass)));
+         $.baseIncludeLabel.setEnabled(boolean(strlen($baseClass)));
+         $.baseIncludeLineEdit.setEnabled(boolean(strlen($baseClass)));
 
          if (!strlen($baseClass)) {
              $.baseIncludeLineEdit.clear();
@@ -344,7 +344,7 @@ class OutputFilesPage inherits QWizardPage {
     }
 
     initializePage() {
-        my $className = $.field("className");
+        my $className = $.field("className").toString();
         $.headerLineEdit.setText(tolower($className) + ".h");
         $.implementationLineEdit.setText(tolower($className) + ".cpp");
         $.outputDirLineEdit.setText(QDir::tempPath());
@@ -375,7 +375,7 @@ class ConclusionPage inherits QWizardPage {
 
 class classwizard_example inherits QApplication {
     constructor() {      
-        our $dir = get_script_dir();
+        our string $dir = get_script_dir();
 
         my string $translatorFileName = "qt_" + QLocale::system().name();
         my QTranslator $translator(qApp());
