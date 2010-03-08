@@ -17,10 +17,8 @@
 
 const NumDigitButtons = 10;
 
-class Button inherits QToolButton
-{
-    constructor($text, $color, $parent) : QToolButton($parent)
-    {
+class Button inherits QToolButton {
+    constructor($text, $color, $parent) : QToolButton($parent) {
         $.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
         $.setText($text);
         
@@ -30,8 +28,7 @@ class Button inherits QToolButton
         $.setPalette($newPalette);
     }
 
-    sizeHint()
-    {
+    sizeHint() {
         my $size = QToolButton::$.sizeHint();
         $size.setHeight($size.height() + 20);
         $size.setWidth(max($size.width(), $size.height()));
@@ -39,10 +36,8 @@ class Button inherits QToolButton
     }
 }
 
-class Calculator inherits QDialog
-{
-    constructor($parent) : QDialog($parent)
-    {
+class Calculator inherits QDialog {
+    constructor($parent) : QDialog($parent) {
         $.sumInMemory = 0.0;
         $.sumSoFar = 0.0;
         $.factorSoFar = 0.0;
@@ -127,8 +122,7 @@ class Calculator inherits QDialog
         $.setWindowTitle($.tr("Calculator"));
     }
 
-    digitClicked()
-    {
+    digitClicked() {
         my $clickedButton = $.sender();
         my $digitValue = float($clickedButton.text());
         if ($.display.text() == "0" && $digitValue == 0.0)
@@ -141,12 +135,11 @@ class Calculator inherits QDialog
         $.display.setText($.display.text() + string($digitValue));
     }
 
-    unaryOperatorClicked()
-    {
+    unaryOperatorClicked() {
         my $clickedButton = $.sender();
         my $clickedOperator = $clickedButton.text();
         my $operand = float($.display.text());
-        my $result = 0.0;
+        my float $result = 0.0;
 
         if ($clickedOperator == $.tr("Sqrt")) {
             if ($operand < 0.0) {
@@ -163,12 +156,11 @@ class Calculator inherits QDialog
             }
             $result = 1.0 / $operand;
         }
-        $.display.setText($result);
+        $.display.setText(string($result));
         $.waitingForOperand = True;
     }
 
-    additiveOperatorClicked()
-    {
+    additiveOperatorClicked() {
         my $clickedButton = $.sender();
         my $clickedOperator = $clickedButton.text();
         my $operand = float($.display.text());
@@ -189,7 +181,7 @@ class Calculator inherits QDialog
                 $.abortOperation();
                 return;
             }
-            $.display.setText($.sumSoFar);
+            $.display.setText(string($.sumSoFar));
         } else {
             $.sumSoFar = $operand;
         }
@@ -198,8 +190,7 @@ class Calculator inherits QDialog
         $.waitingForOperand = True;
     }
 
-    multiplicativeOperatorClicked()
-    {
+    multiplicativeOperatorClicked() {
         my $clickedButton = $.sender();
         my $clickedOperator = $clickedButton.text();
         my $operand = float($.display.text());
@@ -209,7 +200,7 @@ class Calculator inherits QDialog
                 $.abortOperation();
                 return;
             }
-            $.display.setText($.factorSoFar);
+            $.display.setText(string($.factorSoFar));
         } else {
             $.factorSoFar = $operand;
         }
@@ -218,9 +209,8 @@ class Calculator inherits QDialog
         $.waitingForOperand = True;
     }
 
-    equalClicked()
-    {
-        my $operand = float($.display.text());
+    equalClicked() {
+        my float $operand = float($.display.text());
 
         if (strlen($.pendingMultiplicativeOperator)) {
             if (!$.calculate($operand, $.pendingMultiplicativeOperator)) {
@@ -241,13 +231,12 @@ class Calculator inherits QDialog
             $.sumSoFar = $operand;
         }
 
-        $.display.setText($.sumSoFar);
+        $.display.setText(string($.sumSoFar));
         $.sumSoFar = 0.0;
         $.waitingForOperand = True;
     }
 
-    pointClicked()
-    {
+    pointClicked() {
         if ($.waitingForOperand)
             $.display.setText("0");
         if ($.display.text() !~ /\./)
@@ -255,8 +244,7 @@ class Calculator inherits QDialog
         $.waitingForOperand = False;
     }
 
-    changeSignClicked()
-    {
+    changeSignClicked() {
         my $text = $.display.text();
         my $value = float($text);
 
@@ -268,8 +256,7 @@ class Calculator inherits QDialog
         $.display.setText($text);
     }
 
-    backspaceClicked()
-    {
+    backspaceClicked() {
         if ($.waitingForOperand)
             return;
 
@@ -282,8 +269,7 @@ class Calculator inherits QDialog
         $.display.setText($text);
     }
 
-    clear()
-    {
+    clear() {
         if ($.waitingForOperand)
             return;
 
@@ -291,8 +277,7 @@ class Calculator inherits QDialog
         $.waitingForOperand = True;
     }
 
-    clearAll()
-    {
+    clearAll() {
         $.sumSoFar = 0.0;
         $.factorSoFar = 0.0;
         $.pendingAdditiveOperator = "";
@@ -301,44 +286,37 @@ class Calculator inherits QDialog
         $.waitingForOperand = True;
     }
 
-    clearMemory()
-    {
+    clearMemory() {
         $.sumInMemory = 0.0;
     }
 
-    readMemory()
-    {
-        $.display.setText($.sumInMemory);
+    readMemory() {
+        $.display.setText(string($.sumInMemory));
         $.waitingForOperand = True;
     }
 
-    setMemory()
-    {
+    setMemory() {
         $.equalClicked();
         $.sumInMemory = float($.display.text());
     }
 
-    addToMemory()
-    {
+    addToMemory() {
         $.equalClicked();
         $.sumInMemory += float($.display.text());
     }
 
-    createButton($text, $color, $member)
-    {
+    createButton($text, $color, $member) {
         my $button = new Button($text, $color);
         $.connect($button, SIGNAL("clicked()"), $member);
         return $button;
     }
 
-    abortOperation()
-    {
+    abortOperation() {
         $.clearAll();
         $.display.setText($.tr("####"));
     }
 
-    calculate($rightOperand, $pendingOperator)
-    {
+    calculate($rightOperand, $pendingOperator) {
         #printf("%n\n", $pendingOperator);
         if ($pendingOperator == $.tr("+")) {
             $.sumSoFar += $rightOperand;
@@ -355,10 +333,8 @@ class Calculator inherits QDialog
     }
 }
 
-class calculator_example inherits QApplication
-{
-    constructor() 
-    {
+class calculator_example inherits QApplication {
+    constructor() {
         our $mult = "×";
         our $div  = "÷";
 

@@ -75,15 +75,15 @@ class Window inherits QWidget
         my $dateEdit = new QDateEdit(now());
         $dateEdit.setDateRange(2005-01-01, 2010-12-31);
         $dateLabel.setText(sprintf($.tr("Appointment date (between %s and %s):"), 
-                                   format_date("YYYY-MM-DD", $dateEdit.minimumDate()),
-                                   format_date("YYYY-MM-DD", $dateEdit.maximumDate())));
+                                   $dateEdit.minimumDate().toString(Qt::ISODate),
+                                   $dateEdit.maximumDate().toString(Qt::ISODate)));
 
         my $timeLabel = new QLabel();
         my $timeEdit = new QTimeEdit(now());
         $timeEdit.setTimeRange(new QTime(9, 0, 0, 0), new QTime(16, 30, 0, 0));
         $timeLabel.setText(sprintf($.tr("Appointment time (between %s and %s):"), 
-                                   format_date("HH:mm:SS", $timeEdit.minimumTime()),
-                                   format_date("HH:mm:SS", $timeEdit.maximumTime())));
+                                   $timeEdit.minimumTime().toString(Qt::ISODate),
+                                   $timeEdit.maximumTime().toString(Qt::ISODate)));
 
         $.meetingLabel = new QLabel();
         $.meetingEdit = new QDateTimeEdit(now());
@@ -118,13 +118,13 @@ class Window inherits QWidget
         if ($.meetingEdit.displayedSections() & QDateTimeEdit::DateSections_Mask) {
             $.meetingEdit.setDateRange(2004-11-01, 2005-11-30);
             $.meetingLabel.setText(sprintf($.tr("Meeting date (between %s and %s):"),
-                                           format_date("YYYY-MM-DD", $.meetingEdit.minimumDate()),
-                                           format_date("YYYY-MM-DD", $.meetingEdit.maximumDate())));
+                                           $.meetingEdit.minimumDate().toString(Qt::ISODate),
+                                           $.meetingEdit.maximumDate().toString(Qt::ISODate)));
         } else {
             $.meetingEdit.setTimeRange(new QTime(0, 7, 20, 0), new QTime(21, 0, 0, 0));
             $.meetingLabel.setText(sprintf($.tr("Meeting time (between %s and %s):"),
-                                           format_date("HH:mm:SS", $.meetingEdit.minimumTime()),
-                                           format_date("HH:mm:SS", $.meetingEdit.maximumTime())));
+                                           $.meetingEdit.minimumTime().toString(Qt::ISODate),
+                                           $.meetingEdit.maximumTime().toString(Qt::ISODate)));
         }
     }
 

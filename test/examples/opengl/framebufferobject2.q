@@ -207,7 +207,6 @@ class GLWidget inherits QGLWidget {
         $.yOffs[$i] = abs(cos((-M_PI * $jmp) * $.xOffs[$i]) * $amp) - 1;
         $.rot[$i] += $rotation;
     }
-    
 }
 
 class framebufferobject2 inherits QApplication {
@@ -215,12 +214,12 @@ class framebufferobject2 inherits QApplication {
         if (!QGLFormat::hasOpenGL()) {
             QMessageBox::information(NOTHING, "OpenGL framebuffer objects",
                                     "this system does not support OpenGL");
-            return -1;
+            return;
         }
         if (!QGLFramebufferObject::hasOpenGLFramebufferObjects()) {
             QMessageBox::information(NOTHING, "OpenGL framebuffer objects",
                                     "this system does not support framebuffer objects.");
-            return -1;
+            return;
         }
 
         my $widget = new GLWidget();

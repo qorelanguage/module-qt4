@@ -1,12 +1,13 @@
 #!/usr/bin/env qore
 
 # This is basically a direct port of a QT example program to Qore
-# using Qore's "qt-opengl" module.
+# using Qore's "qt4" module.
 
-# Note that Qore's "qt-opengl" module requires QT 4.3 or above with OpenGL support
+# Note that Qore's "qt4" module requires QT 4.3 or above 
 
-# use the "qt-opengl" module (automatically loads the "qt-gui" and "opengl" modules)
+# use the "qt4" module
 %requires qt4
+# use the "opengl" module for opengl functions
 %requires opengl
 
 # this is an object-oriented program, the application class is "grabber"
@@ -21,13 +22,11 @@ const reflectance1 = ( 0.8, 0.1, 0.0, 1.0 );
 const reflectance2 = ( 0.0, 0.8, 0.2, 1.0 );
 const reflectance3 = ( 0.2, 0.2, 1.0, 1.0 );
 
-class GLWidget inherits QGLWidget
-{
+class GLWidget inherits QGLWidget {
     private $.gear1, $.gear2, $.gear3, 
             $.xRot, $.yRot, $.zRot, $.gear1Rot, $.lastPos;
 
-    constructor($parent) : QGLWidget($parent)
-    {
+    constructor($parent) : QGLWidget($parent) {
         $.lastPos = new QPoint();
 
         # create signals
@@ -267,16 +266,14 @@ class GLWidget inherits QGLWidget
     }
 }
 
-class MainWindow inherits QMainWindow
-{
+class MainWindow inherits QMainWindow {
     private $.centralWidget, $.glWidgetArea, $.pixmapLabelArea,
     $.glWidget, $.pixmapLabel, $.xSlider, $.ySlider, 
     $.zSlider, $.fileMenu, $.helpMenu, $.grabFrameBufferAct, 
     $.renderIntoPixmapAct, $.clearPixmapAct, $.exitAct, 
     $.aboutAct, $.aboutQtAct;
 
-    constructor()
-    {
+    constructor() {
         $.centralWidget = new QWidget();
         $.setCentralWidget($.centralWidget);
 
@@ -319,8 +316,7 @@ class MainWindow inherits QMainWindow
         $.resize(400, 300);
     }
 
-    renderIntoPixmap()
-    {
+    renderIntoPixmap() {
         my $size = $.getSize();
         if ($size.isValid()) {
             my $pixmap = $.glWidget.renderPixmap($size.width(), $size.height());
@@ -328,26 +324,22 @@ class MainWindow inherits QMainWindow
         }
     }
 
-    grabFrameBuffer()
-    {
+    grabFrameBuffer() {
         my $image = $.glWidget.grabFrameBuffer();
         $.setPixmap(QPixmap::fromImage($image));
     }
 
-    clearPixmap()
-    {
+    clearPixmap() {
         $.setPixmap(new QPixmap());
     }
 
-    about()
-    {
+    about() {
         QMessageBox::about($self, $.tr("About Grabber"),
                           $.tr("The <b>Grabber</b> example demonstrates two approaches for "
                              "rendering OpenGL into a Qt pixmap."));
     }
 
-    createActions()
-    {
+    createActions() {
         $.renderIntoPixmapAct = new QAction($.tr("&Render into Pixmap..."), $self);
         $.renderIntoPixmapAct.setShortcut($.tr("Ctrl+R"));
         $.connect($.renderIntoPixmapAct, SIGNAL("triggered()"), SLOT("renderIntoPixmap()"));
@@ -371,8 +363,7 @@ class MainWindow inherits QMainWindow
         qApp().connect($.aboutQtAct, SIGNAL("triggered()"), SLOT("aboutQt()"));
     }
 
-    createMenus()
-    {
+    createMenus() {
         $.fileMenu = $.menuBar().addMenu($.tr("&File"));
         $.fileMenu.addAction($.renderIntoPixmapAct);
         $.fileMenu.addAction($.grabFrameBufferAct);
@@ -385,9 +376,8 @@ class MainWindow inherits QMainWindow
         $.helpMenu.addAction($.aboutQtAct);
     }
 
-    createSlider($changedSignal, $setterSlot)
-    {
-         my $slider = new QSlider(Qt::Horizontal);
+    createSlider($changedSignal, $setterSlot) {
+        my $slider = new QSlider(Qt::Horizontal);
         $slider.setRange(0, 360 * 16);
         $slider.setSingleStep(16);
         $slider.setPageStep(15 * 16);
@@ -398,8 +388,7 @@ class MainWindow inherits QMainWindow
         return $slider;
     }
 
-    setPixmap($pixmap)
-    {
+    setPixmap($pixmap) {
         $.pixmapLabel.setPixmap($pixmap);
         my $size = $pixmap.size();
         if ($size.subtract(new QSize(1, 0)) == $.pixmapLabelArea.maximumViewportSize())
@@ -407,8 +396,7 @@ class MainWindow inherits QMainWindow
         $.pixmapLabel.resize($size);
     }
 
-    getSize()
-    {
+    getSize() {
         my $ok;
         my $text = QInputDialog::getText($self, $.tr("Grabber"),
                                         $.tr("Enter pixmap size:"),
@@ -430,8 +418,7 @@ class MainWindow inherits QMainWindow
     }
 }
 
-class grabber inherits QApplication 
-{
+class grabber inherits QApplication {
     constructor() {
         my $mainWin = new MainWindow();
         $mainWin.show();

@@ -81,7 +81,7 @@ class Screenshot inherits QWidget {
     shootScreen() {
         if ($.delaySpinBox.value() != 0)
             QApplication::beep();
-
+                
         $.originalPixmap = QPixmap::grabWindow(QApplication::desktop().winId());
         $.updateScreenshotLabel();
 

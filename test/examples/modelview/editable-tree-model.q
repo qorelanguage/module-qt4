@@ -210,17 +210,14 @@ class MainWindow inherits QMainWindow, private Ui_MainWindow {
         my $index = $.view.selectionModel().currentIndex();
         my $model = $.view.model();
 
-	printf("model=%N calling insertRow(%N, %N)\n", $model, $index.row() + 1, $index.parent();
-
         if (!$model.insertRow($index.row() + 1, $index.parent()))
+        if (!$model.insertRow($index.row() + 1))
             return;
 
-	printf("insertRow returned True\n");
         $.updateActions();
-        
+
         for (my int $column = 0; $column < $model.columnCount($index.parent()); ++$column) {
             my $child = $model.index($index.row() + 1, $column, $index.parent());
-	    printf("column %d: row=%d child=%N\n", $column, $index.row(), $child);
             $model.setData($child, new QVariant("[No data]"), Qt::EditRole);
         }
     }
