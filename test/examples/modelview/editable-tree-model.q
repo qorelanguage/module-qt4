@@ -1,11 +1,11 @@
 #!/usr/bin/env qore
 
 # $Self is basically a direct port of the QT tutorial to Qore 
-# using Qore's "qt" module.  
+# using Qore's "qt4" module.  
 
-# Note that Qore's "qt" module requires QT 4.3 or above 
+# Note that Qore's "qt4" module requires QT 4.3 or above 
 
-# use the "qt-gui" module
+# use the "qt4" module
 %requires qt4
 
 # $self is an object-oriented program, the application class is "editable_tree_model"
@@ -16,7 +16,23 @@
 %enable-all-warnings
 
 class Ui_MainWindow {
-    setupUi($MainWindow) {
+    public {
+	QTreeView $.view;
+	QAction $.exitAction;
+	QAction $.insertRowAction;
+	QAction $.removeRowAction;
+	QAction $.insertColumnAction;
+	QAction $.removeColumnAction;
+	QAction $.insertChildAction;
+	QWidget $.centralwidget;
+	QVBoxLayout $.vboxLayout;
+	QMenuBar $.menubar;
+	QStatusBar $.statusbar;
+	QMenu $.fileMenu;
+	QMenu $.actionsMenu;
+    }
+
+    setupUi(QMainWindow $MainWindow) {
         if (!strlen($MainWindow.objectName()))
             $MainWindow.setObjectName("MainWindow");
         $MainWindow.resize(573, 468);
@@ -129,7 +145,7 @@ class MainWindow inherits QMainWindow, private Ui_MainWindow {
     }
 
     updateActions() {
-        my $hasSelection = boolean(strlen($.view.selectionModel().selection()));
+        my bool $hasSelection = !$.view.selectionModel().selection().isEmpty();
         $.removeRowAction.setEnabled($hasSelection);
         $.removeColumnAction.setEnabled($hasSelection);
 
@@ -194,13 +210,17 @@ class MainWindow inherits QMainWindow, private Ui_MainWindow {
         my $index = $.view.selectionModel().currentIndex();
         my $model = $.view.model();
 
-        if (!$model.insertRow($index.row()+1, $index.parent()))
+	printf("model=%N calling insertRow(%N, %N)\n", $model, $index.row() + 1, $index.parent();
+
+        if (!$model.insertRow($index.row() + 1, $index.parent()))
             return;
 
+	printf("insertRow returned True\n");
         $.updateActions();
         
-        for (my $column = 0; $column < $model.columnCount($index.parent()); ++$column) {
+        for (my int $column = 0; $column < $model.columnCount($index.parent()); ++$column) {
             my $child = $model.index($index.row() + 1, $column, $index.parent());
+	    printf("column %d: row=%d child=%N\n", $column, $index.row(), $child);
             $model.setData($child, new QVariant("[No data]"), Qt::EditRole);
         }
     }
@@ -350,7 +370,7 @@ sub gb($num) {
 }
 
 class TreeModel inherits QAbstractItemModel {
-    private $.rootItem;
+    private { TreeItem $.rootItem; }
 
     constructor($headers, $data, $parent) : QAbstractItemModel($parent) {
         my $rootData = ();
@@ -549,9 +569,8 @@ class TreeModel inherits QAbstractItemModel {
 
 class editable_tree_model inherits QApplication {
     constructor() {
-        my $window = new MainWindow();
+        my MainWindow $window();
         $window.show();
-        return $.exec();
+        $.exec();
     }
 }
-

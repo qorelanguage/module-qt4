@@ -588,6 +588,7 @@ private:
    }
 
    DLLLOCAL void addMethod(QoreClass *qc, const Smoke::Class &c, const Smoke::Method &method, const TypeHandler *th);
+   DLLLOCAL void addQoreMethods();
 };
 
 // Singleton. Everywhere available map Smoke::Class index -> QoreClass*

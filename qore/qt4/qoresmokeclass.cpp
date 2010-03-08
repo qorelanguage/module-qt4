@@ -28,12 +28,14 @@
 #include "commonqoremethod.h"
 #include "qoreqtenumnode.h"
 #include "typeinfohelpers.h"
+#include "qoreqlist.h"
 
 #include <iostream>
 #include <QtDebug>
 #include <QVariant>
 #include <QAbstractItemModel>
 #include <QApplication>
+#include <QItemSelection>
 #include <map>
 
 // map from class names to QoreClass pointers
@@ -54,7 +56,6 @@ ClassMap * ClassMap::m_instance = NULL;
 static AbstractQoreNode *f_QOBJECT_connect(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *ptr, const QoreListNode *params, ExceptionSink *xsink);
 static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *ptr, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink);
 //static AbstractQoreNode *QOBJECT_connect_static(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *ptr, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink);
-
 static AbstractQoreNode *QOBJECT_createSignal(QoreObject *self, QoreSmokePrivateQObjectData *qo, const QoreListNode *args, ExceptionSink *xsink);
 static AbstractQoreNode *QOBJECT_emit(QoreObject *self, QoreSmokePrivateQObjectData *qo, const QoreListNode *args, ExceptionSink *xsink);
 static bool qobject_delete_blocker(QoreObject *self, QoreSmokePrivateQObjectData *data);
@@ -154,6 +155,28 @@ ClassMap::ClassMap() {
 
    // free map memory
    nsmap.clear();
+
+   // add special qore methods to classes
+   addQoreMethods();
+}
+
+void ClassMap::addQoreMethods() {
+   // add methods to classes
+
+   QoreClass *qc = const_cast<QoreClass *>(QC_QOBJECT);
+
+   // QObject
+   qc->addMethodExtended("createSignal", (q_method_t)QOBJECT_createSignal, false, QDOM_DEFAULT, nothingTypeInfo, 1, stringTypeInfo, QORE_PARAM_NO_ARG);
+   qc->addMethodExtended("emit", (q_method_t)QOBJECT_emit, false, QDOM_DEFAULT, nothingTypeInfo, 1, stringTypeInfo, QORE_PARAM_NO_ARG);
+   qc->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
+
+   // QVariant
+   qc = ClassNamesMap::Instance()->value("QVariant");
+   //printd(0, "registered QVariant::toQore\n");
+   qc->addMethod2("toQore", (q_method2_t)Marshalling::return_qvariant);
+
+   qc = ClassNamesMap::Instance()->value("QItemSelection");
+   addListMethods<QItemSelection>(qc);
 }
 
 void ClassMap::addBaseClasses() {
@@ -172,13 +195,7 @@ void ClassMap::addBaseClasses() {
 	    continue;
 	 }
 
-	 /*
-	 if (QC_QOBJECT && parent == QC_QOBJECT)
-	    qc->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
-	 */
-	 
 	 qc->addBuiltinVirtualBaseClass(parent);
-	 //addSuperClasses(*i, qt_ns);
       }
    }
 }
@@ -501,13 +518,6 @@ static QoreClass *newClass(Smoke::Index ix, const Smoke::Class &c) {
    // process special classes
    if (!QC_QOBJECT && !strcmp(c.className, "QObject")) {
       QC_QOBJECT = qc;
-      qc->addMethodExtended("createSignal", (q_method_t)QOBJECT_createSignal, false, QDOM_DEFAULT, nothingTypeInfo, 1, stringTypeInfo, QORE_PARAM_NO_ARG);
-      qc->addMethodExtended("emit", (q_method_t)QOBJECT_emit, false, QDOM_DEFAULT, nothingTypeInfo, 1, stringTypeInfo, QORE_PARAM_NO_ARG);
-      qc->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
-   }
-   else if (!strcmp(c.className, "QVariant")) {
-      //printd(0, "registered toQore\n");
-      qc->addMethod2("toQore", (q_method2_t)Marshalling::return_qvariant);
    }
 
    return qc;
