@@ -113,7 +113,6 @@ class Ui_MainWindow {
 }
 
 class MainWindow inherits QMainWindow, private Ui_MainWindow {
-
     constructor($parent) : QMainWindow($parent) {
         $.setupUi($self);
 
@@ -260,6 +259,7 @@ class TreeItem {
 	$.itemData; 
 	$.parentItem;
     }
+    public {}
 
     constructor(list $data, $parent) {
         $.parentItem = $parent;
@@ -369,6 +369,7 @@ sub gb($num) {
 
 class TreeModel inherits QAbstractItemModel {
     private { TreeItem $.rootItem; }
+    public {}
 
     constructor($headers, $data, $parent) : QAbstractItemModel($parent) {
         my list $rootData = ();
@@ -562,7 +563,7 @@ class TreeModel inherits QAbstractItemModel {
     }
 }
 
-class editable_tree_model inherits QApplication {
+class editable_tree_model inherits QApplication {    
     constructor() {
         my MainWindow $window();
         $window.show();
