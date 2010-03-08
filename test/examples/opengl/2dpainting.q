@@ -1,12 +1,13 @@
 #!/usr/bin/env qore
 
 # This is basically a direct port of a QT example program to Qore 
-# using Qore's "qt-opengl" module.  
+# using Qore's "qt4" module.  
 
-# Note that Qore's "qt-opengl" module requires QT 4.3 or above with OpenGL support 
+# Note that Qore's "qt4" module requires QT 4.3 or above
 
-# use the "qt-opengl" module (automatically loads the "qt-gui" and "opengl" modules)
+# use the "qt4" module
 %requires qt4
+# use the "opengl" module
 %requires opengl
 
 # this is an object-oriented program, the application class is "two_d_painting"

@@ -229,7 +229,7 @@ class Window inherits QWidget
         $.ySlider = $.createSlider();
         $.zSlider = $.createSlider();
 
-        $.connect($.xSlider, SIGNAL("valueChanged(int)"), $.glWidget, SLOT("setXRotation(int)"));
+        QObject::connect($.xSlider, SIGNAL("valueChanged(int)"), $.glWidget, SLOT("setXRotation(int)"));
         $.xSlider.connect($.glWidget, SIGNAL("xRotationChanged(int)"), SLOT("setValue(int)"));
         $.glWidget.connect($.ySlider, SIGNAL("valueChanged(int)"), SLOT("setYRotation(int)"));
         $.ySlider.connect($.glWidget, SIGNAL("yRotationChanged(int)"), SLOT("setValue(int)"));
