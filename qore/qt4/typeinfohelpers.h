@@ -72,7 +72,7 @@ public:
    }
    DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
       return typeInfoGetType(typeInfo) == NT_STRING 
-         || typeInfoGetClass(typeInfo) == QC_QCHAR
+         || typeInfoParseTestCompatibleClass(typeInfo, QC_QCHAR)
          ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
 };
@@ -90,7 +90,7 @@ public:
       return QTI_AMBIGUOUS;
    }
    DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
-      return typeInfoGetClass(typeInfo) == QC_QRECT ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      return typeInfoParseTestCompatibleClass(typeInfo, QC_QRECT) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
 };
 
@@ -122,7 +122,7 @@ public:
       return typeInfoGetType(typeInfo) == NT_INT 
 	 || !strcmp(tn, "Qt::GlobalColor") 
 	 || !strcmp(tn, "Qt::BrushStyle")
-         || typeInfoGetClass(typeInfo) == QC_QCOLOR
+         || typeInfoParseTestCompatibleClass(typeInfo, QC_QCOLOR)
          ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
 };
