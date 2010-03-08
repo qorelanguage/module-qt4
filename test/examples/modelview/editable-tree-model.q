@@ -117,15 +117,15 @@ class MainWindow inherits QMainWindow, private Ui_MainWindow {
     constructor($parent) : QMainWindow($parent) {
         $.setupUi($self);
 
-        my $headers = ($.tr("Title"), $.tr("Description"));
+        my list $headers = ($.tr("Title"), $.tr("Description"));
 
-        my $file = new File();
+        my File $file();
         $file.open(get_script_dir() + "default.txt");
-        my $model = new TreeModel($headers, $file.read(-1), $.view);
+        my TreeModel $model($headers, $file.read(-1), $.view);
         $file.close();
 
         $.view.setModel($model);
-        for (my $column = 0; $column < $model.columnCount(); ++$column)
+        for (my int $column = 0; $column < $model.columnCount(); ++$column)
             $.view.resizeColumnToContents($column);
 
         qApp().connect($.exitAction, SIGNAL("triggered()"), SLOT("quit()"));
@@ -149,15 +149,15 @@ class MainWindow inherits QMainWindow, private Ui_MainWindow {
         $.removeRowAction.setEnabled($hasSelection);
         $.removeColumnAction.setEnabled($hasSelection);
 
-        my $hasCurrent = $.view.selectionModel().currentIndex().isValid();
+        my bool $hasCurrent = $.view.selectionModel().currentIndex().isValid();
         $.insertRowAction.setEnabled($hasCurrent);
         $.insertColumnAction.setEnabled($hasCurrent);
 
         if ($hasCurrent) {
             $.view.closePersistentEditor($.view.selectionModel().currentIndex());
 
-            my $row = $.view.selectionModel().currentIndex().row();
-            my $column = $.view.selectionModel().currentIndex().column();
+            my int $row = $.view.selectionModel().currentIndex().row();
+            my int $column = $.view.selectionModel().currentIndex().column();
             if ($.view.selectionModel().currentIndex().parent().isValid())
                 $.statusBar().showMessage(sprintf($.tr("Position: (%d,%d)"), $row, $column));
             else
@@ -189,9 +189,8 @@ class MainWindow inherits QMainWindow, private Ui_MainWindow {
     }
 
     private insertColumn($parent) {
-        if (!exists $parent) {
+        if (!exists $parent)
             $parent = new QModelIndex();
-        }
 
         my $model = $.view.model();
         my $column = $.view.selectionModel().currentIndex().column();
@@ -207,11 +206,10 @@ class MainWindow inherits QMainWindow, private Ui_MainWindow {
     }
 
     private insertRow() {
-        my $index = $.view.selectionModel().currentIndex();
-        my $model = $.view.model();
+        my QModelIndex $index = $.view.selectionModel().currentIndex();
+        my QAbstractItemModel $model = $.view.model();
 
         if (!$model.insertRow($index.row() + 1, $index.parent()))
-        if (!$model.insertRow($index.row() + 1))
             return;
 
         $.updateActions();
@@ -247,8 +245,8 @@ class MainWindow inherits QMainWindow, private Ui_MainWindow {
     }
 }
 
-sub indexof($list, $v) {
-    for (my $i = 0; $i < elements $list; ++$i) {
+sub indexof(list $list, $v) returns int {
+    for (my int $i = 0; $i < elements $list; ++$i) {
         if ($list[$i] == $v) {
             return $i;
         }
@@ -257,46 +255,49 @@ sub indexof($list, $v) {
 }
 
 class TreeItem {
-    private $.childItems, $.itemData, $.parentItem;
+    private {
+	$.childItems; 
+	$.itemData; 
+	$.parentItem;
+    }
 
-    constructor($data, $parent) {
+    constructor(list $data, $parent) {
         $.parentItem = $parent;
         $.itemData = $data;
         $.childItems = ();
     }
 
-    child($number) {
+    child(int $number) returns TreeItem {
         return $.childItems[$number];
     }
 
-    childCount() {
+    childCount() returns int {
         return elements $.childItems;
     }
 
-    childNumber() {
-        if (exists $.parentItem) {
+    childNumber() returns int {
+        if (exists $.parentItem)
             return indexof($.parentItem.childItems, $self);
-        }
 
         return 0;
     }
 
-    columnCount() {
+    columnCount() returns int {
         return elements $.itemData;
     }
 
-    data($column) {
+    data(int $column) returns QVariant {
         return $.itemData[$column];
     }
 
-    insertChildren($position, $count, $columns) {
+    insertChildren(int $position, int $count, int $columns) {
         if ($position < 0 || $position > elements $.childItems)
             return False;
 
-        for (my $row = 0; $row < $count; ++$row) {
+        for (my int $row = 0; $row < $count; ++$row) {
             my $data[$columns - 1] = NOTHING;
-            my $item = new TreeItem($data, $self);
-            if (elements $.childTems > $position)
+            my TreeItem $item($data, $self);
+            if (elements $.childItems > $position)
                 splice $.childItems, $position, 0, $item;
             else
                 $.childItems[$position] = $item;
@@ -370,7 +371,7 @@ class TreeModel inherits QAbstractItemModel {
     private { TreeItem $.rootItem; }
 
     constructor($headers, $data, $parent) : QAbstractItemModel($parent) {
-        my $rootData = ();
+        my list $rootData = ();
         foreach my $header in ($headers)
             $rootData += $header;
 
@@ -382,44 +383,41 @@ class TreeModel inherits QAbstractItemModel {
         return $.rootItem.columnCount();
     }
 
-    data($index, $role) {
-        if (!$index.isValid()) {
-            return;
-        }
+    data(QModelIndex $index, int $role) returns QVariant {
+        if (!$index.isValid())
+            return new QVariant();
 
         if ($role != Qt::DisplayRole && $role != Qt::EditRole)
-            return;
+            return new QVariant();
         
-        my $item = $.getItem($index);
+        my TreeItem $item = $.getItem($index);
         return $item.data($index.column());
     }
 
-    flags($index) {
+    flags(QModelIndex $index) {
         if (!$index.isValid())
             return 0;
 
         return Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemIsSelectable;
     }
 
-    getItem($index) {
+    getItem(QModelIndex $index) returns TreeItem {
         if (exists $index && $index.isValid()) {
             my $item = $index.internalPointer();
-            if (exists $item) {
-                    return $item;
-            }
+            if (exists $item) return $item;
         }
         return $.rootItem;
     }
 
-    headerData($section, $orientation, $role) {
+    headerData(int $section, int $orientation, int $role = Qt::DisplayRole) returns QVariant {
         if ($orientation == Qt::Horizontal && $role == Qt::DisplayRole)
             return $.rootItem.data($section);
 
-        return;
+        return new QVariant();
     }
 
-    index($row, $column, $parent) {
-        if (exists $parent && $parent.isValid() && $parent.column() != 0)
+    index(int $row, int $column, QModelIndex $parent) returns QModelIndex {
+        if ($parent.isValid() && $parent.column() != 0)
             return new QModelIndex();
 
         my $parentItem = $.getItem($parent);
@@ -429,37 +427,38 @@ class TreeModel inherits QAbstractItemModel {
         return exists $childItem ? $.createIndex($row, $column, $childItem) : new QModelIndex();
     }
 
-    insertColumns($position, $columns, $parent) {
+    insertColumns(int $position, int $columns, QModelIndex $parent) returns bool {
         $.beginInsertColumns($parent, $position, $position + $columns - 1);
-        my $success = $.rootItem.insertColumns($position, $columns);
+        my bool $success = $.rootItem.insertColumns($position, $columns);
         $.endInsertColumns();
 
         return $success;
     }
 
-    insertRows($position, $rows, $parent) {
-        my $parentItem = $.getItem($parent);
-        
+    insertRows(int $position, int $rows, QModelIndex $parent) returns bool {
+        my TreeItem $parentItem = $.getItem($parent);
+
         $.beginInsertRows($parent, $position, $position + $rows - 1);
-        my $success = $parentItem.insertChildren($position, $rows, $.rootItem.columnCount());
+        my bool $success = $parentItem.insertChildren($position, $rows, $.rootItem.columnCount());
         $.endInsertRows();
 
         return $success;
     }
 
-    parent($index) {
+    parent(QModelIndex $index) returns QModelIndex {
         if (!$index.isValid()) {
             return $index;
         }
 
-        my $childItem = $.getItem($index);
+        my TreeItem $childItem = $.getItem($index);
         #printf("childItem %N\n", $childItem);
-        my $parentItem = $childItem.parent();
+        my TreeItem $parentItem = $childItem.parent();
         #printf("parentItem %N\n", $parentItem);
 
-        return ($parentItem == $.rootItem || $parentItem == NOTHING)
-                ? new QModelIndex()
-                : $.createIndex($parentItem.childNumber(), 0, $parentItem);
+	if ($parentItem == $.rootItem)
+	    return new QModelIndex();
+
+	return $.createIndex($parentItem.childNumber(), 0, $parentItem);
     }
 
     removeColumns($position, $columns, $parent) {
@@ -483,18 +482,18 @@ class TreeModel inherits QAbstractItemModel {
         return $success;
     }
 
-    rowCount($parent) {
-        my $parentItem = $.getItem($parent);
+    rowCount(QModelIndex $parent) {
+        my TreeItem $parentItem = $.getItem($parent);
         
         return $parentItem.childCount();
     }
     
-    setData($index, $value, $role) {
+    setData(QModelIndex $index, QVariant $value, int $role) returns bool {
         if ($role != Qt::EditRole)
             return False;
 
-        my $item = $.getItem($index);
-        my $result = $item.setData($index.column(), $value);
+        my TreeItem $item = $.getItem($index);
+        my bool $result = $item.setData($index.column(), $value);
 
         if ($result)
             $.emit("dataChanged(const QModelIndex &, const QModelIndex &)", $index, $index);
@@ -514,14 +513,14 @@ class TreeModel inherits QAbstractItemModel {
         return $result;
     }
     
-    setupModelData($lines, $parent) {
-        my $parents = list($parent);
-        my $indentations = list(0);
+    setupModelData(list $lines, TreeItem $parent) {
+        my list $parents = list($parent);
+        my list $indentations = list(0);
 
-        my $number = 0;
+        my int $number = 0;
 
         while ($number < elements $lines) {
-            my $position = 0;
+            my int $position = 0;
             while ($position < elements $lines[$number]) {
                 if ($lines[$number][$position] != " ")
                     break;
@@ -532,29 +531,28 @@ class TreeModel inherits QAbstractItemModel {
 
             if (strlen($lineData)) {
                 # Read the column data from the rest of the line.
-                my $columnData = select split("\t", $lineData), strlen($1);                
+                my list $columnData = select split("\t", $lineData), strlen($1);                
                 
                 if ($position > $indentations[elements $indentations - 1]) {
                     # The last child of the current parent is now the new parent
                     # unless the current parent has no children.
                     
-                    my $lp = $parents[elements $parents - 1];
+                    my TreeItem $lp = $parents[elements $parents - 1];
                     if ($lp.childCount() > 0) {
-                        my $lc = $lp.child($lp.childCount() - 1);
                         $parents += $lp.child($lp.childCount() - 1);
                         $indentations += $position;
                     }
                 } else {
-                    while ($position < $indentations[elements $indentations - 1] && elements $parents > 0) {
+                    while ($position < $indentations[elements $indentations - 1] && elements $parents) {
                         pop $parents;
                         pop $indentations;
                     }
                 }
 
                 # Append a new item to the current parent's list of children.
-                my $lp = $parents[elements $parents - 1];
+                my TreeItem $lp = $parents[elements $parents - 1];
                 $lp.insertChildren($lp.childCount(), 1, $.rootItem.columnCount());
-                for (my $column = 0; $column < elements $columnData; ++$column) {
+                for (my int $column = 0; $column < elements $columnData; ++$column) {
                     $lp.child($lp.childCount() - 1).setData($column, $columnData[$column]);
                 }
             }
