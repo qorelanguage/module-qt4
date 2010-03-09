@@ -59,6 +59,7 @@ static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, const type_ve
 static AbstractQoreNode *QOBJECT_createSignal(QoreObject *self, QoreSmokePrivateQObjectData *qo, const QoreListNode *args, ExceptionSink *xsink);
 static AbstractQoreNode *QOBJECT_emit(QoreObject *self, QoreSmokePrivateQObjectData *qo, const QoreListNode *args, ExceptionSink *xsink);
 static bool qobject_delete_blocker(QoreObject *self, QoreSmokePrivateQObjectData *data);
+static AbstractQoreNode *QIMAGE_scanLine(QoreObject *self, QoreSmokePrivateData *qo, const QoreListNode *args, ExceptionSink *xsink);
 
 QRegionTypeHelper typeHelperQRegion;
 QWidgetTypeHelper typeHelperQWidget;
@@ -175,6 +176,11 @@ void ClassMap::addQoreMethods() {
    //printd(0, "registered QVariant::toQore\n");
    qc->addMethod2("toQore", (q_method2_t)Marshalling::return_qvariant);
 
+   // QImage
+   qc = ClassNamesMap::Instance()->value("QImage");
+   qc->addMethodExtended("scanLine", (q_method_t)QIMAGE_scanLine, false, QDOM_DEFAULT, binaryTypeInfo, 1, bigIntTypeInfo, QORE_PARAM_NO_ARG);
+
+   // QItemSelection
    qc = ClassNamesMap::Instance()->value("QItemSelection");
    addListMethods<QItemSelection>(qc);
 }
@@ -206,7 +212,9 @@ void ClassMap::addMethod(QoreClass *qc, const Smoke::Class &c, const Smoke::Meth
    const char *methodName = qt_Smoke->methodNames[method.name];
 
    // skip certain methods
-   if (!strcmp(qc->getName(), "QAbstractItemModel") && !strcmp(methodName, "createIndex")) {
+   if ((!strcmp(qc->getName(), "QAbstractItemModel") && !strcmp(methodName, "createIndex"))
+       || (!strcmp(qc->getName(), "QImage") && !strcmp(methodName, "scanLine"))
+      ) {
       //printd(0,"skipping %s::%s()\n", c.className, methodName);
       return;
    }
@@ -466,6 +474,20 @@ static AbstractQoreNode *QOBJECT_emit(QoreObject *self, QoreSmokePrivateQObjectD
 
 static bool qobject_delete_blocker(QoreObject *self, QoreSmokePrivateQObjectData *data) {
     return data->deleteBlocker(self);
+}
+
+static AbstractQoreNode *QIMAGE_scanLine(QoreObject *self, QoreSmokePrivateData *qo, const QoreListNode *args, ExceptionSink *xsink) {
+   HARD_QORE_PARAM(no, const QoreBigIntNode, args, 0);
+   QImage *qi = qo->getObject<QImage>();
+   if (!qi)
+      return 0;
+   uchar *ptr = qi->scanLine(no->val);
+   if (!ptr)
+      return 0;
+   // copy scanline data
+   BinaryNode *b = new BinaryNode;
+   b->append(ptr, qi->bytesPerLine());
+   return b;
 }
 
 #ifdef DEBUG_0

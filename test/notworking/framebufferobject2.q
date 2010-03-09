@@ -1,12 +1,13 @@
 #!/usr/bin/env qore
 
 # This is basically a direct port of a QT example program to Qore
-# using Qore's "qt-opengl" module.
+# using Qore's "qt4" module.
 
-# Note that Qore's "qt-opengl" module requires QT 4.3 or above with OpenGL support
+# Note that Qore's "qt4" module requires QT 4.3 or above with OpenGL support
 
-# use the "qt-opengl" module (automatically loads the "qt-gui" and "opengl" modules)
+# use the "qt4" module
 %requires qt4
+# use the "opengl" module
 %requires opengl
 
 # this is an object-oriented program, the application class is "framebufferobject2"
@@ -40,7 +41,8 @@ const colorArray = (170, 202, 0, 255,
 class GLWidget inherits QGLWidget {
     private $.rot, $.xOffs, $.yOffs, $.xInc, $.pbufferList, 
     $.cubeTexture, $.timerId, $.fbo;
-    
+    public {}
+
     constructor($parent) : QGLWidget(new QGLFormat(QGL::SampleBuffers)) {#, $parent) {
         # create the framebuffer object - make sure to have a current
         # context before creating it
@@ -100,7 +102,7 @@ class GLWidget inherits QGLWidget {
         }
         glEndList();
 
-        for (my $i = 0; $i < 3; ++$i) {
+        for (my int $i = 0; $i < 3; ++$i) {
             $.yOffs[$i] = 0.0;
             $.xInc[$i] = 0.005;
             $.rot[$i] = 0.0;

@@ -17,25 +17,24 @@
 # enable all parse warnings
 %enable-all-warnings
 
-class GLWidget inherits QGLWidget
-{
+# disable warning
+%disable-warning non-existent-method-call
+
+class GLWidget inherits QGLWidget {
     private $.helper, $.elapsed;
 
-    constructor($helper, $parent) : QGLWidget(new QGLFormat(QGL::SampleBuffers), $parent)
-    {
+    constructor($helper, $parent) : QGLWidget(new QGLFormat(QGL::SampleBuffers), $parent) {
         $.helper = $helper;
         $.elapsed = 0;
         $.setFixedSize(200, 200);
     }
 
-    animate()
-    {
+    animate() {
         $.elapsed = ($.elapsed + $.sender().interval()) % 1000;
         $.repaint();
     }
 
-    paintEvent($event)
-    {
+    paintEvent($event) {
         my $painter = new QPainter();
         $painter.begin($self);
         $painter.setRenderHint(QPainter::Antialiasing);
@@ -44,13 +43,11 @@ class GLWidget inherits QGLWidget
     }
 }
 
-class Helper
-{
+class Helper {
     private $.background, $.circleBrush, $.textFont,
             $.circlePen, $.textPen;
 
-    constructor()
-    {
+    constructor() {
         $.textFont = new QFont();
 
         my $gradient = new QLinearGradient(new QPointF(50, -20), new QPointF(80, 20));
@@ -65,8 +62,7 @@ class Helper
         $.textFont.setPixelSize(50);
     }
 
-    paint($painter, $event, $elapsed)
-    {        
+    paint($painter, $event, $elapsed) {        
         $painter.fillRect($event.rect(), $.background);
         $painter.translate(100, 100);
         
@@ -93,25 +89,21 @@ class Helper
     }
 }
 
-class Widget inherits QWidget
-{
+class Widget inherits QWidget {
     private $.helper, $.elapsed;
 
-    constructor($helper, $parent) : QWidget($parent)
-    {
+    constructor($helper, $parent) : QWidget($parent) {
         $.helper = $helper;
         $.elapsed = 0;
         $.setFixedSize(200, 200);
     }
 
-    animate()
-    {
+    animate() {
         $.elapsed = ($.elapsed + $.sender().interval()) % 1000;
         $.repaint();
     }
 
-    paintEvent($event)
-    {
+    paintEvent($event) {
         my $painter = new QPainter();
         $painter.begin($self);
         $painter.setRenderHint(QPainter::Antialiasing);
@@ -120,12 +112,10 @@ class Widget inherits QWidget
     }
 }
 
-class Window inherits QWidget
-{
+class Window inherits QWidget {
     private $.helper;
 
-    constructor()
-    {
+    constructor() {
         $.helper = new Helper();
 
         my $native = new Widget($.helper, $self);
@@ -151,8 +141,7 @@ class Window inherits QWidget
     }
 }
 
-class two_d_painting inherits QApplication 
-{
+class two_d_painting inherits QApplication {
     constructor() {
         my $window = new Window();
         $window.show();
