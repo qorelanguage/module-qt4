@@ -155,11 +155,5 @@ static inline QoreObject *getQoreMappedObject(Smoke::Index classId, void *p) {
 
 DLLLOCAL const QoreMethod *findUserMethod(const QoreClass *qc, const char *name);
 
-// type for map from class names to QoreClass pointers
-typedef std::map<std::string, QoreClass *> qcmap_t;
-
-// map from class names to QoreClass pointers
-DLLLOCAL extern qcmap_t parse_class_map;
-
 #endif
 

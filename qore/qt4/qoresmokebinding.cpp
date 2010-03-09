@@ -171,7 +171,7 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
 	return true;
     }
 
-    const QoreMethod * qoreMethod = o->getClass()->findMethod(mname);
+    const QoreMethod *qoreMethod = o->getClass()->findMethod(mname);
     printd(5, "QoreSmokeBinding::callMethod() virtual method %s::%s() method=%p (user: %d)\n", o->getClassName(), mname, qoreMethod, qoreMethod ? qoreMethod->isUser() : 0);
     if (!qoreMethod || !qoreMethod->isUser()) {
         //printd(0, "QoreSmokeBinding::callMethod() virtual method %s::%s() not found\n", o->getClassName(), mname);
@@ -182,6 +182,8 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
         }
         return false;
     }
+
+    //printd(0, "QoreSmokeBinding::callMethod() calling %s::%s() found method %s::%s()\n", o->getClassName(), mname, qoreMethod->getClassName(), qoreMethod->getName());
 
     Smoke::Index *idx = smoke->argumentList + meth.args;
     QList<Smoke::Type> typeList;
@@ -194,11 +196,14 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
 
     ReferenceHolder<QoreListNode> qoreArgs(new QoreListNode(), &xsink);
 
-    for (int i = 0; i < typeList.size(); ++i)
+    for (int i = 0; i < typeList.size(); ++i) {
         qoreArgs->push(Marshalling::stackToQore(typeList.at(i), args[i + 1], &xsink));
+	if (xsink)
+	   return false;
+    }
 
-    //printd(0, "QoreSmokeBinding::callMethod() calling method smoke=%s::%s(), qore=%s::%s() args=%d\n", cname, mname, o->getClassName(), mname, typeList.size());
-    ReferenceHolder<AbstractQoreNode> aNode(o->evalMethod(mname, *qoreArgs, &xsink), &xsink);
+    //printd(5, "QoreSmokeBinding::callMethod() calling method smoke=%s::%s(), qore=%s::%s() args=%d valid=%d xsink=%d\n", cname, mname, qoreMethod->getClassName(), mname, typeList.size(), o->isValid(), (bool)xsink);
+    ReferenceHolder<AbstractQoreNode> aNode(o->evalMethod(*qoreMethod, *qoreArgs, &xsink), &xsink);
 
     Smoke::Type &rt = smoke->types[meth.ret];
     if (CommonQoreMethod::qoreToStackStatic(&xsink, args[0], cname, mname, rt, *aNode, -1, 0, true) == -1) {

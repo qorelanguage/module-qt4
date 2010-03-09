@@ -70,21 +70,20 @@ CommonQoreMethod::CommonQoreMethod(const char *cname, const char *mname)
     foreach (QByteArray name, mMap->keys()) {
         foreach (const ClassMap::TypeHandler &th, mMap->values(name)) {
 	   if (!th.types.count()) {
-	      m_munged = name;
 	      type_handler = &th;
 	      break;
 	   }
 	}
-	if (m_munged.size())
+	if (type_handler)
 	   break;
     }
 
-    assert(m_munged.size());
+    assert(type_handler);
 
     m_valid = true;
 
     m_method = qt_Smoke->methods[type_handler->method];
-    //printd(0, "CommonQoreMethod::method() '%s' method=%d (%s)\n", m_munged.data(), type_handler.method, qt_Smoke->methodNames[m_method.name]);
+    //printd(0, "CommonQoreMethod::method() method=%d (%s)\n", type_handler.method, qt_Smoke->methodNames[m_method.name]);
 
     // Create a Smoke stack for return value
     Stack = new Smoke::StackItem[1];
@@ -115,7 +114,7 @@ CommonQoreMethod::CommonQoreMethod(ClassMap::TypeHandler *th,
     m_method = qt_Smoke->methods[type_handler->method];
     m_valid = true;
 
-//     printd(0, "CommonQoreMethod::method() '%s' method=%d (%s)\n", m_munged.data(), type_handler->method, qt_Smoke->methodNames[m_method.name]);
+    //printd(0, "CommonQoreMethod::method() method=%d smoke: %s::%s()\n", type_handler->method, qt_Smoke->classes[m_method.classId].className, qt_Smoke->methodNames[m_method.name]);
 
     // stack must be larger for its 0th value as a retval
     if (type_handler->arg_handler)  {

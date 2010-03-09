@@ -379,9 +379,6 @@ public:
     DLLLOCAL Smoke::Class &smokeClass() {
         return qt_Smoke->classes[m_method.classId];
     }
-    DLLLOCAL const char* mungedMethod() {
-        return m_munged.data();
-    }
     DLLLOCAL Smoke::Method &method() {
         return m_method;
     }
@@ -460,7 +457,6 @@ private:
    const char* m_className;
    const char* m_methodName;
    ExceptionSink * m_xsink;
-   QByteArray m_munged;
    Smoke::Method m_method;
    bool m_valid;
    int qoreArgCnt;

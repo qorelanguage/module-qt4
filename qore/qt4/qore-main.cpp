@@ -514,8 +514,6 @@ static QoreStringNode *qt_module_init() {
     // register all classes and methods
     ClassMap::init();
 
-    assert(parse_class_map.empty());
-
     // register qt "addons"
     registerQtFunctions(qt_ns);
 

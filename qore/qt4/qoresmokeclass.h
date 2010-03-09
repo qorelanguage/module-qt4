@@ -569,7 +569,7 @@ private:
       m_instance = 0;
    }
    
-   DLLLOCAL static void addBaseClasses();
+   DLLLOCAL static void setupClassHierarchy();
 
    DLLLOCAL QoreNamespace *getNS(const char *name) {
       NameToNamespace::iterator i = nsmap.find(name);
@@ -592,40 +592,52 @@ private:
 };
 
 // Singleton. Everywhere available map Smoke::Class index -> QoreClass*
+//                                 and const char * -> QoreClass*
 // It's used to handle creating Qore objects from Qt ones (returned directly
 // from Qt library.
 class ClassNamesMap {
 public:
+   typedef QMap<Smoke::Index,QoreClass*> m_map_t;
+   typedef QHash<QByteArray,QoreClass*> m_name_map_t;
+
    DLLLOCAL bool contains(Smoke::Index ix) {
-        return m_map.contains(ix);
-    };
+      return m_map.contains(ix);
+   }
    DLLLOCAL bool contains(const QByteArray & name) {
-        return contains(qt_Smoke->findClass(name.constData()).index);
-    }
+      return m_name_map.contains(name);
+      //return contains(qt_Smoke->findClass(name.constData()).index);
+   }
    DLLLOCAL void addItem(Smoke::Index key, QoreClass* value) {
-        m_map[key] = value;
-    };
+      assert(!m_map.value(key));
+      assert(!m_name_map.value(value->getName()));
+      m_map[key] = value;
+      m_name_map[value->getName()] = value;
+   }
    DLLLOCAL QoreClass* value(Smoke::Index key) {
-        return m_map.value(key);
-    };
+      return m_map.value(key);
+   }
    DLLLOCAL QoreClass* value(const QByteArray & name) {
-        return value(qt_Smoke->findClass(name.constData()).index);
-    };
+      return m_name_map.value(name);
+   }
 
    DLLLOCAL static ClassNamesMap* Instance() {
-        if (!m_instance) {
-            m_instance = new ClassNamesMap();
-        }
-        return m_instance;
-    }
+      if (!m_instance)
+	 m_instance = new ClassNamesMap();
+      return m_instance;
+   }
    
    DLLLOCAL static void del() {
       delete m_instance;
    }
 
+   DLLLOCAL const m_map_t &getMap() const {
+      return m_map;
+   }
+
 private:
     static ClassNamesMap * m_instance;
-    QMap<Smoke::Index,QoreClass*> m_map;
+    m_map_t m_map;
+    m_name_map_t m_name_map;
 
     ClassNamesMap() {};
     ClassNamesMap(const ClassNamesMap &);
