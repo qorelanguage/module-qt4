@@ -42,13 +42,12 @@ class GLWidget inherits QGLWidget {
         $.zRot = 0;
         $.gear1Rot = 0;
 
-        my $timer = new QTimer($self);
+        my QTimer $timer($self);
         $.connect($timer, SIGNAL("timeout()"), SLOT("advanceGears()"));
         $timer.start(20);
     }
     
-    destructor()
-    {
+    destructor() {
         $.makeCurrent();
         glDeleteLists($.gear1, 1);
         glDeleteLists($.gear2, 1);
@@ -59,8 +58,7 @@ class GLWidget inherits QGLWidget {
     yRotation() { return $.yRot; }
     zRotation() { return $.zRot; }
 
-    setXRotation($angle)
-    {
+    setXRotation($angle) {
         $.normalizeAngle(\$angle);
         if ($angle != $.xRot) {
             $.xRot = $angle;
@@ -69,8 +67,7 @@ class GLWidget inherits QGLWidget {
         }
     }
 
-    setYRotation($angle)
-    {
+    setYRotation($angle) {
         $.normalizeAngle(\$angle);
         if ($angle != $.yRot) {
             $.yRot = $angle;
@@ -79,8 +76,7 @@ class GLWidget inherits QGLWidget {
         }
     }
 
-    setZRotation($angle)
-    {
+    setZRotation($angle) {
         $.normalizeAngle(\$angle);
         if ($angle != $.zRot) {
             $.zRot = $angle;
@@ -89,8 +85,7 @@ class GLWidget inherits QGLWidget {
         }
     }
 
-    initializeGL()
-    {
+    initializeGL() {
         glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
         glEnable(GL_LIGHTING);
         glEnable(GL_LIGHT0);
@@ -104,8 +99,7 @@ class GLWidget inherits QGLWidget {
         glClearColor(0.0, 0.0, 0.0, 1.0);
     }
 
-    paintGL()
-    {
+    paintGL() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glPushMatrix();
@@ -122,8 +116,7 @@ class GLWidget inherits QGLWidget {
         glPopMatrix();
     }
 
-    resizeGL($width, $height)
-    {
+    resizeGL($width, $height) {
         my $side = min($width, $height);
         glViewport(($width - $side) / 2, ($height - $side) / 2, $side, $side);
 
@@ -135,13 +128,11 @@ class GLWidget inherits QGLWidget {
         glTranslated(0.0, 0.0, -40.0);
     }
 
-    mousePressEvent($event)
-    {
+    mousePressEvent($event) {
         $.lastPos = $event.pos();
     }
 
-    mouseMoveEvent($event)
-    {
+    mouseMoveEvent($event) {
         my $dx = $event.x() - $.lastPos.x();
         my $dy = $event.y
             () - $.lastPos.y
@@ -157,15 +148,13 @@ class GLWidget inherits QGLWidget {
         $.lastPos = $event.pos();
     }
 
-    advanceGears()
-    {
+    advanceGears() {
         $.gear1Rot += 2 * 16;
         $.updateGL();
     }
 
     makeGear($reflectance, $innerRadius, $outerRadius, $thickness,
-             $toothSize, $toothCount)
-    {
+             $toothSize, $toothCount) {
         my $list = glGenLists(1);
         glNewList($list, GL_COMPILE);
         glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, $reflectance);
@@ -248,8 +237,7 @@ class GLWidget inherits QGLWidget {
         return $list;
     }
 
-    drawGear($gear, $dx, $dy, $dz, $angle)
-    {
+    drawGear($gear, $dx, $dy, $dz, $angle) {
         glPushMatrix();
         glTranslated($dx, $dy, $dz);
         glRotated($angle, 0.0, 0.0, 1.0);
@@ -257,8 +245,7 @@ class GLWidget inherits QGLWidget {
         glPopMatrix();
     }
 
-    normalizeAngle($angle)
-    {
+    normalizeAngle($angle) {
         while ($angle < 0)
             $angle += 360 * 16;
         while ($angle > 360 * 16)
@@ -300,7 +287,7 @@ class MainWindow inherits QMainWindow {
         $.createActions();
         $.createMenus();
 
-        my $centralLayout = new QGridLayout();
+        my QGridLayout $centralLayout();
         $centralLayout.addWidget($.glWidgetArea, 0, 0);
         $centralLayout.addWidget($.pixmapLabelArea, 0, 1);
         $centralLayout.addWidget($.xSlider, 1, 0, 1, 2);
@@ -317,9 +304,9 @@ class MainWindow inherits QMainWindow {
     }
 
     renderIntoPixmap() {
-        my $size = $.getSize();
+        my QSize $size = $.getSize();
         if ($size.isValid()) {
-            my $pixmap = $.glWidget.renderPixmap($size.width(), $size.height());
+            my QPixmap $pixmap = $.glWidget.renderPixmap($size.width(), $size.height());
             $.setPixmap($pixmap);
         }
     }
@@ -377,7 +364,7 @@ class MainWindow inherits QMainWindow {
     }
 
     createSlider($changedSignal, $setterSlot) {
-        my $slider = new QSlider(Qt::Horizontal);
+        my QSlider $slider(Qt::Horizontal);
         $slider.setRange(0, 360 * 16);
         $slider.setSingleStep(16);
         $slider.setPageStep(15 * 16);
@@ -388,11 +375,12 @@ class MainWindow inherits QMainWindow {
         return $slider;
     }
 
-    setPixmap($pixmap) {
+    setPixmap(QPixmap $pixmap) {
         $.pixmapLabel.setPixmap($pixmap);
-        my $size = $pixmap.size();
-        if ($size.subtract(new QSize(1, 0)) == $.pixmapLabelArea.maximumViewportSize())
-            $size.subtractEquals(new QSize(1, 0));
+        my QSize $size = $pixmap.size();
+	my QSize $tmp($size.width() - 1, $size.height());
+        if ($tmp == $.pixmapLabelArea.maximumViewportSize())
+	    $size = $tmp;
         $.pixmapLabel.resize($size);
     }
 
@@ -406,7 +394,7 @@ class MainWindow inherits QMainWindow {
         if (!$ok)
             return new QSize();
 
-        my $regExp = new QRegExp($.tr("([0-9]+) *x *([0-9]+)"));
+        my QRegExp $regExp($.tr("([0-9]+) *x *([0-9]+)"));
         if ($regExp.exactMatch($text)) {
             my $width = int($regExp.cap(1));
             my $height = int($regExp.cap(2));
@@ -420,7 +408,7 @@ class MainWindow inherits QMainWindow {
 
 class grabber inherits QApplication {
     constructor() {
-        my $mainWin = new MainWindow();
+        my MainWindow $mainWin();
         $mainWin.show();
         $.exec();
     }
