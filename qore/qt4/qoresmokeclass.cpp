@@ -76,7 +76,7 @@ const QoreMethod *findUserMethod(const QoreClass *qc, const char *name) {
     return m && m->isUser() ? m : 0;
 }
 
-static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool &valid, bool param = false);
+static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool &valid, bool param = false, bool runtime = false);
 static QoreClass *findCreateQoreClass(Smoke::Index ix);
 
 ClassMap::ClassMap() {
@@ -537,7 +537,11 @@ static const QoreTypeInfo *getInitClassType(const char *name, const Smoke::Type 
    return qc->getTypeInfo();
 }
 
-static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool &valid, bool param) {
+const QoreTypeInfo *getQtTypeInfo(const Smoke::Type &t, bool &valid) {
+   return getInitType(t, valid, false, true);
+}
+
+static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool &valid, bool param, bool runtime) {
    valid = true;
 
    //int flags = t.flags & 0x30;
@@ -613,6 +617,11 @@ static const QoreTypeInfo *getInitType(const Smoke::Type &t, bool &valid, bool p
 
    if (strchr(f, '<'))
       return 0;
+
+   if (runtime) {
+      QoreClass *qc = ClassNamesMap::Instance()->value(t.classId);
+      return qc ? qc->getTypeInfo() : 0;
+   }
 
    return getInitClassType(f, t);
 }

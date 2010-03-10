@@ -170,45 +170,85 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
 	args[0].s_int = -1;
 	return true;
     }
+    
+    // first setup arguments so a user method variant can be found    
+    Smoke::Index *idx = smoke->argumentList + meth.args;
+    type_vec_t typeInfoList;
+    while (*idx) {
+       Smoke::Type &t = smoke->types[*idx];
+       idx++;
 
-    const QoreMethod *qoreMethod = o->getClass()->findMethod(mname);
-    printd(5, "QoreSmokeBinding::callMethod() virtual method %s::%s() method=%p (user: %d)\n", o->getClassName(), mname, qoreMethod, qoreMethod ? qoreMethod->isUser() : 0);
-    if (!qoreMethod || !qoreMethod->isUser()) {
-        //printd(0, "QoreSmokeBinding::callMethod() virtual method %s::%s() not found\n", o->getClassName(), mname);
-        if (isAbstract) {
-            xsink.raiseException("QT-ABSTRACT-METHOD-ERROR", "The Qt library tried to execute pure virtual %s::%s(), but this method is not implemented in the %s class", o->getClassName(), mname, o->getClassName());
-            xsink.handleExceptions();
-            assert(0); // TODO/FIXME: probably won't crash here...
-        }
-        return false;
+       // get argument type to find variant
+       bool valid;
+       const QoreTypeInfo *typeInfo = getQtTypeInfo(t, valid);
+       // if we have an unrecognized type, then we cannot have overloaded this method either
+       if (!typeInfo || !valid) {
+	  assert(!isAbstract);
+	  return false;
+       }
+       typeInfoList.push_back(typeInfo);
     }
 
-    //printd(0, "QoreSmokeBinding::callMethod() calling %s::%s() found method %s::%s()\n", o->getClassName(), mname, qoreMethod->getClassName(), qoreMethod->getName());
-
-    Smoke::Index *idx = smoke->argumentList + meth.args;
-    QList<Smoke::Type> typeList;
-    while (*idx) {
-        typeList.append(smoke->types[*idx]);
-        idx++;
+    // see if there is a user method at all
+    const QoreMethod *qmethod;
+    const QoreExternalMethodVariant *variant = o->getClass()->findUserMethodVariant(mname, qmethod, typeInfoList);
+    printd(5, "QoreSmokeBinding::callMethod() virtual method %s::%s() method=%p variant=%p isAbstract=%d\n", o->getClassName(), mname, qmethod, variant, isAbstract);
+    if (!variant) {
+        //printd(0, "QoreSmokeBinding::callMethod() virtual method %s::%s() not found\n", o->getClassName(), mname);
+        if (!isAbstract) 
+	   return false;
+	xsink.raiseException("QT-ABSTRACT-METHOD-ERROR", "The Qt library tried to execute pure virtual %s::%s(), but this method is not implemented in the %s class", o->getClassName(), mname, o->getClassName());
+	// FIXME: instead of assert'ing, since the function is abstract, we have to
+	// create the default value for the return type and return true
+#ifdef DEBUG
+	// call this so we can see the exception before the process aborts
+	xsink.handleExceptions();
+	assert(false);
+#endif
+	return true;
     }
 
     //printd(0, "QoreSmokeBinding::callMethod() creating args list for %s::%s() (arg count: %d)\n", o->getClassName(), mname, typeList.size());
 
     ReferenceHolder<QoreListNode> qoreArgs(new QoreListNode(), &xsink);
 
-    for (int i = 0; i < typeList.size(); ++i) {
-        qoreArgs->push(Marshalling::stackToQore(typeList.at(i), args[i + 1], &xsink));
-	if (xsink)
-	   return false;
+    QList<Smoke::Type> typeList;
+    idx = smoke->argumentList + meth.args;
+    int i = 1;
+    while (*idx) {
+       Smoke::Type &t = smoke->types[*(idx++)];
+       qoreArgs->push(Marshalling::stackToQore(t, args[i++], &xsink));
+
+       if (xsink) {
+	  if (!isAbstract)
+	     return false;
+
+	  // FIXME: instead of assert'ing, since the function is abstract, we have to
+	  // create the default value for the return type and return true
+#ifdef DEBUG
+	  // call this so we can see the exception before the process aborts
+	  xsink.handleExceptions();
+	  assert(false);
+#endif
+	  return true;
+       }
     }
 
     //printd(5, "QoreSmokeBinding::callMethod() calling method smoke=%s::%s(), qore=%s::%s() args=%d valid=%d xsink=%d\n", cname, mname, qoreMethod->getClassName(), mname, typeList.size(), o->isValid(), (bool)xsink);
-    ReferenceHolder<AbstractQoreNode> aNode(o->evalMethod(*qoreMethod, *qoreArgs, &xsink), &xsink);
+    ReferenceHolder<AbstractQoreNode> aNode(o->evalMethodVariant(*qmethod, variant, *qoreArgs, &xsink), &xsink);
 
     Smoke::Type &rt = smoke->types[meth.ret];
     if (CommonQoreMethod::qoreToStackStatic(&xsink, args[0], cname, mname, rt, *aNode, -1, 0, true) == -1) {
+	if (!isAbstract)
+	   return false;
+	// FIXME: instead of assert'ing, since the function is abstract, we have to
+	// create the default value for the return type and return true
+#ifdef DEBUG
+	// call this so we can see the exception before the process aborts
         xsink.handleExceptions();
-        assert(0);
+        assert(false);
+#endif
+	return true;
     }
 
     return true;

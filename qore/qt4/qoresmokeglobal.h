@@ -87,23 +87,23 @@ typedef QHash<void *, QoreObject *> qt_qore_map_t;
 
 class QtQoreMap : protected qt_qore_map_t, protected QoreRWLock {
 public:
-    DLLLOCAL ~QtQoreMap() {
-        //assert(empty());
-    }
-    DLLLOCAL void add(void *qto, QoreObject *qo) {
-        QoreAutoRWWriteLocker l(this);
-        assert(!contains(qto));
-        insert(qto, qo);
-    }
-    DLLLOCAL QoreObject *get(void *qto) {
-        QoreAutoRWReadLocker l(this);
-        return value(qto, 0);
-    }
-    DLLLOCAL void del(void *qto) {
-        QoreAutoRWWriteLocker l(this);
-        assert(contains(qto));
-        remove(qto);
-    }
+   DLLLOCAL ~QtQoreMap() {
+      //assert(empty());
+   }
+   DLLLOCAL void add(void *qto, QoreObject *qo) {
+      QoreAutoRWWriteLocker l(this);
+      assert(!contains(qto));
+      insert(qto, qo);
+   }
+   DLLLOCAL QoreObject *get(void *qto) {
+      QoreAutoRWReadLocker l(this);
+      return value(qto, 0);
+   }
+   DLLLOCAL void del(void *qto) {
+      QoreAutoRWWriteLocker l(this);
+      assert(contains(qto));
+      remove(qto);
+   }
 };
 
 DLLLOCAL extern QtQoreMap qt_qore_map;
@@ -154,6 +154,8 @@ static inline QoreObject *getQoreMappedObject(Smoke::Index classId, void *p) {
 }
 
 DLLLOCAL const QoreMethod *findUserMethod(const QoreClass *qc, const char *name);
+
+DLLLOCAL const QoreTypeInfo *getQtTypeInfo(const Smoke::Type &t, bool &valid);
 
 #endif
 
