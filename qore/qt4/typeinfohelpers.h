@@ -191,12 +191,14 @@ public:
    }
    DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
    DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
-      qore_type_t t = n ? n->getType() : NT_NOTHING;
-      return canConvertIntern(t, get_type_name(n)) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      if (!n)
+         return QTI_NOT_EQUAL;
+      return canConvertIntern(n->getType(), n->getTypeName()) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
    DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
-      qore_type_t t = typeInfo ? typeInfoGetType(typeInfo) : NT_NOTHING;
-      return canConvertIntern(t, typeInfoGetName(typeInfo)) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
+      if (!typeInfo)
+         return QTI_NOT_EQUAL;
+      return canConvertIntern(typeInfoGetType(typeInfo), typeInfoGetName(typeInfo)) ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
 };
 

@@ -232,17 +232,26 @@ bool QVariantTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Except
    return true;
 }
 
+bool QKeySequenceTypeHelper::canConvertIntern(qore_type_t t, const char *name) const {
+   //printd(5, "QVariantTypeHelper::canConvertIntern() t=%d qc=%s\n", t, qc ? qc->getName() : "n/a");
+   if (t == NT_INT || t == NT_STRING)
+      return true;
+
+   return (!strcmp(name, "QKeySequence::StandardKey") || !strcmp(name, "Qt::Key")) ? true : false;
+}
+
 bool QKeySequenceTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
    if (!n)
       return false;
    qore_type_t t = n->getType();
+   const char *name = n->getTypeName();
 
    QKeySequence *qks;
    if (t == NT_STRING)
       qks = new QKeySequence(reinterpret_cast<const QoreStringNode*>(n)->getBuffer());
-   else if (t == NT_INT || !strcmp(n->getTypeName(), "Qt::Key"))
+   else if (t == NT_INT || !strcmp(name, "Qt::Key"))
       qks = new QKeySequence(reinterpret_cast<const QoreBigIntNode*>(n)->val);
-   else if (n && !strcmp(n->getTypeName(), "QKeySequence::StandardKey"))
+   else if (!strcmp(name, "QKeySequence::StandardKey"))
       qks = new QKeySequence((QKeySequence::StandardKey)(reinterpret_cast<const QoreBigIntNode*>(n)->val));
    else
       return false;
@@ -250,13 +259,6 @@ bool QKeySequenceTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Ex
    n->deref(xsink);
    n = Marshalling::createQoreObjectFromNonQObject(QC_QKEYSEQUENCE, SCI_QKEYSEQUENCE, qks);
    return true;
-}
-
-bool QKeySequenceTypeHelper::canConvertIntern(qore_type_t t, const char *name) const {
-   if (t == NT_STRING || t == NT_INT)
-      return true;
-
-   return !strcmp(name, "QKeySequence::StandardKey") || !strcmp(name, "Qt::Key") ? true : false;
 }
 
 bool QDateTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
