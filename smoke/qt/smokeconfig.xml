@@ -43,6 +43,10 @@
         <signature>.*QPixmapData.*</signature>
         <signature>.*operator.*\(QDebug,.*QStyle.*</signature>
         <signature>.*QGraphicsLinearLayout::dump\(.*\).*</signature>
+	<signature>.*QRegion::fromQDRgn.*</signature>
+	<signature>.*QRegion::toQDRgn.*</signature>
+	<signature>.*QRegion::toQDRgnForUpdate_sys.*</signature>
+	<signature>.*QMenu::macMenu.*</signature>
     </exclude>
     <functions>
         <!-- include functions starting with 'q' -->
