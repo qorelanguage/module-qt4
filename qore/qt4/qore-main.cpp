@@ -1,3 +1,4 @@
+/* -*- indent-tabs-mode: nil -*- */
 /*
   Qore Programming Language Qt4 Module
 
@@ -111,7 +112,7 @@ static int argv_handler_intern(int argc_no, Smoke::Stack &stack, const ClassMap:
     // because it will be assigned by the persistent ArgStringList
 
     // assign second reference
-    ref_store_s *p1 = cqm.getRefEntry(++argc_no);
+    temp_store_s *p1 = cqm.getRefEntry(++argc_no);
     p1->assign(sl);
 
     // set up stack
@@ -474,9 +475,9 @@ static int arg_handler_QPixmapCache_find(Smoke::Stack &stack, const ClassMap::Ty
     const AbstractQoreNode *n = get_param(args, 0);
     cqm.qoreToStack(types[0], n, 1);
 
-    ref_store_s *rs = cqm.getRefEntry(1);
+    temp_store_s *rs = cqm.getRefEntry(1);
     assert(rs);
-    if (rs->type != ref_store_s::r_qpixmap) {
+    if (rs->type != temp_store_s::r_qpixmap) {
        rs->del();
        rs->assign(new QPixmap);
     }

@@ -1,7 +1,8 @@
+/* -*- mode: c++; indent-tabs-mode: nil -*- */
 /*
   Qore Programming Language Qt4 Module
 
-  Copyright 2009 Qore Technologies sro
+  Copyright 2009 - 2010 Qore Technologies sro
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -32,62 +33,13 @@ class QMetaMethod;
 
 extern Smoke* qt_Smoke;
 
-
 DLLLOCAL void emitStaticSignal(QObject *sender,
                                int signalId,
                                const QMetaMethod &qmm,
                                const QoreListNode *args,
                                ExceptionSink *xsink);
 
-
-/*
-class AbstractQoreQtDynamicType {
-public:
-   DLLLOCAL virtual ~QoreQtAbstractDynamicTypeHelper() {}
-   // convert QT void * arg to Qore arg
-   DLLLOCAL virtual void qtArgToQore(QoreListNode &args, void *arg) = 0;
-
-   // convert Qore arg to QT void * arg
-   DLLLOCAL virtual void qoreToQt(void *&ptr, void *&save, const AbstractQoreNode *val) = 0;
-
-   // delete temporary memory
-   DLLLOCAL virtual void deleteTemporary(void *ptr) = 0;
-
-   DLLLOCAL virtual void qoreToQtReturn(void *rv, const AbstractQoreNode *val) = 0;
-   DLLLOCAL virtual const char *getName() const = 0;
-
-   DLLLOCAL virtual bool identify(const char *&p) = 0;
-};
-
-class SimpleQoreQtDynamicType {
-private:
-   const char *name;
-   int size;
-
-public:
-   DLLLOCAL SimpleQoreQtDynamicType(const char *n) : name(n), size(strlen(n)) {
-   }
-
-   DLLLOCAL virtual const char *getName() const {
-      return name;
-   }
-
-   DLLLOCAL bool identify(const char *&p) {
-      if (!strncmp(name, p, size)) {
-     // make sure there is no more to the passed type
-     const char *p1 = p + size;
-     while (*p1 == ' ' || *p1 == '\t')
-        ++p1;
-
-     if (!*p1 || *p1 == ',' || *p1 == ')') {
-        p = p1;
-        return true;
-     }
-      }
-      return false;
-   }
-};
-*/
+struct temp_store_s;
 
 // parent type for Signals and slots
 class QoreQtDynamicMethod {
@@ -112,7 +64,8 @@ public:
     DLLLOCAL static void qtToQore(const Smoke::Type &t, void *arg, QoreListNode *args);
 
     DLLLOCAL static void qoreToQt(ExceptionSink *xsink, const Smoke::Type &qtType, Smoke::StackItem &si,
-                                  void *&ptr, void *&save, const AbstractQoreNode *val, const char *cname, const char *mname, int index = -1, bool value_required = false);
+                                  void *&ptr, void *&save, const AbstractQoreNode *val, const char *cname, 
+				  const char *mname, int index = -1, bool value_required = false, temp_store_s *temp_store = 0);
 
     DLLLOCAL static void qoreToQtDirect(const Smoke::Type &qtType, void *&ptr, const AbstractQoreNode *val, const char *cname, const char *mname);
 
@@ -179,7 +132,5 @@ public:
         return id;
     }
 };
-
-
 
 #endif

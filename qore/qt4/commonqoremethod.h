@@ -1,3 +1,4 @@
+/* -*- mode: c++; indent-tabs-mode: nil -*- */
 /*
   Qore Programming Language Qt4 Module
 
@@ -115,8 +116,16 @@ public:
     }
 };
 
-// storage for references
-struct ref_store_s {
+struct QoreSmokeObj {
+   Smoke::Index classId;
+   void *obj;
+
+   DLLLOCAL QoreSmokeObj(Smoke::Index n_classId, void *n_obj) : classId(n_classId), obj(n_obj) {
+   }
+};
+
+// temporary storage for references or signal arguments
+struct temp_store_s {
     // flag for field used
     enum ref_type {
         r_none,          // no value
@@ -136,6 +145,7 @@ struct ref_store_s {
         r_qdate,         // for QDate
         r_qtime,         // for QTime
 	r_qpixmap,       // for QPixmap
+	r_smokeobj,      // for a QoreSmokeObj structure
     };
 
     const ReferenceNode *ref;
@@ -159,39 +169,48 @@ struct ref_store_s {
        Marshalling::QoreQListBase * q_container;
        Marshalling::QoreQVariant * q_qvariant;
        QPixmap *q_qpixmap;
+       QoreSmokeObj *q_smokeobj;
     } data;
 
-    DLLLOCAL ref_store_s() : ref(0), ref_value(0), type(r_none), have_ref_value(false) {}
-    DLLLOCAL ~ref_store_s() {
+    DLLLOCAL temp_store_s() : ref(0), ref_value(0), type(r_none), have_ref_value(false) {}
+    DLLLOCAL ~temp_store_s() {
        del();
     }
-    DLLLOCAL void del() {
-//         printd(0, "ref_store_s::~ref_store_s() this=%p, ref=%p, ref_value=%p, type=%d, have_ref_value=%d\n", this, ref, ref_value, type, have_ref_value);
-        switch (type) {
-        case r_str:
+   DLLLOCAL void del() {
+//         printd(0, "temp_store_s::~temp_store_s() this=%p, ref=%p, ref_value=%p, type=%d, have_ref_value=%d\n", this, ref, ref_value, type, have_ref_value);
+      switch (type) {
+	 case r_smokeobj: {
+	    // get destructor method index
+	    Smoke::Index dm = ClassMap::Instance()->getDestructor(qt_Smoke->classes[data.q_smokeobj->classId].className);
+	    // delete the object with the smoke destructor
+	    (* qt_Smoke->classes[data.q_smokeobj->classId].classFn)(dm, data.q_smokeobj->obj, 0);
+	    delete data.q_smokeobj;
+	    break;
+	 }
+	 case r_str:
             if (data.q_str) {
-//          printd(0, "ref_store_s::~ref_store_s() this=%p freeing string ptr %p\n", this, data.q_str);
+//          printd(0, "temp_store_s::~temp_store_s() this=%p freeing string ptr %p\n", this, data.q_str);
                 free(data.q_str);
             }
             break;
         case r_qstr:
-//           printd(0, "ref_store_s::~ref_store_s() this=%p deleting QString ptr %p\n", this, data.q_qstr);
+//           printd(0, "temp_store_s::~temp_store_s() this=%p deleting QString ptr %p\n", this, data.q_qstr);
             delete data.q_qstr;
             break;
         case r_qkeysequence:
-//           printd(0, "ref_store_s::~ref_store_s() this=%p deleting QKeySequence ptr %p\n", this, data.q_qkeysequence);
+//           printd(0, "temp_store_s::~temp_store_s() this=%p deleting QKeySequence ptr %p\n", this, data.q_qkeysequence);
             delete data.q_qkeysequence;
             break;
         case r_qbrush:
-//           printd(0, "ref_store_s::~ref_store_s() this=%p deleting QBrush ptr %p\n", this, data.q_qbrush);
+//           printd(0, "temp_store_s::~temp_store_s() this=%p deleting QBrush ptr %p\n", this, data.q_qbrush);
             delete data.q_qbrush;
             break;
         case r_qpen:
-//           printd(0, "ref_store_s::~ref_store_s() this=%p deleting QPen ptr %p\n", this, data.q_qpen);
+//           printd(0, "temp_store_s::~temp_store_s() this=%p deleting QPen ptr %p\n", this, data.q_qpen);
             delete data.q_qpen;
             break;
         case r_qcolor:
-//           printd(0, "ref_store_s::~ref_store_s() this=%p deleting QColor ptr %p\n", this, data.q_qcolor);
+//           printd(0, "temp_store_s::~temp_store_s() this=%p deleting QColor ptr %p\n", this, data.q_qcolor);
             delete data.q_qcolor;
             break;
         case r_container:
@@ -214,7 +233,7 @@ struct ref_store_s {
 	    break;
         default:
             (void)data; // suppress compiler warning
-        }
+      }
     }
 
     DLLLOCAL void save_ref_value(const AbstractQoreNode *v) {
@@ -222,17 +241,24 @@ struct ref_store_s {
         have_ref_value = true;
     }
 
+   DLLLOCAL void assign(Smoke::Index classId, void *obj) {
+      assert(classId);
+      assert(obj);
+      type = r_smokeobj;
+      data.q_smokeobj = new QoreSmokeObj(classId, obj);
+   }
+
     DLLLOCAL void assign(QString *v) {
         type = r_qstr;
         data.q_qstr = v;
     }
     DLLLOCAL void assign(int v) {
-        //printd(0, "ref_store_s() this=%p assigning integer %d\n", this, v);
+        //printd(0, "temp_store_s() this=%p assigning integer %d\n", this, v);
         type = r_int;
         data.q_int = v;
     }
     DLLLOCAL void assign(char *v) {
-        //printd(0, "ref_store_s::assign('%s' (%p)) this=%p\n", v, v, this);
+        //printd(0, "temp_store_s::assign('%s' (%p)) this=%p\n", v, v, this);
         type = r_str;
         data.q_str = v;
     }
@@ -241,7 +267,7 @@ struct ref_store_s {
         data.q_bool = v;
     }
     DLLLOCAL void assign(ArgStringList *v) {
-        //printd(0, "ref_store_s() this=%p assigning string list %p (size %d)\n", this, v, v->getSize());
+        //printd(0, "temp_store_s() this=%p assigning string list %p (size %d)\n", this, v, v->getSize());
         type = r_sl;
         data.q_sl = v;
     }
@@ -346,7 +372,7 @@ struct ref_store_s {
             ptr = 0;
             break;
         }
-        //printd(0, "ref_store_s::getPtr() this=%p returning %p\n", this, ptr);
+        //printd(0, "temp_store_s::getPtr() this=%p returning %p\n", this, ptr);
         return ptr;
     }
 };
@@ -391,9 +417,9 @@ public:
     DLLLOCAL const char *getMethodName() const {
         return m_methodName;
     }
-    DLLLOCAL ref_store_s *getRefEntry(int index) {
+    DLLLOCAL temp_store_s *getRefEntry(int index) {
         checkRefStore();
-        ref_store_s &val = (*ref_store)[index];
+        temp_store_s &val = (*temp_store)[index];
         return &val;
     }
 
@@ -436,11 +462,11 @@ public:
     }
 
     // static functions
-    DLLLOCAL static int qoreToStackStatic(ExceptionSink *xsink, Smoke::StackItem &si, const char *className, const char *methodName, Smoke::Type t, const AbstractQoreNode *node, int index = -1, CommonQoreMethod *cqm = 0, bool temp = false);
+    DLLLOCAL static int qoreToStackStatic(ExceptionSink *xsink, Smoke::StackItem &si, const char *className, const char *methodName, Smoke::Type t, const AbstractQoreNode *node, int index = -1, CommonQoreMethod *cqm = 0, bool temp = false, temp_store_s *temp_store = 0);
 
     DLLLOCAL static int getObjectStatic(ExceptionSink *xsink, const char *className, const char *methodName, Smoke::Index classId, const AbstractQoreNode *v, ReferenceHolder<QoreSmokePrivate> &c, int index, bool nullOk = false);
 
-    DLLLOCAL static int returnQtObjectOnStack(Smoke::StackItem &si, const char *cname, const char *mname, const AbstractQoreNode *v, Smoke::Type &t, int index, ExceptionSink *xsink, bool temp = false);
+    DLLLOCAL static int returnQtObjectOnStack(Smoke::StackItem &si, const char *cname, const char *mname, const AbstractQoreNode *v, Smoke::Type &t, int index, ExceptionSink *xsink, bool temp = false, temp_store_s *temp_store = 0);
 
     DLLLOCAL const QoreListNode *getArgs() const {
        return args;
@@ -452,7 +478,7 @@ public:
     Smoke::Stack Stack;
 
 private:
-   typedef QMap<int,ref_store_s> RefMap;
+   typedef QMap<int,temp_store_s> RefMap;
 
    const char* m_className;
    const char* m_methodName;
@@ -460,7 +486,7 @@ private:
    Smoke::Method m_method;
    bool m_valid;
    int qoreArgCnt;
-   RefMap *ref_store;
+   RefMap *temp_store;
    AutoVLock vl;
    const ClassMap::TypeHandler *type_handler;
    QoreHashNode *tparams;
@@ -470,8 +496,8 @@ private:
    const QoreListNode *args;
    
    DLLLOCAL void checkRefStore() {
-      if (!ref_store)
-	 ref_store = new RefMap;
+      if (!temp_store)
+	 temp_store = new RefMap;
    }
    
    DLLLOCAL int getScore(Smoke::Type smoke_type, const AbstractQoreNode *n, int index);

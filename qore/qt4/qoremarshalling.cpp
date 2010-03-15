@@ -1,9 +1,10 @@
+/* -*- indent-tabs-mode: nil -*- */
 /*
   qoremarshalling.cpp
 
   Qore Programming Language Qt4 Module
 
-  Copyright 2009 Qore Technologies sro
+  Copyright 2009 - 2010 Qore Technologies sro
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -576,6 +577,7 @@ QoreToQtContainer::QoreToQtContainer() {
 //     m_map["QVector<QTextLength>
 }
 
+// FIXME: pass a reference to a status flag instead of allocating and destroying an object from the heap
 // delete me when possible
 QoreQVariant *qoreToQVariant(const Smoke::Type & t, const AbstractQoreNode * node, ExceptionSink * xsink) {
 //     printd(0, "Marshalling::qoreToQVariant %s %d\n", t.name, node ? node->getType() : 0);

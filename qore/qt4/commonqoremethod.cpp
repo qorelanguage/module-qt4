@@ -1,3 +1,4 @@
+/* -*- indent-tabs-mode: nil -*- */
 /*
   commonqoremethod.cpp
 
@@ -56,7 +57,7 @@ CommonQoreMethod::CommonQoreMethod(const char *cname, const char *mname)
      m_xsink(0),
      m_valid(false),
      qoreArgCnt(0),
-     ref_store(0),
+     temp_store(0),
      vl(0),
      type_handler(0),
      tparams(0),
@@ -102,7 +103,7 @@ CommonQoreMethod::CommonQoreMethod(ClassMap::TypeHandler *th,
      m_xsink(xsink),
      m_valid(false),
      qoreArgCnt(num_params(params)),
-     ref_store(0),
+     temp_store(0),
      vl(xsink),
      type_handler(th),
      tparams(0),
@@ -147,10 +148,10 @@ CommonQoreMethod::CommonQoreMethod(ClassMap::TypeHandler *th,
 CommonQoreMethod::~CommonQoreMethod() {
 //     printd(0, "CommonQoreMethod::~CommonQoreMethod() this=%p valid=%d\n", this, m_valid);
 
-    if (ref_store) {
-        for (RefMap::iterator i = ref_store->begin(), e = ref_store->end(); i != e; ++i) {
-            ref_store_s &rf = i.value();
-//             printd(0, "CommonQoreMethod::~CommonQoreMethod() ref_store[%d].ref=%p\n", i.key(), rf.ref);
+    if (temp_store) {
+        for (RefMap::iterator i = temp_store->begin(), e = temp_store->end(); i != e; ++i) {
+            temp_store_s &rf = i.value();
+//             printd(0, "CommonQoreMethod::~CommonQoreMethod() temp_store[%d].ref=%p\n", i.key(), rf.ref);
             // dereference all saved reference values
             if (rf.ref_value)
                 rf.ref_value->deref(m_xsink);
@@ -159,26 +160,26 @@ CommonQoreMethod::~CommonQoreMethod() {
             if (rf.ref) {
                 ReferenceHelper ref(rf.ref, vl, m_xsink);
                 switch (rf.type) {
-                case ref_store_s::r_none:
+                case temp_store_s::r_none:
                     ref.assign(0, m_xsink);
                     break;
-                case ref_store_s::r_int:
+                case temp_store_s::r_int:
                     ref.assign(new QoreBigIntNode(rf.data.q_int), m_xsink);
                     break;
-                case ref_store_s::r_str:
+                case temp_store_s::r_str:
                     ref.assign(new QoreStringNode(rf.data.q_str), m_xsink);
                     break;
-                case ref_store_s::r_qstr: {
+                case temp_store_s::r_qstr: {
                     QoreStringNode *v = new QoreStringNode(rf.data.q_qstr->toUtf8().data(), QCS_UTF8);
                     ref.assign(v, m_xsink);
                 }
-                case ref_store_s::r_bool:
+                case temp_store_s::r_bool:
                     ref.assign(get_bool_node(rf.data.q_bool), m_xsink);
                     break;
-                case ref_store_s::r_qreal:
+                case temp_store_s::r_qreal:
                     ref.assign(new QoreFloatNode(rf.data.q_qreal), m_xsink);
                     break;
-		case ref_store_s::r_qpixmap:
+		case temp_store_s::r_qpixmap:
 		    ref.assign(Marshalling::createQoreObjectFromNonQObject(QC_QPIXMAP, SCI_QPIXMAP, rf.data.q_qpixmap), m_xsink);
 		    rf.data.q_qpixmap = 0;
 		    break;
@@ -188,7 +189,7 @@ CommonQoreMethod::~CommonQoreMethod() {
             }
         }
 
-        delete ref_store;
+        delete temp_store;
     }
 
     delete[] Stack;
@@ -406,7 +407,7 @@ static T get_char(const AbstractQoreNode *node) {
     return (T)(node ? node->getAsInt() : 0);
 }
 
-int CommonQoreMethod::returnQtObjectOnStack(Smoke::StackItem &si, const char *cname, const char *mname, const AbstractQoreNode *v, Smoke::Type &t, int index, ExceptionSink *xsink, bool temp) {
+int CommonQoreMethod::returnQtObjectOnStack(Smoke::StackItem &si, const char *cname, const char *mname, const AbstractQoreNode *v, Smoke::Type &t, int index, ExceptionSink *xsink, bool temp, temp_store_s *temp_store) {
     int flags = t.flags & 0x30;
 
     ReferenceHolder<QoreSmokePrivate> c(xsink);
@@ -428,12 +429,21 @@ int CommonQoreMethod::returnQtObjectOnStack(Smoke::StackItem &si, const char *cn
                 p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
                 if (*xsink)
                     return -1;
+		if (temp_store)
+		   temp_store->assign(t.classId, p);
             }
         } else if (flags == Smoke::tf_ref) {
-            p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
-            if (*xsink)
-                return -1;
-        }
+	   assert(!temp);
+	   /*
+	   if (t.flags & Smoke::tf_const) {
+	   }
+	   else {
+	      p = Marshalling::constructCopy(p, qt_Smoke->classes[t.classId].className, xsink);
+	      if (*xsink)
+		 return -1;
+	   }
+	   */
+	}
     }
 
     if (!p && flags == Smoke::tf_stack) {
@@ -441,6 +451,8 @@ int CommonQoreMethod::returnQtObjectOnStack(Smoke::StackItem &si, const char *cn
        CommonQoreMethod cqm(t.name, t.name);
        (* cqm.smokeClass().classFn)(cqm.method().method, 0, cqm.Stack);
        p = cqm.Stack[0].s_class;
+       if (temp_store)
+	  temp_store->assign(t.classId, p);
     }
 
     si.s_class = p;
@@ -456,11 +468,12 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                                         const AbstractQoreNode * node,
                                         int index,
                                         CommonQoreMethod *cqm,
-                                        bool temp) {
+                                        bool temp,
+					temp_store_s *temp_store) {
     int tid = t.flags & Smoke::tf_elem;
     int flags = t.flags & 0x30;
     bool iconst = t.flags & Smoke::tf_const;
-    ref_store_s *rf = 0;
+    temp_store_s *rf = 0;
 
     //printd(0, "CommonQoreMethod::qoreToStackStatic() %s::%s --- index %d cqm=%p '%s' classId=%d const=%s flags=0x%x (ptr=%s ref=%s) type=%d qore='%s' (%p)\n", className, methodName, index, cqm, t.name, (int)t.classId, iconst ? "true" : "false", flags, flags == Smoke::tf_ptr ? "true" : "false", flags == Smoke::tf_ref ? "true" : "false", tid, node ? node->getTypeName() : "n/a", node);
 
@@ -547,6 +560,8 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                     si.s_voidp = cqm->getRefEntry(index - 1)->getPtr();
                 } else {
                     std::auto_ptr<QoreString> tmp(new QoreString(*str));
+		    if (temp_store)
+		       temp_store->assign((char *)tmp->getBuffer());
                     si.s_voidp = tmp->giveBuffer();
                 }
             }
@@ -560,7 +575,9 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                 cqm->getRefEntry(index - 1)->assign(qstr.release());
                 si.s_voidp = cqm->getRefEntry(index - 1)->getPtr();
             } else {
-                si.s_voidp = qstr.release();
+	       if (temp_store)
+		  temp_store->assign(qstr.get());
+	       si.s_voidp = qstr.release();
             }
             return 0;
         } else if (isptrtype(name, "qreal") || isptrtype(name, "double")) {
@@ -579,7 +596,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                    && v && (v->getType() == NT_INT || v->getType() == NT_STRING)) {
             if (v->getType() == NT_STRING) {
                 if (cqm) {
-                    ref_store_s *re = cqm->getRefEntry(index - 1);
+                    temp_store_s *re = cqm->getRefEntry(index - 1);
                     re->assign(new QKeySequence(reinterpret_cast<const QoreStringNode*>(v)->getBuffer()));
                     si.s_class = re->getPtr();
                 } else {
@@ -589,7 +606,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                 return 0;
             }
             if (cqm) {
-                ref_store_s *re = cqm->getRefEntry(index - 1);
+                temp_store_s *re = cqm->getRefEntry(index - 1);
                 re->assign(new QKeySequence((QKeySequence::StandardKey)v->getAsInt()));
                 si.s_class = re->getPtr();
             } else {
@@ -601,7 +618,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
 	   if (           //v->getType() == NT_QTENUM ||
 	      v->getType() == NT_INT) {
                 if (cqm) {
-                    ref_store_s *re = cqm->getRefEntry(index - 1);
+                    temp_store_s *re = cqm->getRefEntry(index - 1);
                     re->assign(new QBrush((Qt::GlobalColor)v->getAsInt()));
                     si.s_class = re->getPtr();
                 } else {
@@ -625,13 +642,13 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                     return 0;
                 }
             }
-            return returnQtObjectOnStack(si, className, methodName, v, t, index, xsink, temp);
+            return returnQtObjectOnStack(si, className, methodName, v, t, index, xsink, temp, temp_store);
         } else if (isptrtype(name, "QPen") && v && (v->getType() == NT_INT)) {
             assert(iconst);
         } else if (isptrtype(name, "QColor") && v && (v->getType() == NT_INT)) {
             assert(iconst);
             if (cqm) {
-                ref_store_s *re = cqm->getRefEntry(index - 1);
+                temp_store_s *re = cqm->getRefEntry(index - 1);
                 re->assign(new QColor((Qt::GlobalColor)v->getAsInt()));
                 si.s_class = re->getPtr();
             } else {
@@ -674,11 +691,12 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                     return -1;
                 }
                 if (cqm) {
-                    ref_store_s *re = cqm->getRefEntry(index - 1);
+                    temp_store_s *re = cqm->getRefEntry(index - 1);
                     re->assign(list);
                     si.s_voidp = re->getPtr();
                 } else {
-                    si.s_voidp = list->voidp();
+		   /// FIXME: memory leak or error here
+		   si.s_voidp = list->voidp();
                 }
                 return 0;
             } else if (bname.startsWith("QVariant")) {
@@ -689,13 +707,18 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                 }
                 if (cqm) {
                     assert(iconst);
-                    ref_store_s *re = cqm->getRefEntry(index - 1);
+                    temp_store_s *re = cqm->getRefEntry(index - 1);
                     re->assign(variant.release());
                     si.s_class = re->getPtr();
 //                     printd(0, "CommonQoreMethod::qoreToStackStatic() %s::%s() valid QVariant returned (cqm) si.s_class=%p\n", className, methodName, si.s_class);
                 } else {
 //                     printd(0, "CommonQoreMethod::qoreToStackStatic() valid QVariant returned (no cqm) variant=%p\n", variant.get());
-                    si.s_class = variant.get()->s_class();
+		    if (temp_store) {
+		       temp_store->assign(variant.release());
+		       si.s_class = variant.get()->s_class();
+		    }
+		    else
+		       si.s_class = new QVariant(variant->qvariant);
                 }
                 return 0;
             } else if (bname.startsWith("QDateTime")) {
@@ -707,7 +730,9 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                     cqm->getRefEntry(index - 1)->assign(qdt.release());
                     si.s_class = cqm->getRefEntry(index - 1)->getPtr();
                 } else {
-                    si.s_class = qdt.release();
+		   if (temp_store)
+		      temp_store->assign(qdt.get());
+		   si.s_class = qdt.release();
                 }
                 return 0;
             } else if (bname.startsWith("QDate")) {
@@ -719,6 +744,8 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                     cqm->getRefEntry(index - 1)->assign(qd.release());
                     si.s_class = cqm->getRefEntry(index - 1)->getPtr();
                 } else {
+		   if (temp_store)
+		      temp_store->assign(qd.get());
                     si.s_class = qd.release();
                 }
                 return 0;
@@ -731,13 +758,15 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
                     cqm->getRefEntry(index - 1)->assign(qt.release());
                     si.s_class = cqm->getRefEntry(index - 1)->getPtr();
                 } else {
+		   if (temp_store)
+		      temp_store->assign(qt.get());
                     si.s_class = qt.release();
                 }
                 return 0;
             }
             // finally the generic Q stuff
             else {
-	       return returnQtObjectOnStack(si, className, methodName, v, t, index, xsink, temp);
+	       return returnQtObjectOnStack(si, className, methodName, v, t, index, xsink, temp, temp_store);
             }
         } else {
 //             printd(0, "can't handle ref type '%s'\n", t.name);
@@ -797,7 +826,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
 
     if (!strcmp(t.name, "WId")) {
         if (cqm) {
-            ref_store_s *re = cqm->getRefEntry(index - 1);
+            temp_store_s *re = cqm->getRefEntry(index - 1);
             re->assign(node->getAsInt());
             si.s_voidp = re->getPtr();
             return 0;
@@ -805,12 +834,18 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
     }
 
     if (!strcmp(t.name, "QVariant")) {
-        Marshalling::QoreQVariant * variant = Marshalling::qoreToQVariant(t, node, xsink);
-        if (variant->status == Marshalling::QoreQVariant::Invalid)
-            return -1;
-        std::auto_ptr<QVariant> value(new QVariant(variant->qvariant));
-        si.s_class = value.release();
-        return 0;
+       std::auto_ptr<Marshalling::QoreQVariant> variant(Marshalling::qoreToQVariant(t, node, xsink));
+       if (!variant.get() || variant->status == Marshalling::QoreQVariant::Invalid)
+	  return -1;
+       if (temp_store) {
+	  si.s_class = &variant->qvariant;
+	  temp_store->assign(variant.release());
+       }
+       else {
+	  std::auto_ptr<QVariant> value(new QVariant(variant->qvariant));
+	  si.s_class = value.release();
+       }
+       return 0;
     }
 
     // QString has no class in smoke
@@ -823,6 +858,10 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
         std::auto_ptr<QString> qstr(new QString());
         if (get_qstring(t, *(qstr.get()), node, xsink))
             return -1;
+
+	if (temp_store)
+	   temp_store->assign(qstr.get());
+
         si.s_voidp = qstr.release();
         return 0;
     }
@@ -835,7 +874,7 @@ int CommonQoreMethod::qoreToStackStatic(ExceptionSink *xsink,
     }
 
     if (t.name[0] == 'Q')
-        return returnQtObjectOnStack(si, className, methodName, node, t, index, xsink, temp);
+       return returnQtObjectOnStack(si, className, methodName, node, t, index, xsink, temp, temp_store);
 
     xsink->raiseException("QT-ARGUMENT-ERROR", "don't know how to handle arguments ot type '%s'", t.name);
     return -1;

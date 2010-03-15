@@ -1,7 +1,8 @@
+/* -*- indent-tabs-mode: nil -*- */
 /*
   Qore Programming Language Qt4 Module
 
-  Copyright 2009 Qore Technologies sro
+  Copyright 2009 - 2010 Qore Technologies sro
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -23,7 +24,6 @@
 #include "qoresmokeglobal.h"
 #include "qoreqtdynamicmethod.h"
 #include "commonqoremethod.h"
-
 
 int QoreQtDynamicMethod::identifyTypes(SmokeTypeList &typeList, const char *sig, const char *p, ExceptionSink *xsink) {
     //printd(0, "QoreQtDynamicMethod::identifyTypes sig=%s p=%s\n", sig, p);
@@ -211,13 +211,13 @@ static void doDefaultValue(const Smoke::Type &t, Smoke::StackItem &si, Exception
    si.s_class = cqm.callConstructor();
 }
 
-void QoreQtDynamicMethod::qoreToQt(ExceptionSink *xsink, const Smoke::Type &qtType, Smoke::StackItem &si, void *&ptr, void *&save, const AbstractQoreNode *val, const char *cname, const char *mname, int index, bool value_required) {
+void QoreQtDynamicMethod::qoreToQt(ExceptionSink *xsink, const Smoke::Type &qtType, Smoke::StackItem &si, void *&ptr, void *&save, const AbstractQoreNode *val, const char *cname, const char *mname, int index, bool value_required, temp_store_s *temp_store) {
     save = 0;
     ptr = 0;
 //     printd(0, "qoreToQt() ptr=%p save=%p, val=%p (%s) typename=%s\n", ptr, save, val, val ? val->getTypeName() : "n/a", qtType.name);
 
     //QByteArray bname(qtType.name);
-    if (CommonQoreMethod::qoreToStackStatic(xsink, si, cname, mname, qtType, val, index) == -1) {
+    if (CommonQoreMethod::qoreToStackStatic(xsink, si, cname, mname, qtType, val, index, 0, false, temp_store) == -1) {
        
        // setup default value on stack if required (ex: slot return value), otherwise return
        if (value_required)
@@ -334,6 +334,7 @@ void QoreQtDynamicSignal::emitSignal(QObject *obj, int id, const QoreListNode *a
     void *sig_args[num_args + 1];
     void *save_args[num_args];
     Smoke::StackItem si[num_args];
+    temp_store_s ts[num_args];
 
     // set return value to 0
     sig_args[0] = 0;
@@ -343,15 +344,11 @@ void QoreQtDynamicSignal::emitSignal(QObject *obj, int id, const QoreListNode *a
         // get argument QoreNode
         const AbstractQoreNode *n = args ? args->retrieve_entry(i + 1) : 0;
 
-        qoreToQt(xsink, typeList[i], si[i], sig_args[i + 1], save_args[i], n, "QObject", "emit", i + 1);
+        qoreToQt(xsink, typeList[i], si[i], sig_args[i + 1], save_args[i], n, "QObject", "emit", i + 1, false, &ts[i]);
 	if (*xsink)
 	   return;
     }
     QMetaObject::activate(obj, id, id, sig_args);
-
-    // iterate through signal parameters to delete temporary values
-    //for (int i = 0; i < num_args; ++i)
-    // type_list[i]->del_arg(save_args[i]);
 }
 
 

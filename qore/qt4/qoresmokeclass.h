@@ -1,3 +1,4 @@
+/* -*- mode: c++; indent-tabs-mode: nil -*- */
 /*
   Qore Programming Language Qt4 Module
 
@@ -152,19 +153,20 @@ public:
       }
       
    }
-   //DLLLOCAL int metacall(Smoke::Stack args);
-    DLLLOCAL bool deleteBlocker(QoreObject *self) {
-        //printd(0, "QoreSmokePrivateQObjectData::deleteBlocker(%p) %s obj=%p parent=%p eo=%s\n", self, self->getClassName(), m_qobject.data(), m_qobject.data() ? m_qobject->parent() : 0, externallyOwned() ? "true" : "false");
-        if (m_qobject.data() && (m_qobject->parent() || externallyOwned())) {
-            if (!obj_ref) {
-                obj_ref = true;
-                // note that if we call QoreObject::ref() here, it will cause an immediate deadlock!
-                self->deleteBlockerRef();
-            }
-            return true;
-        }
-        return false;
-    }
+
+   DLLLOCAL bool deleteBlocker(QoreObject *self) {
+      //printd(0, "QoreSmokePrivateQObjectData::deleteBlocker(%p) %s obj=%p parent=%p eo=%s\n", self, self->getClassName(), m_qobject.data(), m_qobject.data() ? m_qobject->parent() : 0, externallyOwned() ? "true" : "false");
+      if (m_qobject.data() && (m_qobject->parent() || externallyOwned())) {
+	 if (!obj_ref) {
+	    obj_ref = true;
+	    // note that if we call QoreObject::ref() here, it will cause an immediate deadlock!
+	    self->deleteBlockerRef();
+	 }
+	 return true;
+      }
+      return false;
+   }
+
     DLLLOCAL virtual void *object() {
         return m_qobject.data();
     }
@@ -492,6 +494,13 @@ public:
    DLLLOCAL MungledToTypes * availableMethods(const QByteArray & className,
 					      const QByteArray & methodName) {
       return &m_map[className][methodName];
+   }
+
+   DLLLOCAL Smoke::Index getDestructor(const QByteArray &className) {
+      QByteArray destructor = "~" + className;
+      assert(m_map[className][destructor].begin() != m_map[className][destructor].end());      
+      TypeHandler &th = m_map[className][destructor].begin().value();
+      return th.method;
    }
 
    DLLLOCAL const QoreTypeInfo *getEnumTypeInfo(const Smoke::Type &t) {
