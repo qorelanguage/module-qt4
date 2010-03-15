@@ -689,7 +689,7 @@ QoreObject *doQObject(void *origObj, ExceptionSink *xsink, T **p = 0) {
         meta = qtObj->metaObject();
     }
 
-    const char * cname;
+    const char *cname;
     const QoreClass *qc;
     while (true) {
         cname = meta->className();

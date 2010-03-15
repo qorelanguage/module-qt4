@@ -151,17 +151,20 @@ public:
 	    delete m_qobject;
 	 }
       }
-      
+
+      assert(!obj_ref);
    }
 
    DLLLOCAL bool deleteBlocker(QoreObject *self) {
-      //printd(0, "QoreSmokePrivateQObjectData::deleteBlocker(%p) %s obj=%p parent=%p eo=%s\n", self, self->getClassName(), m_qobject.data(), m_qobject.data() ? m_qobject->parent() : 0, externallyOwned() ? "true" : "false");
+      //printd(5, "QoreSmokePrivateQObjectData::deleteBlocker(%p) %s obj=%p parent=%p eo=%s obj_ref=%d\n", self, self->getClassName(), m_qobject.data(), m_qobject.data() ? m_qobject->parent() : 0, externallyOwned() ? "true" : "false", obj_ref);
       if (m_qobject.data() && (m_qobject->parent() || externallyOwned())) {
 	 if (!obj_ref) {
 	    obj_ref = true;
 	    // note that if we call QoreObject::ref() here, it will cause an immediate deadlock!
 	    self->deleteBlockerRef();
 	 }
+
+	 //printd(5, "QoreSmokePrivateQObjectData::deleteBlocker(%p) returning true\n", self);
 	 return true;
       }
       return false;
@@ -171,7 +174,7 @@ public:
         return m_qobject.data();
     }
     DLLLOCAL virtual void clear() {
-       //printd(0, "QoreSmokePrivateQObjectData::clear() this=%p obj=%p (%s)\n", this, m_qobject.data(), getClassName());
+       //printd(5, "QoreSmokePrivateQObjectData::clear() this=%p obj=%p (%s)\n", this, m_qobject.data(), getClassName());
 
        assert(m_qobject.data());
        if (m_qobject.data()->isWidgetType())
@@ -313,12 +316,13 @@ public:
 
        // clear object before running destructor
        clear();
+
+       //printd(0, "QoreSmokePrivateQObjectData::externalDelete() deleting %s object (obj_ref=%d)\n", obj->getClassName(), obj_ref);
+       if (qo && obj->isValid())
+	  obj->doDelete(xsink);
+
        if (obj_ref) {
-	  //printd(5, "QoreSmokePrivateQObjectData::externalDelete() deleting object of class %s\n", obj->getClassName());
 	  obj_ref = false;
-	  // delete the object if necessary (if not already in the destructor)
-	  if (obj->isValid())
-	     obj->doDelete(xsink);
 	  obj->deref(xsink);
        }
     }

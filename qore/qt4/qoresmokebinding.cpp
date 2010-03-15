@@ -1,9 +1,10 @@
+/* -*- indent-tabs-mode: nil -*- */
 /*
   qoresmokebinding.cpp
 
   Qore Programming Language Qt4 Module
 
-  Copyright 2009 Qore Technologies sro
+  Copyright 2009 - 2010 Qore Technologies sro
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -92,7 +93,7 @@ void QoreSmokeBinding::deleted(Smoke::Index classId, void *obj) {
     QoreClass *qc;
     QoreObject *o = getQoreObject(classId, obj, qc);
 
-    //printd(0, "QoreSmokeBinding::deleted() %s::~%s qobject=%p qore obj=%p\n", className(classId), className(classId), obj, o);
+    //printd(5, "QoreSmokeBinding::deleted() %s::~%s qobject=%p qore obj=%p\n", className(classId), className(classId), obj, o);
 
     if (o) {
         ExceptionSink xsink;
