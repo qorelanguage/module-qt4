@@ -37,9 +37,9 @@ public:
 
 template<class QLISTT>
 DLLLOCAL void addListMethods(QoreClass *qc) {   
-   qc->addMethodExtended2("isEmpty", (q_method2_t)QoreListClassHelper<QLISTT>::isEmpty, false, QDOM_DEFAULT, boolTypeInfo);
-   qc->addMethodExtended2("count", (q_method2_t)QoreListClassHelper<QLISTT>::count, false, QDOM_DEFAULT, bigIntTypeInfo);
-   qc->addMethodExtended2("size", (q_method2_t)QoreListClassHelper<QLISTT>::count, false, QDOM_DEFAULT, bigIntTypeInfo);
+   qc->addMethodExtended2("isEmpty", (q_method2_t)QoreListClassHelper<QLISTT>::isEmpty, false, QC_NO_FLAGS, QDOM_DEFAULT, boolTypeInfo);
+   qc->addMethodExtended2("count", (q_method2_t)QoreListClassHelper<QLISTT>::count, false, QC_NO_FLAGS, QDOM_DEFAULT, bigIntTypeInfo);
+   qc->addMethodExtended2("size", (q_method2_t)QoreListClassHelper<QLISTT>::count, false, QC_NO_FLAGS, QDOM_DEFAULT, bigIntTypeInfo);
 }
 
 #endif
