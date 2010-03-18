@@ -166,6 +166,7 @@ void WriteDeclaration::acceptWidget(DomWidget *node)
     QString className = QLatin1String("QWidget");
     if (node->hasAttributeClass())
         className = node->attributeClass();
+    className = m_uic->customWidgetsInfo()->realClassName(className);
 
 	QString item = m_driver->findOrInsertWidget(node);
 	item = item.mid(0, 1).toLower() + item.mid(1);
@@ -179,6 +180,7 @@ void WriteDeclaration::acceptLayout(DomLayout *node)
     QString className = QLatin1String("QLayout");
     if (node->hasAttributeClass())
         className = node->attributeClass();
+    className = m_uic->customWidgetsInfo()->realClassName(className);
 
 	QString item = m_driver->findOrInsertLayout(node);
 	item = item.mid(0, 1).toLower() + item.mid(1);
