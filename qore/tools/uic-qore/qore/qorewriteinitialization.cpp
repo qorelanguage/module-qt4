@@ -1677,7 +1677,7 @@ void WriteInitialization::acceptTabStops(DomTabStops *tabStops)
             continue;
         }
 
-        m_output << m_option.indent << "QWidget.setTabOrder($." << lastName << ", $." << name << ");\n";
+        m_output << m_option.indent << "QWidget::setTabOrder($." << lastName << ", $." << name << ");\n";
 
         lastName = name;
     }
