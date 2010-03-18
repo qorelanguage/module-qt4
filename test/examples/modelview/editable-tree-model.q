@@ -483,7 +483,7 @@ class TreeModel inherits QAbstractItemModel {
         return $success;
     }
 
-    rowCount(QModelIndex $parent) {
+    rowCount(QModelIndex $parent = new QModelIndex()) {
         my TreeItem $parentItem = $.getItem($parent);
         
         return $parentItem.childCount();

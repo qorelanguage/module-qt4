@@ -45,28 +45,31 @@ public:
    DLLLOCAL QoreSmokePrivate(Smoke::Index classID, bool n_is_qobject = false) : m_class(classID), externally_owned(false), is_qobject(n_is_qobject) {}
    DLLLOCAL virtual ~QoreSmokePrivate() {
    }
-    DLLLOCAL virtual void * object() = 0;
-    DLLLOCAL virtual void clear() = 0;
-    // the following is defined as pure virtual so only 1 virtual call has to be made when calling it
-    // (it could be implemented here with 2 other virtual calls)
-    DLLLOCAL virtual void *takeObject() = 0;
-    DLLLOCAL Smoke::Index smokeClass() {
-        return m_class;
-    }
+   DLLLOCAL virtual void * object() = 0;
+   DLLLOCAL virtual void clear() = 0;
+   // the following is defined as pure virtual so only 1 virtual call has to be made when calling it
+   // (it could be implemented here with 2 other virtual calls)
+   DLLLOCAL virtual void *takeObject() = 0;
+   DLLLOCAL Smoke::Index smokeClass() {
+      return m_class;
+   }
 
-    DLLLOCAL void setExternallyOwned() {
-        externally_owned = true;
-    }
+   DLLLOCAL void setExternallyOwned() {
+      externally_owned = true;
+   }
 
-    DLLLOCAL bool externallyOwned() const {
-        return externally_owned;
-    }
-    DLLLOCAL const char *getClassName() const {
-        return qt_Smoke->classes[m_class].className;
-    }
-    DLLLOCAL bool isQObject() const {
-       return is_qobject;
-    }
+   DLLLOCAL bool externallyOwned() const {
+      return externally_owned;
+   }
+   DLLLOCAL const char *getClassName() const {
+      return qt_Smoke->classes[m_class].className;
+   }
+   DLLLOCAL Smoke::Index classIndex() const {
+      return m_class;
+   }
+   DLLLOCAL bool isQObject() const {
+      return is_qobject;
+   }
 
 private:
     Smoke::Index m_class;
@@ -75,36 +78,33 @@ private:
 };
 
 class QoreSmokePrivateData : public QoreSmokePrivate {
-    bool save_map;
+   bool save_map;
 public:
-    DLLLOCAL QoreSmokePrivateData(Smoke::Index classID, void *p, QoreObject *self) : QoreSmokePrivate(classID), m_object(p) {
-        // register in object map if object has virtual functions
-        save_map = qt_Smoke->classes[classID].flags & Smoke::cf_virtual;
-        if (save_map)
-            qt_qore_map.add(p, self);
-    }
-    DLLLOCAL virtual ~QoreSmokePrivateData() {
-        // the object must have been destroyed externally and cleared before this destructor is run
-        assert(!m_object);
-    }
-    DLLLOCAL virtual void *object() {
-        return m_object;
-    }
-    DLLLOCAL virtual void clear() {
-        if (save_map && m_object)
-            qt_qore_map.del(m_object);
-        m_object = 0;
-    }
-    DLLLOCAL virtual void *takeObject() {
-        void *p = m_object;
-        QoreSmokePrivateData::clear();
-        return p;
-    }
-    // non-virtual method for getting the object
-    template <class T>
-    DLLLOCAL T *getObject() {
-        return reinterpret_cast<T *>(m_object);
-    }
+   DLLLOCAL QoreSmokePrivateData(Smoke::Index classID, void *p, QoreObject *self) : QoreSmokePrivate(classID), m_object(p) {
+      // register in object map if object has virtual functions
+      save_map = qt_Smoke->classes[classID].flags & Smoke::cf_virtual;
+      if (save_map)
+         qt_qore_map.add(p, self);
+   }
+   DLLLOCAL virtual ~QoreSmokePrivateData();
+   DLLLOCAL virtual void *object() {
+      return m_object;
+   }
+   DLLLOCAL virtual void clear() {
+      if (save_map && m_object)
+         qt_qore_map.del(m_object);
+      m_object = 0;
+   }
+   DLLLOCAL virtual void *takeObject() {
+      void *p = m_object;
+      QoreSmokePrivateData::clear();
+      return p;
+   }
+   // non-virtual method for getting the object
+   template <class T>
+   DLLLOCAL T *getObject() {
+      return reinterpret_cast<T *>(m_object);
+   }
 
 private:
    void * m_object;

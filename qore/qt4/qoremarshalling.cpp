@@ -951,8 +951,9 @@ AbstractQoreNode *stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Excepti
 		  o = createQoreObjectFromNonQObject(c, classId, origObj, &p);
 		  new_copy = true;
 	       }
-	       else
+	       else {
 		  o = createQoreObjectFromNonQObject(c, classId, origObj, &p);
+               }
 	    }
 	    if (flags != Smoke::tf_stack && !new_copy && !iconst)
 	       p->setExternallyOwned();

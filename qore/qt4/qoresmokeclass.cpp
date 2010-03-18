@@ -923,3 +923,13 @@ void emitStaticSignal(QObject *sender, int signalId, const QMetaMethod &qmm, con
     //for (int i = 0; i < num_args; ++i)
     //  tlist[i]->del_arg(save_args[i]);
 }
+
+QoreSmokePrivateData::~QoreSmokePrivateData() {
+   // if the object still exists here, the QoreObject is being obliterated due to an exception in the derived user constructor
+   if (m_object && !externallyOwned()) {
+      const Smoke::Class &cls = qt_Smoke->classes[classIndex()];
+      Smoke::Index dm = ClassMap::Instance()->getDestructor(cls.className);
+      // delete the object with the smoke destructor
+      (* cls.classFn)(dm, m_object, 0);
+   }
+}
