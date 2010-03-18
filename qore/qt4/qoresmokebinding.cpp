@@ -134,8 +134,11 @@ bool QoreSmokeBinding::callMethod(Smoke::Index method, void *obj, Smoke::Stack a
     if (!o) {
         // we must have an implementation for abstract methods
 #ifdef DEBUG
-        if (isAbstract)
+       if (isAbstract) {
 	   printd(0, "trying to execute pure virtual method %s::%s() obj=%p\n", cname, mname, obj);
+           xsink.raiseException("QT-ABSTRACT-METHOD-ERROR", "The Qt library tried to execute pure virtual %s::%s(), but the object has been deleted", cname, mname);
+           xsink.handleExceptions();
+       }
 #endif
         assert(!isAbstract);
         return false;

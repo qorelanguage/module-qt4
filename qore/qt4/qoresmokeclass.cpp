@@ -171,7 +171,6 @@ void ClassMap::addQoreMethods() {
    // QObject
    qc->addMethodExtended("createSignal", (q_method_t)QOBJECT_createSignal, false, QC_NO_FLAGS, QDOM_DEFAULT, nothingTypeInfo, 1, stringTypeInfo, QORE_PARAM_NO_ARG);
    qc->addMethodExtended("emit", (q_method_t)QOBJECT_emit, false, QC_NO_FLAGS, QDOM_DEFAULT, nothingTypeInfo, 1, stringTypeInfo, QORE_PARAM_NO_ARG);
-   qc->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
 
    // QVariant
    qc = ClassNamesMap::Instance()->value("QVariant");
@@ -518,8 +517,11 @@ static QoreClass *findCreateQoreClass(Smoke::Index ix) {
       qc = new QoreClass(name, QDOM_GUI);
 
       // process special classes
-      if (!QC_QOBJECT && !strcmp(name, "QObject"))
+      if (!QC_QOBJECT && !strcmp(name, "QObject")) {
 	 QC_QOBJECT = qc;
+         // we must set this immediately or child classes will not be registered as having a delete blocker
+         qc->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
+      }
    }
 
    //printd(0, "findCreateQoreClass() ix=%d %s qc=%p id=%d\n", ix, name, qc, qc->getID());
