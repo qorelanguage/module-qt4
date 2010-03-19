@@ -842,7 +842,7 @@ void common_destructor(const QoreClass &thisclass, ClassMap::TypeHandler *type_h
    // because the QApplication destructor will free windowing resources and subsequently deleting
    // any QWidget objects will cause a crash
    if (thisclass.getID() == QC_QAPPLICATION->getID()) {
-      printd(0, "QApplication::destructor() pobj=%p private_data=%p\n", pobj, private_data);
+      //printd(5, "QApplication::destructor() pobj=%p private_data=%p\n", pobj, private_data);
       QWM.deleteAll();
    }
 
