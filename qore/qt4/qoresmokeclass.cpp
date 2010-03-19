@@ -837,20 +837,11 @@ void common_destructor(const QoreClass &thisclass, ClassMap::TypeHandler *type_h
    // if the QApplication object is being deleted, then delete all QWidget objects that still exist
    // because the QApplication destructor will free windowing resources and subsequently deleting
    // any QWidget objects will cause a crash
-   if (&thisclass == QC_QAPPLICATION) {
+   if (thisclass.getID() == QC_QAPPLICATION->getID()) {
       //printd(0, "QApplication::destructor() pobj=%p private_data=%p\n", pobj, private_data);
       QWM.deleteAll();
-      
-      /*
-      // delete all top-level widgets belonging to the application
-      QWidgetList l = QApplication::topLevelWidgets();
-      //printd(0, "QApplication::destructor() pobj=%p private_data=%p l size=%d\n", pobj, private_data, l.size());
-      foreach (QWidget *widget, l) {
-	 //printd(0, "deleting widget %p (%p)\n", widget, pobj);
-	 delete widget;
-      }
-      */
    }
+
    //printd(5, "deleting object of class %s %p pobj=%p private_data=%p\n", thisclass.getName(), &thisclass, pobj, private_data);
 
    if (p->isQObject()) {
