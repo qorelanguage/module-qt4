@@ -57,7 +57,7 @@ static AbstractQoreNode *QOBJECT_connect(const QoreMethod &method, const type_ve
 //static AbstractQoreNode *QOBJECT_connect_static(const QoreMethod &method, const type_vec_t &typeList, ClassMap::TypeHandler *ptr, QoreObject *self, QoreSmokePrivateQObjectData *apd, const QoreListNode *params, ExceptionSink *xsink);
 static AbstractQoreNode *QOBJECT_createSignal(QoreObject *self, QoreSmokePrivateQObjectData *qo, const QoreListNode *args, ExceptionSink *xsink);
 static AbstractQoreNode *QOBJECT_emit(QoreObject *self, QoreSmokePrivateQObjectData *qo, const QoreListNode *args, ExceptionSink *xsink);
-static bool qobject_delete_blocker(QoreObject *self, QoreSmokePrivateQObjectData *data);
+static bool qt_delete_blocker(QoreObject *self, QoreSmokePrivate *data);
 static AbstractQoreNode *QIMAGE_scanLine(QoreObject *self, QoreSmokePrivateData *qo, const QoreListNode *args, ExceptionSink *xsink);
 
 QRegionTypeHelper typeHelperQRegion;
@@ -463,7 +463,7 @@ static AbstractQoreNode *QOBJECT_emit(QoreObject *self, QoreSmokePrivateQObjectD
    return 0;
 }
 
-static bool qobject_delete_blocker(QoreObject *self, QoreSmokePrivateQObjectData *data) {
+static bool qt_delete_blocker(QoreObject *self, QoreSmokePrivate *data) {
     return data->deleteBlocker(self);
 }
 
@@ -519,8 +519,12 @@ static QoreClass *findCreateQoreClass(Smoke::Index ix) {
       // process special classes
       if (!QC_QOBJECT && !strcmp(name, "QObject")) {
 	 QC_QOBJECT = qc;
+      }
+
+      // set the delete blocker on all classes with virtual methods
+      if (c.flags & Smoke::cf_virtual) {
          // we must set this immediately or child classes will not be registered as having a delete blocker
-         qc->setDeleteBlocker((q_delete_blocker_t)qobject_delete_blocker);
+         qc->setDeleteBlocker((q_delete_blocker_t)qt_delete_blocker);
       }
    }
 
@@ -769,7 +773,7 @@ void common_constructor(const QoreClass &myclass,
 
     assert(!*xsink);
 
-    //printd(0, "common_constructor() %s private %p (%p) cid %d objcid %d self %p\n", className, obj, qtObj, myclass.getID(), self->getClass()->getID(), self);
+    printd(5, "common_constructor() %s private %p (%p) cid %d objcid %d self %p\n", className, obj, qtObj, myclass.getID(), self->getClass()->getID(), self);
 }
 
 // a helper function to handle conflicting names
@@ -827,7 +831,7 @@ void common_destructor(const QoreClass &thisclass, ClassMap::TypeHandler *type_h
 
    void *pobj = p->object();
 
-   //printd(5, "common_destructor() %s self=%p (%s) pobj=%p qobject=%d externally_owned=%d\n", thisclass.getName(), self, self->getClassName(), pobj, p->isQObject(), p->externallyOwned());
+   printd(5, "common_destructor() %s self=%p (%s) pobj=%p qobject=%d externally_owned=%d\n", thisclass.getName(), self, self->getClassName(), pobj, p->isQObject(), p->externallyOwned());
 
    if (!pobj) {
       //printd(0, "common_destructor (WW) QoreSmokePrivate's Qt object does not exist anymore\n");

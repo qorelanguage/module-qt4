@@ -924,9 +924,11 @@ AbstractQoreNode *stackToQore(const Smoke::Type &t, Smoke::StackItem &i, Excepti
 	 QoreClass *qc;
 	 ReferenceHolder<QoreObject> o(getQoreObject(classId, origObj, qc), xsink);
 	 if (o) {
-	    //printd(0, "Marshalling::stackToQore() got QoreObject %p\n", *o);
+	    //printd(5, "Marshalling::stackToQore() got QoreObject %p\n", *o);
 	    o->ref();
 	 } else {
+	    //printd(5, "Marshalling::stackToQore() no QoreObject for %s %p\n", c->getName(), origObj);
+
 	    bool new_copy = false;
 
 	    QoreSmokePrivate *p = 0;

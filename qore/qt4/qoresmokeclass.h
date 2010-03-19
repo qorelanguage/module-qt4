@@ -42,8 +42,9 @@
 // a Qore object private member. See Qore object/classes implementation.
 class QoreSmokePrivate : public AbstractPrivateData {
 public:
-   DLLLOCAL QoreSmokePrivate(Smoke::Index classID, bool n_is_qobject = false) : m_class(classID), externally_owned(false), is_qobject(n_is_qobject) {}
+   DLLLOCAL QoreSmokePrivate(Smoke::Index classID, bool n_is_qobject = false) : m_class(classID), externally_owned(false), is_qobject(n_is_qobject), obj_ref(false) {}
    DLLLOCAL virtual ~QoreSmokePrivate() {
+      assert(!obj_ref);
    }
    DLLLOCAL virtual void * object() = 0;
    DLLLOCAL virtual void clear() = 0;
@@ -53,6 +54,9 @@ public:
    DLLLOCAL Smoke::Index smokeClass() {
       return m_class;
    }
+
+   DLLLOCAL virtual bool deleteBlocker(QoreObject *self) = 0;
+   DLLLOCAL virtual void externalDelete(QoreObject *obj, ExceptionSink *xsink) = 0;
 
    DLLLOCAL void setExternallyOwned() {
       externally_owned = true;
@@ -71,10 +75,11 @@ public:
       return is_qobject;
    }
 
-private:
-    Smoke::Index m_class;
-    bool externally_owned : 1;
-    bool is_qobject : 1;
+protected:
+   Smoke::Index m_class;
+   bool externally_owned : 1;
+   bool is_qobject : 1;
+   bool obj_ref : 1;
 };
 
 class QoreSmokePrivateData : public QoreSmokePrivate {
@@ -87,6 +92,38 @@ public:
          qt_qore_map.add(p, self);
    }
    DLLLOCAL virtual ~QoreSmokePrivateData();
+
+   DLLLOCAL virtual bool deleteBlocker(QoreObject *self) {
+      printd(5, "QoreSmokePrivateData::deleteBlocker(%p) %s obj=%p eo=%s obj_ref=%d\n", self, self->getClassName(), m_object, externallyOwned() ? "true" : "false", obj_ref);
+      if (m_object && externallyOwned()) {
+	 if (!obj_ref) {
+	    obj_ref = true;
+	    // note that if we call QoreObject::ref() here, it will cause an immediate deadlock!
+	    self->deleteBlockerRef();
+	 }
+
+	 //printd(5, "QoreSmokePrivateData::deleteBlocker(%p) returning true\n", self);
+	 return true;
+      }
+      return false;
+   }
+
+   DLLLOCAL virtual void externalDelete(QoreObject *obj, ExceptionSink *xsink) {
+      if (m_object) {
+         // clear object before running destructor
+         clear();
+      
+         //printd(0, "QoreSmokePrivateData::externalDelete() deleting %s object (obj_ref=%d)\n", obj->getClassName(), obj_ref);
+         if (obj->isValid())
+            obj->doDelete(xsink);
+      }
+
+      if (obj_ref) {
+         obj_ref = false;
+         obj->deref(xsink);
+      }
+   }
+
    DLLLOCAL virtual void *object() {
       return m_object;
    }
@@ -112,7 +149,7 @@ private:
 
 class QoreSmokePrivateQObjectData : public QoreSmokePrivate {
 public:
-   DLLLOCAL QoreSmokePrivateQObjectData(Smoke::Index classID, QObject *p, QoreObject *self) : QoreSmokePrivate(classID, true), m_qobject(p), obj_ref(false) {
+   DLLLOCAL QoreSmokePrivateQObjectData(Smoke::Index classID, QObject *p, QoreObject *self) : QoreSmokePrivate(classID, true), m_qobject(p) {
       //printd(0, "QoreSmokePrivateQObjectData::QoreSmokePrivateQObjectData() %s qobject=%p self=%p this=%p\n", getClassName(), p, self, this);
 
       qt_metaobject_method_count = getParentMetaObject()->methodCount();
@@ -151,11 +188,9 @@ public:
 	    delete m_qobject;
 	 }
       }
-
-      assert(!obj_ref);
    }
 
-   DLLLOCAL bool deleteBlocker(QoreObject *self) {
+   DLLLOCAL virtual bool deleteBlocker(QoreObject *self) {
       //printd(5, "QoreSmokePrivateQObjectData::deleteBlocker(%p) %s obj=%p parent=%p eo=%s obj_ref=%d\n", self, self->getClassName(), m_qobject.data(), m_qobject.data() ? m_qobject->parent() : 0, externallyOwned() ? "true" : "false", obj_ref);
       if (m_qobject.data() && (m_qobject->parent() || externallyOwned())) {
 	 if (!obj_ref) {
@@ -309,7 +344,7 @@ public:
        return qt_metaobject_method_count;
     }
 
-    DLLLOCAL void externalDelete(QoreObject *obj, ExceptionSink *xsink) {
+    DLLLOCAL virtual void externalDelete(QoreObject *obj, ExceptionSink *xsink) {
        QObject *qo = m_qobject.data();
        if (qo && qo->isWidgetType())
 	  QWM.remove(reinterpret_cast<QWidget *>(qo));
@@ -407,7 +442,6 @@ protected:
     QHash<QByteArray, int> slotIndices;    // map slot signatures to indices in the methodList
     QHash<QByteArray, int> signalIndices;  // map signal signatures to signal IDs in the methodList
     DynamicMethodList methodList;          // list of dynamic signals and slots
-    bool obj_ref;
 };
 
 class QoreSmokePrivateQAbstractItemModelData : public QoreSmokePrivateQObjectData {

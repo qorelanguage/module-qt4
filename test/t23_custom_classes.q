@@ -15,7 +15,6 @@ class MyItem inherits QTreeWidgetItem
         }
 }
 
-
 class TreeWidget inherits QTreeWidget
 {
         constructor(QWidget $parent) : QTreeWidget($parent)
@@ -26,13 +25,11 @@ class TreeWidget inherits QTreeWidget
                       SLOT("self_currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)"));
         }
 
-        self_currentItemChanged(QTreeWidgetItem $current, QTreeWidgetItem $previous)
+        self_currentItemChanged(QTreeWidgetItem $current, any $previous)
         {
             $current.foo();
         }
 }
-
-
 
 my QApplication $a();
 my QTreeWidget $w();
