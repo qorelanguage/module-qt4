@@ -50,7 +50,7 @@ public:
    DLLLOCAL virtual void clear() = 0;
    // the following is defined as pure virtual so only 1 virtual call has to be made when calling it
    // (it could be implemented here with 2 other virtual calls)
-   DLLLOCAL virtual void *takeObject() = 0;
+   DLLLOCAL virtual void *takeObjectForDelete(QoreObject *self, ExceptionSink *xsink) = 0;
    DLLLOCAL Smoke::Index smokeClass() {
       return m_class;
    }
@@ -132,9 +132,15 @@ public:
          qt_qore_map.del(m_object);
       m_object = 0;
    }
-   DLLLOCAL virtual void *takeObject() {
+   DLLLOCAL virtual void *takeObjectForDelete(QoreObject *self, ExceptionSink *xsink) {
       void *p = m_object;
       QoreSmokePrivateData::clear();
+
+      if (obj_ref) {
+         obj_ref = false;
+         self->deref(xsink);
+      }
+
       return p;
    }
    // non-virtual method for getting the object
@@ -218,9 +224,15 @@ public:
        qt_qore_map.del(m_qobject.data());
        m_qobject = 0;
     }
-    DLLLOCAL virtual void *takeObject() {
+   DLLLOCAL virtual void *takeObjectForDelete(QoreObject *self, ExceptionSink *xsink) {
         void *p = (void *)m_qobject.data();
 	clear();
+
+        if (obj_ref) {
+           obj_ref = false;
+           self->deref(xsink);
+        }
+
         return p;
     }
 

@@ -9,8 +9,10 @@ my $m;
 my $y;
 my $k;
 
+try {
 $col.getCmyk($c, $m, $y, $k);
 printf("!ref: C %N M %N Y %N K %N\n", $c, $m, $y, $k);
+} catch () {}
 
 $col.getCmyk(\$c, \$m, \$y, \$k);
 printf(" ref: C %N M %N Y %N K %N\n", $c, $m, $y, $k);

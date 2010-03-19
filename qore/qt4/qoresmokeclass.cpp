@@ -842,7 +842,7 @@ void common_destructor(const QoreClass &thisclass, ClassMap::TypeHandler *type_h
    // because the QApplication destructor will free windowing resources and subsequently deleting
    // any QWidget objects will cause a crash
    if (thisclass.getID() == QC_QAPPLICATION->getID()) {
-      //printd(0, "QApplication::destructor() pobj=%p private_data=%p\n", pobj, private_data);
+      printd(0, "QApplication::destructor() pobj=%p private_data=%p\n", pobj, private_data);
       QWM.deleteAll();
    }
 
@@ -870,7 +870,9 @@ void common_destructor(const QoreClass &thisclass, ClassMap::TypeHandler *type_h
 
    if (p->externallyOwned()) {
       //printd(0, "common_destructor() %s::destructor(): QT object %p is externally owned\n", thisclass.getName(), p->object());
-      p->clear();
+      // we remove the QT object from the Qore private data structure
+      // this will also dereference the QoreObject
+      p->takeObjectForDelete(self, xsink);
       return;
    }
    
@@ -883,7 +885,7 @@ void common_destructor(const QoreClass &thisclass, ClassMap::TypeHandler *type_h
    //printd(0, "common_destructor %s::destructor() Qt: %p\n", thisclass.getName(), pobj);
    assert(cqm.isValid());
    // call the destructor -- and take the object from the private data first
-   (* cqm.smokeClass().classFn)(cqm.method().method, p->takeObject(), cqm.Stack);
+   (* cqm.smokeClass().classFn)(cqm.method().method, p->takeObjectForDelete(self, xsink), cqm.Stack);
    //printd(0, "common_destructor %s::destructor() Qt: %p returned from smoke destructor\n", thisclass.getName(), pobj);
 }
 
@@ -928,5 +930,9 @@ QoreSmokePrivateData::~QoreSmokePrivateData() {
       Smoke::Index dm = ClassMap::Instance()->getDestructor(cls.className);
       // delete the object with the smoke destructor
       (* cls.classFn)(dm, m_object, 0);
+      m_object = 0;
+   }
+   if (obj_ref) {
+      
    }
 }

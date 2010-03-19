@@ -623,11 +623,14 @@ static QoreStringNode *qt_module_init() {
     cm.addArgHandler("QFormLayout", "addItem", setExternallyOwned_handler);
     cm.addArgHandler("QGraphicsGridLayout", "addItem", setExternallyOwned_handler);
     cm.addArgHandler("QGraphicsLinearLayout", "addItem", setExternallyOwned_handler);
+    cm.addArgHandler("QGraphicsLinearLayout", "insertItem", setExternallyOwned_handler);
     cm.addArgHandler("QGraphicsScene", "addItem", setExternallyOwned_handler);
     cm.addArgHandler("QListWidget", "addItem", setExternallyOwned_handler);
+    cm.addArgHandler("QListWidget", "insertItem", setExternallyOwned_handler);
     cm.addArgHandler("QStackedLayout", "addItem", setExternallyOwned_handler);
     cm.addArgHandler("QBoxLayout", "addItem", setExternallyOwned_handler);
     cm.addArgHandler("QBoxLayout", "addSpacerItem", setExternallyOwned_handler);
+    cm.addArgHandler("QBoxLayout", "insertItem", setExternallyOwned_handler);
     cm.addArgHandler("QBoxLayout", "insertSpacerItem", setExternallyOwned_handler);
 
     cm.addArgHandler("QLayout", "addWidget", setExternallyOwned_handler);
