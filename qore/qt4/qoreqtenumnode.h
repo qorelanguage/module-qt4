@@ -83,6 +83,7 @@ protected:
 public:
    DLLLOCAL QoreEnumTypeInfoHelper(const Smoke::Type &t) : QoreTypeInfoHelper(t.name), enumType(t), qoreType(get_next_type_id()) {
       assign(qoreType);
+      assignCompat(NT_INT);
       //printd(0, "QoreEnumTypeInfoHelper::QoreEnumTypeInfoHelper() creating %p (%s type %d)\n", this, t.name, qoreType);
    }
    DLLLOCAL virtual ~QoreEnumTypeInfoHelper() {

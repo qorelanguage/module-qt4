@@ -32,6 +32,7 @@ public:
       assert(!fake_id);
       fake_id = get_next_type_id();
       assign(fake_id);
+      assignCompat(NT_INT);
       qtIntTypeInfo = getTypeInfo();
    }
    DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
@@ -59,6 +60,7 @@ public:
       assert(!fake_id);
       fake_id = get_next_type_id();
       assign(fake_id);
+      assignCompat(NT_STRING);
       qtStringTypeInfo = getTypeInfo();
    }
    DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
