@@ -44,7 +44,7 @@ class LCDRange inherits QWidget {
 	$.setText($text);
     }
 
-    value() {
+    value() returns int {
 	return $.slider.value();
     }
 
@@ -63,7 +63,7 @@ class LCDRange inherits QWidget {
 	$.slider.setRange($minValue, $maxValue);
     }
 
-    text() {
+    text() returns string {
 	return $.label.text();
     }
 
@@ -100,15 +100,15 @@ class CannonField inherits QWidget {
 	$.newTarget();
     }
 
-    angle() {
+    angle() returns int {
 	return $.currentAngle;
     }
 
-    force() {
+    force() returns int {
 	return $.currentForce;
     }
 
-    gameOver() {
+    gameOver() returns bool {
 	return $.gameEnded;
     }
 
