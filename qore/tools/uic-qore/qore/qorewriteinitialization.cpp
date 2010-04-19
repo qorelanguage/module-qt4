@@ -482,16 +482,16 @@ void WriteInitialization::acceptUI(DomUI *node)
         const Buddy &b = m_buddies.at(i);
         QString name(b.objName);
         QString buddyName(b.buddy);
+// disabled for Qore. We don't register buddies... it's checked automatically. Propably...
+//         if (!m_registeredWidgets.contains(name) /*&& !m_registeredWidgets.contains(name)*/) {
+//             fprintf(stderr, "'%s' isn't a valid widget - 01\n", name.toLatin1().data());
+//             continue;
+//         } else if (!m_registeredWidgets.contains(b.buddy) && !m_registeredWidgets.contains(buddyName)) {
+//             fprintf(stderr, "'%s' isn't a valid widget - 02\n", buddyName.toLatin1().data());
+//             continue;
+//         }
 
-        if (!m_registeredWidgets.contains(name) && !m_registeredWidgets.contains(name)) {
-            fprintf(stderr, "'%s' isn't a valid widget\n", name.toLatin1().data());
-            continue;
-        } else if (!m_registeredWidgets.contains(b.buddy) && !m_registeredWidgets.contains(buddyName)) {
-            fprintf(stderr, "'%s' isn't a valid widget\n", buddyName.toLatin1().data());
-            continue;
-        }
-
-        m_output << m_option.indent << "$." << name << ".setBuddy( $." << buddyName << " );\n";
+        m_output << m_option.indent << name << ".setBuddy( $." << buddyName << " );\n";
     }
 
     if (node->elementTabStops())
