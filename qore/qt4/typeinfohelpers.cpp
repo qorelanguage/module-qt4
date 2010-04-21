@@ -266,7 +266,10 @@ bool QDateTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Exception
       return false;
 
    const DateTimeNode *d = reinterpret_cast<const DateTimeNode *>(n);
-   QDate *date = new QDate(d->getYear(), d->getMonth(), d->getDay());
+   qore_tm info;
+   d->getInfo(info);
+
+   QDate *date = new QDate(info.year, info.month, info.day);
 
    n->deref(xsink);
    n = Marshalling::createQoreObjectFromNonQObject(QC_QDATE, SCI_QDATE, date);
@@ -279,8 +282,12 @@ bool QDateTimeTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Excep
 
    const DateTimeNode *d = reinterpret_cast<const DateTimeNode *>(n);
    QDateTime *date = new QDateTime;
-   date->setDate(QDate(d->getYear(), d->getMonth(), d->getDay()));
-   date->setTime(QTime(d->getHour(), d->getMinute(), d->getSecond(), d->getMillisecond()));
+
+   qore_tm info;
+   d->getInfo(info);
+
+   date->setDate(QDate(info.year, info.month, info.day));
+   date->setTime(QTime(info.hour, info.minute, info.second, info.us / 1000));
 
    n->deref(xsink);
    n = Marshalling::createQoreObjectFromNonQObject(QC_QDATETIME, SCI_QDATETIME, date);
@@ -292,7 +299,11 @@ bool QTimeTypeHelper::checkTypeInstantiationImpl(AbstractQoreNode *&n, Exception
       return false;
 
    const DateTimeNode *d = reinterpret_cast<const DateTimeNode *>(n);
-   QTime *time = new QTime(d->getHour(), d->getMinute(), d->getSecond(), d->getMillisecond());
+
+   qore_tm info;
+   d->getInfo(info);
+
+   QTime *time = new QTime(info.hour, info.minute, info.second, info.us / 1000);
 
    n->deref(xsink);
    n = Marshalling::createQoreObjectFromNonQObject(QC_QTIME, SCI_QTIME, time);

@@ -202,7 +202,9 @@ int get_qdate(const AbstractQoreNode *n, QDate &date, ExceptionSink *xsink) {
     qore_type_t t = n ? n->getType() : NT_NOTHING;
     if (t == NT_DATE) {
         const DateTimeNode *d = reinterpret_cast<const DateTimeNode *>(n);
-        date.setDate(d->getYear(), d->getMonth(), d->getDay());
+        qore_tm info;
+        d->getInfo(info);
+        date.setDate(info.year, info.month, info.day);
         return 0;
     }
 
@@ -247,8 +249,10 @@ int get_qdatetime(const AbstractQoreNode *n, QDateTime &dt, ExceptionSink *xsink
     if (t == NT_DATE) {
         const DateTimeNode *qdt = reinterpret_cast<const DateTimeNode *>(n);
 
-        dt.setDate(QDate(qdt->getYear(), qdt->getMonth(), qdt->getDay()));
-        dt.setTime(QTime(qdt->getHour(), qdt->getMinute(), qdt->getSecond(), qdt->getMillisecond()));
+        qore_tm info;
+        qdt->getInfo(info);
+        dt.setDate(QDate(info.year, info.month, info.day));
+        dt.setTime(QTime(info.hour, info.minute, info.second, info.us / 1000));
 
         return 0;
     }
@@ -308,8 +312,9 @@ int get_qtime(const AbstractQoreNode *n, QTime &time, ExceptionSink *xsink) {
     qore_type_t t = n ? n->getType() : NT_NOTHING;
     if (t == NT_DATE) {
         const DateTimeNode *qdt = reinterpret_cast<const DateTimeNode *>(n);
-
-        time.setHMS(qdt->getHour(), qdt->getMinute(), qdt->getSecond(), qdt->getMillisecond());
+        qore_tm info;
+        qdt->getInfo(info);
+        time.setHMS(info.hour, info.minute, info.second, info.us / 1000);
         return 0;
     }
 
