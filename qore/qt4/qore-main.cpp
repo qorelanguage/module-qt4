@@ -610,11 +610,12 @@ static QoreStringNode *qt_module_init() {
 
     createIndexHandler.arg_handler = createIndex_handler;
 
-    type_vec_t argv_int_int;
-    argv_int_int.push_back(bigIntTypeInfo);
-    argv_int_int.push_back(bigIntTypeInfo);
+    type_vec_t argv_int_int_any;
+    argv_int_int_any.push_back(bigIntTypeInfo);
+    argv_int_int_any.push_back(bigIntTypeInfo);
+    argv_int_int_any.push_back(anyTypeInfo);
 
-    cm.registerMethod("QAbstractItemModel", "createIndex", "createIndex$$$", methodIndex.index, createIndexHandler, 0, argv_int_int);
+    cm.registerMethod("QAbstractItemModel", "createIndex", "createIndex$$$", methodIndex.index, createIndexHandler, 0, argv_int_int_any);
     
     // QLayout::addItem() and ::addWidget() handlers
     // add argument handlers to existing methods
