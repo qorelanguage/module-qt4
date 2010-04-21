@@ -170,7 +170,7 @@ void ClassMap::addQoreMethods() {
 
    // QObject
    qc->addMethodExtended("createSignal", (q_method_t)QOBJECT_createSignal, false, QC_NO_FLAGS, QDOM_DEFAULT, nothingTypeInfo, 1, stringTypeInfo, QORE_PARAM_NO_ARG);
-   qc->addMethodExtended("emit", (q_method_t)QOBJECT_emit, false, QC_NO_FLAGS, QDOM_DEFAULT, nothingTypeInfo, 1, stringTypeInfo, QORE_PARAM_NO_ARG);
+   qc->addMethodExtended("emit", (q_method_t)QOBJECT_emit, false, QC_USES_EXTRA_ARGS, QDOM_DEFAULT, nothingTypeInfo, 1, stringTypeInfo, QORE_PARAM_NO_ARG);
 
    // QVariant
    qc = ClassNamesMap::Instance()->value("QVariant");
