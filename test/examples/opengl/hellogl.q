@@ -16,13 +16,11 @@
 
 const NumSectors = 200;
 
-class GLWidget inherits QGLWidget
-{
+class GLWidget inherits QGLWidget {
     private $.object, $.xRot, $.yRot, $.zRot, $.lastPos, $.trolltechGreen,
             $.trolltechPurple;
 
-    constructor($parent) : QGLWidget($parent)
-    {
+    constructor($parent) : QGLWidget($parent) {
         $.createSignal("xRotationChanged(int)");
         $.createSignal("yRotationChanged(int)");
         $.createSignal("zRotationChanged(int)");
@@ -36,19 +34,16 @@ class GLWidget inherits QGLWidget
         $.trolltechPurple = QColor::fromCmykF(0.39, 0.39, 0.0, 0.0);
     }
 
-    destructor()
-    {
+    destructor() {
 #         $.makeCurrent();
         glDeleteLists($.object, 1);
     }
 
-    minimumSizeHint()
-    {
+    minimumSizeHint() returns QSize {
         return new QSize(50, 50);
     }
 
-    sizeHint()
-    {
+    sizeHint() returns QSize {
         return new QSize(400, 400);
     }
 
@@ -87,8 +82,7 @@ class GLWidget inherits QGLWidget
         glEnable(GL_CULL_FACE);
     }
 
-    paintGL()
-    {
+    paintGL() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glLoadIdentity();
         glTranslated(0.0, 0.0, -10.0);
@@ -98,8 +92,7 @@ class GLWidget inherits QGLWidget
         glCallList($.object);
     }
 
-    resizeGL($width, $height)
-    {
+    resizeGL($width, $height) {
         my $side = min($width, $height);
         glViewport(($width - $side) / 2, ($height - $side) / 2, $side, $side);
 
@@ -109,17 +102,13 @@ class GLWidget inherits QGLWidget
         glMatrixMode(GL_MODELVIEW);
     }
 
-    mousePressEvent($event)
-    {
+    mousePressEvent($event) {
         $.lastPos = $event.pos();
     }
 
-    mouseMoveEvent($event)
-    {
+    mouseMoveEvent($event) {
         my $dx = $event.x() - $.lastPos.x();
-        my $dy = $event.y
-            () - $.lastPos.y
-            ();
+        my $dy = $event.y() - $.lastPos.y();
         
         if ($event.buttons() & Qt::LeftButton) {
             $.setXRotation($.xRot + 8 * $dy);
@@ -131,8 +120,7 @@ class GLWidget inherits QGLWidget
         $.lastPos = $event.pos();
     }
 
-    makeObject()
-    {
+    makeObject() {
         my $list = glGenLists(1);
         glNewList($list, GL_COMPILE);
 
@@ -183,8 +171,7 @@ class GLWidget inherits QGLWidget
         return $list;
     }
 
-    quad($x1, $y1, $x2, $y2, $x3, $y3, $x4, $y4)
-    {
+    quad($x1, $y1, $x2, $y2, $x3, $y3, $x4, $y4) {
         $.qglColor($.trolltechGreen);
 
         glVertex3d($x1, $y1, -0.05);
@@ -198,8 +185,7 @@ class GLWidget inherits QGLWidget
         glVertex3d($x1, $y1, +0.05);
     }
 
-    extrude($x1, $y1, $x2, $y2)
-    {
+    extrude($x1, $y1, $x2, $y2) {
         $.qglColor($.trolltechGreen.dark(250 + int(100 * $x1)));
 
         glVertex3d($x1, $y1,  0.05);
@@ -208,8 +194,7 @@ class GLWidget inherits QGLWidget
         glVertex3d($x1, $y1, -0.05);
     }
 
-    normalizeAngle($angle)
-    {
+    normalizeAngle($angle) {
         while ($angle < 0)
             $angle += 360 * 16;
         while ($angle > 360 * 16)
@@ -217,12 +202,10 @@ class GLWidget inherits QGLWidget
     }
 }
 
-class Window inherits QWidget
-{
+class Window inherits QWidget {
     private $.glWidget, $.xSlider, $.ySlider, $.zSlider;
 
-    constructor()
-    {
+    constructor() {
         $.glWidget = new GLWidget($self);
 
         $.xSlider = $.createSlider();
@@ -249,9 +232,8 @@ class Window inherits QWidget
         $.setWindowTitle($.tr("Hello GL"));
     }
 
-    createSlider()
-    {
-        my $slider = new QSlider(Qt::Vertical);
+    createSlider() returns QSlider {
+        my QSlider $slider(Qt::Vertical);
         $slider.setRange(0, 360 * 16);
         $slider.setSingleStep(16);
         $slider.setPageStep(15 * 16);
@@ -261,10 +243,9 @@ class Window inherits QWidget
     }
 }
 
-class hellogl inherits QApplication 
-{
+class hellogl inherits QApplication {
     constructor() {
-        my $window = new Window();
+        my Window $window();
         $window.show();
         $.exec();
     }

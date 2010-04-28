@@ -1,6 +1,6 @@
 
 include_directories( ${QT_INCLUDES} ${CMAKE_SOURCE_DIR}/smoke )
-
+set(QT_INCLUDE_DIR "/opt/local/libexec/qt4-mac/include")
 configure_file(config.xml.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.xml @ONLY)
 
 # for QtGuess.txt

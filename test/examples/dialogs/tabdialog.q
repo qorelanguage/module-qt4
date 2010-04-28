@@ -139,13 +139,11 @@ class ApplicationsTab inherits QWidget
     }
 }
 
-class TabDialog inherits QDialog
-{
+class TabDialog inherits QDialog {
     private $.tabWidget, $.buttonBox;
 
-    constructor($fileName, $parent) : QDialog($parent)
-    {
-        my $fileInfo = new QFileInfo($fileName);
+    constructor($fileName, $parent) : QDialog($parent) {
+        my QFileInfo $fileInfo($fileName);
 
         $.tabWidget = new QTabWidget();
         $.tabWidget.addTab(new GeneralTab($fileInfo), $.tr("General"));
@@ -158,7 +156,7 @@ class TabDialog inherits QDialog
         $.connect($.buttonBox, SIGNAL("accepted()"), SLOT("accept()"));
         $.connect($.buttonBox, SIGNAL("rejected()"), SLOT("reject()"));
         
-        my $mainLayout = new QVBoxLayout();
+        my QVBoxLayout $mainLayout();
         $mainLayout.addWidget($.tabWidget);
         $mainLayout.addWidget($.buttonBox);
         $.setLayout($mainLayout);
@@ -167,19 +165,10 @@ class TabDialog inherits QDialog
     }
 }
 
-
-class tabdialog_example inherits QApplication
-{
-    constructor()
-    {
-        my $fileName;
-
-        if (elements $ARGV >= 1)
-            $fileName = $ARGV[0];
-        else
-            $fileName = ".";
-
-        my $tabdialog = new TabDialog($fileName);
-        return $tabdialog.exec();
+class tabdialog_example inherits QApplication {
+    constructor() {
+        my string $fileName = elements $ARGV >= 1 ? $ARGV[0] : ".";
+        my TabDialog $tabdialog($fileName);
+        $tabdialog.exec();
     }
 }

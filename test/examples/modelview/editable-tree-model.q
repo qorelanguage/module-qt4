@@ -94,21 +94,21 @@ class Ui_MainWindow {
     } # setupUi
 
     retranslateUi($MainWindow) {
-        $MainWindow.setWindowTitle(QApplication::translate("MainWindow", "Editable Tree Model", 0, QCoreApplication::UnicodeUTF8));
-        $.exitAction.setText(QApplication::translate("MainWindow", "E&xit", 0, QCoreApplication::UnicodeUTF8));
-        $.exitAction.setShortcut(QApplication::translate("MainWindow", "Ctrl+Q", 0, QCoreApplication::UnicodeUTF8));
-        $.insertRowAction.setText(QApplication::translate("MainWindow", "Insert Row", 0, QCoreApplication::UnicodeUTF8));
-        $.insertRowAction.setShortcut(QApplication::translate("MainWindow", "Ctrl+I, R", 0, QCoreApplication::UnicodeUTF8));
-        $.removeRowAction.setText(QApplication::translate("MainWindow", "Remove Row", 0, QCoreApplication::UnicodeUTF8));
-        $.removeRowAction.setShortcut(QApplication::translate("MainWindow", "Ctrl+R, R", 0, QCoreApplication::UnicodeUTF8));
-        $.insertColumnAction.setText(QApplication::translate("MainWindow", "Insert Column", 0, QCoreApplication::UnicodeUTF8));
-        $.insertColumnAction.setShortcut(QApplication::translate("MainWindow", "Ctrl+I, C", 0, QCoreApplication::UnicodeUTF8));
-        $.removeColumnAction.setText(QApplication::translate("MainWindow", "Remove Column", 0, QCoreApplication::UnicodeUTF8));
-        $.removeColumnAction.setShortcut(QApplication::translate("MainWindow", "Ctrl+R, C", 0, QCoreApplication::UnicodeUTF8));
-        $.insertChildAction.setText(QApplication::translate("MainWindow", "Insert Child", 0, QCoreApplication::UnicodeUTF8));
-        $.insertChildAction.setShortcut(QApplication::translate("MainWindow", "Ctrl+N", 0, QCoreApplication::UnicodeUTF8));
-        $.fileMenu.setTitle(QApplication::translate("MainWindow", "&File", 0, QCoreApplication::UnicodeUTF8));
-        $.actionsMenu.setTitle(QApplication::translate("MainWindow", "&Actions", 0, QCoreApplication::UnicodeUTF8));
+        $MainWindow.setWindowTitle(QApplication::translate("MainWindow", "Editable Tree Model", "", QCoreApplication::UnicodeUTF8));
+        $.exitAction.setText(QApplication::translate("MainWindow", "E&xit", "", QCoreApplication::UnicodeUTF8));
+        $.exitAction.setShortcut(QApplication::translate("MainWindow", "Ctrl+Q", "", QCoreApplication::UnicodeUTF8));
+        $.insertRowAction.setText(QApplication::translate("MainWindow", "Insert Row", "", QCoreApplication::UnicodeUTF8));
+        $.insertRowAction.setShortcut(QApplication::translate("MainWindow", "Ctrl+I, R", "", QCoreApplication::UnicodeUTF8));
+        $.removeRowAction.setText(QApplication::translate("MainWindow", "Remove Row", "", QCoreApplication::UnicodeUTF8));
+        $.removeRowAction.setShortcut(QApplication::translate("MainWindow", "Ctrl+R, R", "", QCoreApplication::UnicodeUTF8));
+        $.insertColumnAction.setText(QApplication::translate("MainWindow", "Insert Column", "", QCoreApplication::UnicodeUTF8));
+        $.insertColumnAction.setShortcut(QApplication::translate("MainWindow", "Ctrl+I, C", "", QCoreApplication::UnicodeUTF8));
+        $.removeColumnAction.setText(QApplication::translate("MainWindow", "Remove Column", "", QCoreApplication::UnicodeUTF8));
+        $.removeColumnAction.setShortcut(QApplication::translate("MainWindow", "Ctrl+R, C", "", QCoreApplication::UnicodeUTF8));
+        $.insertChildAction.setText(QApplication::translate("MainWindow", "Insert Child", "", QCoreApplication::UnicodeUTF8));
+        $.insertChildAction.setShortcut(QApplication::translate("MainWindow", "Ctrl+N", "", QCoreApplication::UnicodeUTF8));
+        $.fileMenu.setTitle(QApplication::translate("MainWindow", "&File", "", QCoreApplication::UnicodeUTF8));
+        $.actionsMenu.setTitle(QApplication::translate("MainWindow", "&Actions", "", QCoreApplication::UnicodeUTF8));
     } # retranslateUi
 }
 

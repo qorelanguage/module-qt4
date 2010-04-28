@@ -104,12 +104,12 @@ class SortingBox inherits QWidget {
         }
     }
 
-    mouseMoveEvent($event) {
+    mouseMoveEvent(QMouseEvent $event) {
         if (($event.buttons() & Qt::LeftButton) && $.itemInMotion)
             $.moveItemTo($event.pos());
     }
 
-    mouseReleaseEvent($event) {
+    mouseReleaseEvent(QMouseEvent $event) {
         if ($event.button() == Qt::LeftButton && $.itemInMotion) {
             $.moveItemTo($event.pos());
             $.itemInMotion = 0;

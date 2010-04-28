@@ -487,7 +487,7 @@ static QoreClass *findCreateQoreClass(Smoke::Index ix) {
 
    QoreClass *qc = ClassNamesMap::Instance()->value(ix);
    if (qc)
-      return qc;   
+      return qc;
 
    const char *name = c.className;
 
@@ -515,6 +515,7 @@ static QoreClass *findCreateQoreClass(Smoke::Index ix) {
       qc = typeHelperQTime.getClass();
    else {
       qc = new QoreClass(name, QDOM_GUI);
+      //printd(5, "creating class: %s (%d)\n", name, qc->getID());
 
       // process special classes
       if (!QC_QOBJECT && !strcmp(name, "QObject")) {

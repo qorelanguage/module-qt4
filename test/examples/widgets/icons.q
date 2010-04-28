@@ -109,8 +109,8 @@ class IconSizeSpinBox inherits QSpinBox {
     constructor($parent) : QSpinBox($parent) {
     }
 
-    valueFromText($text) {
-        return int($text =~ x/(\\d+)(\\s*[xx]\\s*\\d+)?/)[0];
+    valueFromText($text) returns int {
+        return int($text =~ x/(\\d+)(\\s*[xx]\\s*\\d+)?/[0]);
     }
 
     textFromValue($value) {
