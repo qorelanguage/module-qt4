@@ -1,6 +1,16 @@
 
 include_directories( ${QT_INCLUDES} ${CMAKE_SOURCE_DIR}/smoke )
-set(QT_INCLUDE_DIR "/opt/local/libexec/qt4-mac/include")
+
+# HACK to fixup macosx issue with QT_INCLUDE_DIR:
+# QT_INCLUDE_DIR /opt/local/libexec/qt4-mac/include;/opt/local/libexec/qt4-mac/lib/QtCore.framework
+# it should be only:
+# QT_INCLUDE_DIR /opt/local/libexec/qt4-mac/include
+if (QT_USE_FRAMEWORKS)
+    set(CONFIGXML_INCLUDE_DIR ${QT_HEADERS_DIR})
+else(QT_USE_FRAMEWORKS)
+    set(CONFIGXML_INCLUDE_DIR ${QT_INCLUDE_DIR})
+endif(QT_USE_FRAMEWORKS)
+
 configure_file(config.xml.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.xml @ONLY)
 
 # for QtGuess.txt

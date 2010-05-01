@@ -88,6 +88,7 @@ ClassMap::ClassMap() {
 
    QoreClass *qc = 0;
    QByteArray mname;
+   Q_ASSERT_X(qt_Smoke->numMethodMaps > 1, "numMethodMaps check", "empty smoke propably");
    for (int i = 1; i < qt_Smoke->numMethodMaps; ++i) {
       Smoke::MethodMap &mm = qt_Smoke->methodMaps[i];
       Smoke::Class &c = qt_Smoke->classes[mm.classId];
