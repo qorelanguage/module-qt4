@@ -28,10 +28,14 @@ ELSE (XSLTPROC_EXECUTABLE)
 ENDIF (XSLTPROC_EXECUTABLE)
 
 if (DOCS)
+    FIND_FILE(xslstyle  chunk.xsl
+              PATHS /usr/share/xml/docbook/stylesheet/nwalsh5/current/xhtml # opensuse
+                    /opt/local/share/xsl/docbook-xsl/xhtml                  # macpors
+                    /usr/share/sgml/docbook/xsl-stylesheets/xhtml           # fedora
+             )
+    MESSAGE("xsl style: ${xslstyle}")
 
-    SET(xslstyle "/usr/share/xml/docbook/stylesheet/nwalsh5/current/xhtml/chunk.xsl")
     SET(cssstyle "qore.css")
-    SET(xsltparams "/usr/share/xml/docbook/stylesheet/nwalsh5/current/xhtml/param.xsl")
 
     SET(docbook_index "qore-qt4.xml")
 
