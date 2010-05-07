@@ -163,6 +163,14 @@ rpp::Stream* Preprocessor::sourceNeeded(QString& fileName, rpp::Preprocessor::In
     // #include_next <limits.h> in the file and no proper header guard.
     if (fileName == "limits.h" && type == rpp::Preprocessor::IncludeGlobal)
         return 0;
+
+    if (m_fileStack.top().fileName() == fileName && type == rpp::Preprocessor::IncludeGlobal) {
+#ifdef DEBUG
+        qDebug("prevented possible endless loop because of #include<%s>", qPrintable(fileName));
+#endif
+        return 0;
+    }
+
     
     // are the contents already cached?
     if (type == rpp::Preprocessor::IncludeGlobal && m_cache.contains(fileName)) { 

@@ -16,6 +16,6 @@
         <dir>@QT_QTSCRIPT_INCLUDE_DIR@</dir>
         <dir>@QT_QTUITOOLS_INCLUDE_DIR@</dir>
         <dir>@QT_QTTEST_INCLUDE_DIR@</dir>
-        <dir>@QT_QTWEBKIT_INCLUDE_DIR@</dir>
+        <xdir>@QT_QTWEBKIT_INCLUDE_DIR@</xdir>
     </includeDirs>
 </config>

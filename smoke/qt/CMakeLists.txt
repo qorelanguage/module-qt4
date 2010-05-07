@@ -1,15 +1,40 @@
 
 include_directories( ${QT_INCLUDES} ${CMAKE_SOURCE_DIR}/smoke )
 
-# HACK to fixup macosx issue with QT_INCLUDE_DIR:
-# QT_INCLUDE_DIR /opt/local/libexec/qt4-mac/include;/opt/local/libexec/qt4-mac/lib/QtCore.framework
-# it should be only:
-# QT_INCLUDE_DIR /opt/local/libexec/qt4-mac/include
-if (QT_USE_FRAMEWORKS)
-    set(CONFIGXML_INCLUDE_DIR ${QT_HEADERS_DIR})
-else(QT_USE_FRAMEWORKS)
-    set(CONFIGXML_INCLUDE_DIR ${QT_INCLUDE_DIR})
-endif(QT_USE_FRAMEWORKS)
+
+# common variable to be used as a main include dir for config.xml.
+# It's handled below for some Apple versions.
+set(CONFIGXML_INCLUDE_DIR ${QT_INCLUDE_DIR})
+# Qt includes for smokegen. It's handled below for some Apple versions.
+set(QT_INCLUDES_H qt_includes.h)
+
+
+# macosx specific tests for frameworks and include paths
+if (APPLE)
+    # we will use frameworks only if is it specified in paths.
+    # It will allow to handle "use libs first" option for macport's qt4-mac too
+    # QT_USE_FRAMEWORKS is not sufficient here.
+    string(REGEX MATCH "^/Library/Frameworks/.*" USE_FRAMEWORKS ${QT_QTCORE_INCLUDE_DIR})
+    if (USE_FRAMEWORKS)
+        set(QT_INCLUDES_H qt_includes_macframework.h)
+    endif(USE_FRAMEWORKS)
+
+    # HACK to fixup macosx issue with QT_INCLUDE_DIR:
+    # QT_INCLUDE_DIR /opt/local/libexec/qt4-mac/include;/opt/local/libexec/qt4-mac/lib/QtCore.framework
+    # it should be only:
+    # QT_INCLUDE_DIR /opt/local/libexec/qt4-mac/include
+    list(LENGTH QT_INCLUDE_DIR QT_INCLUDE_DIR_LENGTH)
+    if (QT_INCLUDE_DIR_LENGTH)
+        list(GET QT_INCLUDE_DIR 0 CONFIGXML_INCLUDE_DIR) 
+    endif (QT_INCLUDE_DIR_LENGTH)
+
+    # debug
+    #MESSAGE("QT_INCLUDES_H ${QT_INCLUDES_H}")
+    #message("CONFIGXML_INCLUDE_DIR ${CONFIGXML_INCLUDE_DIR}")
+    #message("QT_INCLUDE_DIR ${QT_INCLUDE_DIR}")
+    #message("QT_QTGUI_INCLUDE_DIR ${QT_QTGUI_INCLUDE_DIR}")
+endif (APPLE)
+
 
 configure_file(config.xml.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.xml @ONLY)
 
@@ -48,7 +73,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/smokedata.cpp
 
     COMMAND smokegen
     ARGS -config "${CMAKE_CURRENT_BINARY_DIR}/config.xml" -smokeconfig "${CMAKE_CURRENT_SOURCE_DIR}/smokeconfig.xml"
-         -- ${CMAKE_CURRENT_SOURCE_DIR}/qt_includes.h
+         -- ${CMAKE_CURRENT_SOURCE_DIR}/${QT_INCLUDES_H}
     DEPENDS smokegen generator_smoke WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 macro_add_file_dependencies( ${CMAKE_CURRENT_BINARY_DIR}/smokedata.cpp ${CMAKE_CURRENT_BINARY_DIR}/x_1.cpp )

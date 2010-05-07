@@ -43,10 +43,16 @@
         <signature>.*QPixmapData.*</signature>
         <signature>.*operator.*\(QDebug,.*QStyle.*</signature>
         <signature>.*QGraphicsLinearLayout::dump\(.*\).*</signature>
-	<signature>.*QRegion::fromQDRgn.*</signature>
-	<signature>.*QRegion::toQDRgn.*</signature>
-	<signature>.*QRegion::toQDRgnForUpdate_sys.*</signature>
-	<signature>.*QMenu::macMenu.*</signature>
+        <signature>.*QRegion::fromQDRgn.*</signature>
+        <signature>.*QRegion::toQDRgn.*</signature>
+        <signature>.*QRegion::toQDRgnForUpdate_sys.*</signature>
+        <signature>.*QMenu::macMenu.*</signature>
+        <signature>.*QCoreXmlStreamReader*.</signature>
+        <signature>.*QCoreXmlStreamWriter*.</signature>
+        <!-- temporary removal of QtWebkit -->
+        <signature>.*QWeb.*</signature>
+        <signature>.*ExtensionOption.*</signature>
+        <signature>.*ExtensionReturn.*</signature>
     </exclude>
     <functions>
         <!-- include functions starting with 'q' -->
@@ -713,5 +719,6 @@
         <class>QGL</class>
         <class>QSsl</class>
         <class>QSql</class>
+
     </classList>
 </config>
