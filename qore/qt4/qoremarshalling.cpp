@@ -789,6 +789,12 @@ AbstractQoreNode *return_qvariant(const QoreMethod &method,
     case QVariant::TextFormat:
     case QVariant::Matrix:
     case QVariant::Transform:
+    case QVariant::Matrix4x4:
+    case QVariant::Vector2D:
+    case QVariant::Vector3D:
+    case QVariant::Vector4D:
+    case QVariant::Quaternion:
+    //case QVariant::LastGuiType:
     case QVariant::UserType:
     case QVariant::LastType:
         printd(0, "Missing QVariant implementation\n");
