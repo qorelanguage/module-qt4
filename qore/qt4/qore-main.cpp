@@ -61,11 +61,9 @@ DLLEXPORT qore_license_t qore_module_license = QL_LGPL;
 DLLEXPORT qore_license_t qore_module_license = QL_GPL;
 #endif
 
-qore_type_t QoreQtIntCompatibleTypeInfoHelper::fake_id = 0;
-qore_type_t QoreQtStringCompatibleTypeInfoHelper::fake_id = 0;
-
 static QoreQtIntCompatibleTypeInfoHelper qtIntTypeInfoHelper;
-static QoreQtStringCompatibleTypeInfoHelper qtStringTypeInfoHelper;
+QoreQtStringCompatibleTypeInfoHelper qtStringTypeInfoHelper;
+
 const QoreTypeInfo *qtIntTypeInfo, *qtStringTypeInfo;
 
 const QoreClass *QC_QOBJECT = 0, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT,

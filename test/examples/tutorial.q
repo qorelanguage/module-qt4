@@ -161,7 +161,7 @@ class CannonField inherits QWidget {
 	$.emit("forceChanged(int)", $.currentForce);
     }
 
-    paintEvent() {
+    paintEvent(QPaintEvent $event) {
 	my QPainter $painter = new QPainter($self);
 
 	if ($.gameEnded) {

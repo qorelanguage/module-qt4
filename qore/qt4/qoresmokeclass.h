@@ -568,7 +568,9 @@ public:
   
    DLLLOCAL const QoreTypeInfo *getEnumType(const char *name) {
       NameToEnumType::iterator i = enummap.find(name);
-      return i != enummap.end() ? i.value()->getTypeInfo() : 0;
+      assert(i != enummap.end());
+      return i.value()->getTypeInfo();
+      //return i != enummap.end() ? i.value()->getTypeInfo() : 0;
    }
   
    DLLLOCAL QoreQtEnumNode *getRunTimeEnumValue(const char *name, int64 val) {

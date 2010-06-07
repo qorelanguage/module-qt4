@@ -1,3 +1,4 @@
+/* -*- mode: c++; indent-tabs-mode: nil -*- */
 /*
   Qore Programming Language Qt4 Module
 
@@ -83,29 +84,11 @@ protected:
 public:
    DLLLOCAL QoreEnumTypeInfoHelper(const Smoke::Type &t) : QoreTypeInfoHelper(t.name), enumType(t), qoreType(get_next_type_id()) {
       assign(qoreType);
-      assignCompat(NT_INT);
+      setInt();
       //printd(0, "QoreEnumTypeInfoHelper::QoreEnumTypeInfoHelper() creating %p (%s type %d)\n", this, t.name, qoreType);
    }
    DLLLOCAL virtual ~QoreEnumTypeInfoHelper() {
       //printd(0, "QoreEnumTypeInfoHelper::~QoreEnumTypeInfoHelper() deleting %p\n", this);
-   }
-   DLLEXPORT virtual bool checkTypeInstantiationImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
-      //printd(0, "QoreEnumTypeInfoHelper::checkTypeInstantiationImpl() this=%p n=%p (%s)\n", this, n, n ? n->getTypeName() : "NOTHING");
-      if (!n || n->getType() != NT_INT)
-         return false;
-
-      QoreQtEnumNode *rv = new QoreQtEnumNode(qoreType, reinterpret_cast<QoreBigIntNode *>(n)->val, enumType);
-      n->deref(xsink);
-      n = rv;
-      return true;
-   }
-   DLLEXPORT virtual int testTypeCompatibilityImpl(const AbstractQoreNode *n) const {
-      //printd(0, "QoreEnumTypeInfoHelper::testTypeCompatibilityImpl() this=%p n=%p (%s)\n", this, n, n ? n->getTypeName() : "NOTHING");
-      return n && n->getType() == NT_INT ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
-   }
-   DLLEXPORT virtual int parseEqualImpl(const QoreTypeInfo *typeInfo) const {
-      //printd(0, "QoreEnumTypeInfoHelper::parseEqualImpl() this=%p typeInfo=%s\n", this, typeInfoGetName(typeInfo));
-      return typeInfo && typeInfoGetType(typeInfo) == NT_INT ? QTI_AMBIGUOUS : QTI_NOT_EQUAL;
    }
    DLLLOCAL QoreQtEnumNode *newValue(int64 val) const {
       return new QoreQtEnumNode(qoreType, val, enumType);

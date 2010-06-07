@@ -185,6 +185,47 @@ void ClassMap::addQoreMethods() {
    // QItemSelection
    qc = ClassNamesMap::Instance()->value("QItemSelection");
    addListMethods<QItemSelection>(qc);
+
+   // add QChar type info to qtStringTypeInfo accept list
+   qc = ClassNamesMap::Instance()->value("QChar");
+   qtStringTypeInfoHelper.addAcceptsType(qc->getTypeInfo());
+
+   // add QRect type info to QRegion accept list
+   qc = ClassNamesMap::Instance()->value("QRect");
+   typeHelperQRegion.addAcceptsType(qc->getTypeInfo());
+
+   // add QColor type info to QBrush accept list
+   qc = ClassNamesMap::Instance()->value("QColor");
+   typeHelperQBrush.addAcceptsType(qc->getTypeInfo());
+   const QoreTypeInfo *ti = ClassMap::Instance()->getEnumType("Qt::BrushStyle");
+   typeHelperQBrush.addAcceptsType(ti);
+
+   // add QGlobalColor type info to QBrush accept list
+   ti = ClassMap::Instance()->getEnumType("Qt::GlobalColor");
+   typeHelperQBrush.addAcceptsType(ti);
+
+   // add QGlobalColor type info to QColor accept list
+   typeHelperQColor.addAcceptsType(ti);
+
+   // add QLocale type info to QVariant accept list
+   qc = ClassNamesMap::Instance()->value("QLocale");
+   typeHelperQVariant.addAcceptsType(qc->getTypeInfo());
+
+   // add QIcon type info to QVariant accept list
+   qc = ClassNamesMap::Instance()->value("QIcon");
+   typeHelperQVariant.addAcceptsType(qc->getTypeInfo());
+
+   // add QByteArray type info to QVariant accept list
+   qc = ClassNamesMap::Instance()->value("QByteArray");
+   typeHelperQVariant.addAcceptsType(qc->getTypeInfo());
+
+   // add QKeySequence::StandardKey type info to QKeySequence accept list
+   ti = ClassMap::Instance()->getEnumType("QKeySequence::StandardKey");
+   typeHelperQKeySequence.addAcceptsType(ti);
+
+   ti = ClassMap::Instance()->getEnumType("Qt::Key");
+   typeHelperQKeySequence.addAcceptsType(ti);
+
 }
 
 void ClassMap::setupClassHierarchy() {
@@ -744,6 +785,7 @@ void common_constructor(const QoreClass &myclass,
        assert(*xsink);
        return;
     }
+    assert(!*xsink);
 
     // Setup internal object
     QoreSmokePrivate *obj;
@@ -772,8 +814,6 @@ void common_constructor(const QoreClass &myclass,
        QObject *qtBaseObj = static_cast<QObject*>(qtObj);
        qtBaseObj->setProperty(QORESMOKEPROPERTY, reinterpret_cast<qulonglong>(self));
     }
-
-    assert(!*xsink);
 
     printd(5, "common_constructor() %s private %p (%p) cid %d objcid %d self %p\n", className, obj, qtObj, myclass.getID(), self->getClass()->getID(), self);
 }
