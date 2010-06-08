@@ -665,7 +665,21 @@ static QoreStringNode *qt_module_init() {
 
     cm.addArgHandler("QTimer", "singleShot", arg_handler_QTimer_singleShot);
 
-    cm.addArgHandler("QPixmapCache", "find", arg_handler_QPixmapCache_find);
+    // QPixmapCache::find(string, reference) method  
+    methodIndex = qt_Smoke->findMethod("QPixmapCache", "find$#");
+    assert(methodIndex.smoke);
+
+    ClassMap::TypeHandler findHandler = getTypeHandlerFromMapIndex(methodIndex.index);
+    assert(findHandler.types.size() == 2);
+
+    findHandler.arg_handler = arg_handler_QPixmapCache_find;
+
+    type_vec_t argv_str_ref;
+    argv_str_ref.push_back(stringTypeInfo);
+    argv_str_ref.push_back(referenceTypeInfo);
+
+    cm.registerMethod("QPixmapCache", "find", "find$#", methodIndex.index, findHandler, boolTypeInfo, argv_str_ref, true);
+    //cm.addArgHandler("QPixmapCache", "find", arg_handler_QPixmapCache_find);
 
     // initialize global constants
     QT_METACALL_ID = qt_Smoke->idMethodName("qt_metacall$$?");

@@ -180,7 +180,7 @@ void ClassMap::addQoreMethods() {
 
    // QImage
    qc = ClassNamesMap::Instance()->value("QImage");
-   qc->addMethodExtended("scanLine", (q_method_t)QIMAGE_scanLine, false, QC_NO_FLAGS, QDOM_DEFAULT, binaryTypeInfo, 1, bigIntTypeInfo, QORE_PARAM_NO_ARG);
+   qc->addMethodExtended("scanLine", (q_method_t)QIMAGE_scanLine, false, QC_NO_FLAGS, QDOM_GUI, binaryTypeInfo, 1, bigIntTypeInfo, QORE_PARAM_NO_ARG);
 
    // QItemSelection
    qc = ClassNamesMap::Instance()->value("QItemSelection");
@@ -246,7 +246,9 @@ void ClassMap::addMethod(QoreClass *qc, const Smoke::Class &c, const Smoke::Meth
 
    // skip certain methods
    if ((!strcmp(qc->getName(), "QAbstractItemModel") && !strcmp(methodName, "createIndex"))
-       || (!strcmp(qc->getName(), "QImage") && !strcmp(methodName, "scanLine"))) {
+       || (!strcmp(qc->getName(), "QImage") && !strcmp(methodName, "scanLine"))
+       || (!strcmp(qc->getName(), "QPixmapCache") && !strcmp(methodName, "find"))
+      ) {
       //printd(0,"skipping %s::%s()\n", c.className, methodName);
       return;
    }
@@ -296,7 +298,7 @@ void ClassMap::addMethod(QoreClass *qc, const Smoke::Class &c, const Smoke::Meth
 	 return;
       }
 
-      qc->setConstructorExtendedList3(th, (q_constructor3_t)common_constructor, isPrivate, QC_NO_FLAGS, QDOM_DEFAULT, argTypeInfo);
+      qc->setConstructorExtendedList3(th, (q_constructor3_t)common_constructor, isPrivate, QC_NO_FLAGS, QDOM_GUI, argTypeInfo);
       return;
    }
    
@@ -317,7 +319,7 @@ void ClassMap::addMethod(QoreClass *qc, const Smoke::Class &c, const Smoke::Meth
 	 return;
       }
       
-      qc->addStaticMethodExtendedList3(th, methodName, func, isPrivate, QC_NO_FLAGS, QDOM_DEFAULT, returnTypeInfo, argTypeInfo);
+      qc->addStaticMethodExtendedList3(th, methodName, func, isPrivate, QC_NO_FLAGS, QDOM_GUI, returnTypeInfo, argTypeInfo);
       return;
    }
 
@@ -343,10 +345,10 @@ void ClassMap::addMethod(QoreClass *qc, const Smoke::Class &c, const Smoke::Meth
    if (qc == QC_QOBJECT && !strcmp(methodName, "connect"))
       func = (q_method3_t)QOBJECT_connect;
    
-   qc->addMethodExtendedList3(th, name, func, isPrivate, QC_NO_FLAGS, QDOM_DEFAULT, returnTypeInfo, argTypeInfo);
+   qc->addMethodExtendedList3(th, name, func, isPrivate, QC_NO_FLAGS, QDOM_GUI, returnTypeInfo, argTypeInfo);
 }
 
-void ClassMap::registerMethod(const char *class_name, const char *method_name, const char *munged_name, Smoke::Index method_index, ClassMap::TypeHandler &type_handler, const QoreTypeInfo *returnType, const type_vec_t &argTypeList) {
+void ClassMap::registerMethod(const char *class_name, const char *method_name, const char *munged_name, Smoke::Index method_index, ClassMap::TypeHandler &type_handler, const QoreTypeInfo *returnType, const type_vec_t &argTypeList, bool is_static) {
 //     assert(m_map[class_name][method_name][munged_name].types.count() == 0);
 
     method_index = qt_Smoke->methodMaps[method_index].method;
@@ -367,11 +369,14 @@ void ClassMap::registerMethod(const char *class_name, const char *method_name, c
     if (!strcmp(class_name, method_name)) {
        assert(!returnType);
        //printd(5, "ClassMap::registerMethod() registering constructor %s::%s() args=%d th=%p\n", class_name, method_name, argTypeList.size(), th);
-       qc->setConstructorExtendedList3(th, (q_constructor3_t)common_constructor, false, QC_NO_FLAGS, QDOM_DEFAULT, argTypeList);
+       qc->setConstructorExtendedList3(th, (q_constructor3_t)common_constructor, false, QC_NO_FLAGS, QDOM_GUI, argTypeList);
     }
     else {
        //printd(5, "ClassMap::registerMethod() registering function %s::%s() args=%d th=%p\n", class_name, method_name, argTypeList.size(), th);
-       qc->addMethodExtendedList3(th, method_name, (q_method3_t)common_method, false, QC_NO_FLAGS, QDOM_DEFAULT, returnType, argTypeList);
+       if (is_static)
+          qc->addStaticMethodExtendedList3(th, method_name, (q_static_method3_t)common_static_method, false, QC_NO_FLAGS, QDOM_GUI, returnType, argTypeList);
+       else
+          qc->addMethodExtendedList3(th, method_name, (q_method3_t)common_method, false, QC_NO_FLAGS, QDOM_GUI, returnType, argTypeList);
     }
     //printd(0, "ClassMap::registerMethod(%s, %s, %s)\n", class_name, method_name, munged_name);
 }

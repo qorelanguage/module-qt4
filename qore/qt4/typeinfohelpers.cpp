@@ -31,31 +31,27 @@
 
 // FIXME: add function to create enums from smoke - do not automatically convert from int
 
-AbstractQoreNode *QRegionTypeHelper::acceptInputImpl(bool obj, int param_num, const char *param_name, AbstractQoreNode *n, ExceptionSink *xsink) const {
+bool QRegionTypeHelper::acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
    qore_type_t t = get_node_type(n);
 
-   if (t != NT_OBJECT) {
-      doAcceptError(false, obj, param_num, param_name, n, xsink);
-      return n;         
-   }
+   if (t != NT_OBJECT)
+      return false;
 
    QoreObject *o = reinterpret_cast<QoreObject *>(n);
 
    // see if we can get a QRect
    ReferenceHolder<QoreSmokePrivateData> pd(reinterpret_cast<QoreSmokePrivateData *>(o->getReferencedPrivateData(QC_QRECT->getID(), xsink)), xsink);
-   if (!pd) {
-      if (!*xsink)
-	 doAcceptError(false, obj, param_num, param_name, n, xsink);
-      return n;
-   }
+   if (!pd)
+      return false;
 
    QRegion *qr = new QRegion(*(pd->getObject<QRect>()));
 
    n->deref(xsink);
-   return Marshalling::createQoreObjectFromNonQObject(QC_QREGION, SCI_QREGION, qr);
+   n = Marshalling::createQoreObjectFromNonQObject(QC_QREGION, SCI_QREGION, qr);
+   return true;
 }
 
-AbstractQoreNode *QBrushTypeHelper::acceptInputImpl(bool obj, int param_num, const char *param_name, AbstractQoreNode *n, ExceptionSink *xsink) const {
+bool QBrushTypeHelper::acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
    qore_type_t t = get_node_type(n);
 
    QBrush *br;
@@ -64,11 +60,8 @@ AbstractQoreNode *QBrushTypeHelper::acceptInputImpl(bool obj, int param_num, con
       QoreObject *o = reinterpret_cast<QoreObject *>(n);
       // see if we can get a QColor
       PrivateDataRefHolder<QoreSmokePrivateData> pd(o, QC_QCOLOR->getID(), xsink);
-      if (!pd) {
-	 if (!*xsink)
-	    doAcceptError(false, obj, param_num, param_name, n, xsink);
-	 return n;
-      }
+      if (!pd)
+         return false;
       br = new QBrush(*(pd->getObject<QColor>()));
    }
    else {
@@ -85,21 +78,18 @@ AbstractQoreNode *QBrushTypeHelper::acceptInputImpl(bool obj, int param_num, con
 	 Qt::GlobalColor i = (Qt::GlobalColor)in->val;
 	 br = new QBrush(i);
       }
-      else {
-	 doAcceptError(false, obj, param_num, param_name, n, xsink);
-	 return n;
-      }
+      else
+         return false;
    }
 
    n->deref(xsink);
-   return Marshalling::createQoreObjectFromNonQObject(QC_QBRUSH, SCI_QBRUSH, br);
+   n = Marshalling::createQoreObjectFromNonQObject(QC_QBRUSH, SCI_QBRUSH, br);
+   return true;
 }
 
-AbstractQoreNode *QColorTypeHelper::acceptInputImpl(bool obj, int param_num, const char *param_name, AbstractQoreNode *n, ExceptionSink *xsink) const {
-   if (!n || (n->getType() != NT_INT && strcmp(n->getTypeName(), "Qt::GlobalColor"))) {
-      doAcceptError(false, obj, param_num, param_name, n, xsink);
-      return n;
-   }
+bool QColorTypeHelper::acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+   if (!n || (n->getType() != NT_INT && strcmp(n->getTypeName(), "Qt::GlobalColor")))
+      return false;
          
    QColor *qc;
 
@@ -114,10 +104,11 @@ AbstractQoreNode *QColorTypeHelper::acceptInputImpl(bool obj, int param_num, con
    }
 
    n->deref(xsink);
-   return Marshalling::createQoreObjectFromNonQObject(QC_QCOLOR, SCI_QCOLOR, qc);
+   n = Marshalling::createQoreObjectFromNonQObject(QC_QCOLOR, SCI_QCOLOR, qc);
+   return true;
 }
 
-AbstractQoreNode *QVariantTypeHelper::acceptInputImpl(bool obj, int param_num, const char *param_name, AbstractQoreNode *n, ExceptionSink *xsink) const {
+bool QVariantTypeHelper::acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
    QVariant *q = 0;
 
    qore_type_t t = n ? n->getType() : NT_NOTHING;
@@ -154,7 +145,7 @@ AbstractQoreNode *QVariantTypeHelper::acceptInputImpl(bool obj, int param_num, c
 	 // check for QLocale
 	 p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QLOCALE->getID(), xsink));
 	 if (*xsink) {
-	    return n;
+	    return false;
 	 }
 	 if (p) {
 	    // only call this once because it's a virtual call (slow)
@@ -165,7 +156,7 @@ AbstractQoreNode *QVariantTypeHelper::acceptInputImpl(bool obj, int param_num, c
 	    // check for QIcon
 	    p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QICON->getID(), xsink));
 	    if (*xsink) {
-	       return n;
+	       return false;
 	    }
 	    if (p) {
 	       // only call this once because it's a virtual call (slow)
@@ -176,7 +167,7 @@ AbstractQoreNode *QVariantTypeHelper::acceptInputImpl(bool obj, int param_num, c
 	       // QByteArray
 	       p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QBYTEARRAY->getID(), xsink));
 	       if (*xsink) {
-		  return n;
+		  return false;
 	       }
 	       if (p) {
 		  // only call this once because it's a virtual call (slow)
@@ -189,21 +180,18 @@ AbstractQoreNode *QVariantTypeHelper::acceptInputImpl(bool obj, int param_num, c
       }
    } // switch
 
-   if (!q) {
-      doAcceptError(false, obj, param_num, param_name, n, xsink);
-      return n;
-   }
+   if (!q)
+      return false;
 
    if (n)
       n->deref(xsink);
-   return Marshalling::createQoreObjectFromNonQObject(QC_QVARIANT, SCI_QVARIANT, q);
+   n = Marshalling::createQoreObjectFromNonQObject(QC_QVARIANT, SCI_QVARIANT, q);
+   return true;
 }
 
-AbstractQoreNode *QKeySequenceTypeHelper::acceptInputImpl(bool obj, int param_num, const char *param_name, AbstractQoreNode *n, ExceptionSink *xsink) const {
-   if (!n) {
-      doAcceptError(false, obj, param_num, param_name, n, xsink);
-      return n;
-   }
+bool QKeySequenceTypeHelper::acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+   if (!n)
+      return false;
 
    qore_type_t t = n->getType();
    const char *name = n->getTypeName();
@@ -215,20 +203,17 @@ AbstractQoreNode *QKeySequenceTypeHelper::acceptInputImpl(bool obj, int param_nu
       qks = new QKeySequence(reinterpret_cast<const QoreBigIntNode*>(n)->val);
    else if (!strcmp(name, "QKeySequence::StandardKey"))
       qks = new QKeySequence((QKeySequence::StandardKey)(reinterpret_cast<const QoreBigIntNode*>(n)->val));
-   else {
-      doAcceptError(false, obj, param_num, param_name, n, xsink);
-      return n;
-   }
+   else
+      return false;
 
    n->deref(xsink);
-   return Marshalling::createQoreObjectFromNonQObject(QC_QKEYSEQUENCE, SCI_QKEYSEQUENCE, qks);
+   n = Marshalling::createQoreObjectFromNonQObject(QC_QKEYSEQUENCE, SCI_QKEYSEQUENCE, qks);
+   return true;
 }
 
-AbstractQoreNode *QDateTypeHelper::acceptInputImpl(bool obj, int param_num, const char *param_name, AbstractQoreNode *n, ExceptionSink *xsink) const {
-   if (!n || n->getType() != NT_DATE) {
-      doAcceptError(false, obj, param_num, param_name, n, xsink);
-      return n;
-   }
+bool QDateTypeHelper::acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+   if (!n || n->getType() != NT_DATE)
+      return false;
 
    const DateTimeNode *d = reinterpret_cast<const DateTimeNode *>(n);
    qore_tm info;
@@ -237,14 +222,13 @@ AbstractQoreNode *QDateTypeHelper::acceptInputImpl(bool obj, int param_num, cons
    QDate *date = new QDate(info.year, info.month, info.day);
    
    n->deref(xsink);
-   return Marshalling::createQoreObjectFromNonQObject(QC_QDATE, SCI_QDATE, date);
+   n = Marshalling::createQoreObjectFromNonQObject(QC_QDATE, SCI_QDATE, date);
+   return true;
 }
 
-AbstractQoreNode *QDateTimeTypeHelper::acceptInputImpl(bool obj, int param_num, const char *param_name, AbstractQoreNode *n, ExceptionSink *xsink) const {
-   if (!n || n->getType() != NT_DATE) {
-      doAcceptError(false, obj, param_num, param_name, n, xsink);
-      return n;
-   }
+bool QDateTimeTypeHelper::acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+   if (!n || n->getType() != NT_DATE)
+      return false;
 
    const DateTimeNode *d = reinterpret_cast<const DateTimeNode *>(n);
    QDateTime *date = new QDateTime;
@@ -256,14 +240,13 @@ AbstractQoreNode *QDateTimeTypeHelper::acceptInputImpl(bool obj, int param_num, 
    date->setTime(QTime(info.hour, info.minute, info.second, info.us / 1000));
 
    n->deref(xsink);
-   return Marshalling::createQoreObjectFromNonQObject(QC_QDATETIME, SCI_QDATETIME, date);
+   n = Marshalling::createQoreObjectFromNonQObject(QC_QDATETIME, SCI_QDATETIME, date);
+   return true;
 }
 
-AbstractQoreNode *QTimeTypeHelper::acceptInputImpl(bool obj, int param_num, const char *param_name, AbstractQoreNode *n, ExceptionSink *xsink) const {
-   if (!n || n->getType() != NT_DATE) {
-      doAcceptError(false, obj, param_num, param_name, n, xsink);
-      return n;
-   }
+bool QTimeTypeHelper::acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+   if (!n || n->getType() != NT_DATE)
+      return false;
 
    const DateTimeNode *d = reinterpret_cast<const DateTimeNode *>(n);
 
@@ -273,5 +256,6 @@ AbstractQoreNode *QTimeTypeHelper::acceptInputImpl(bool obj, int param_num, cons
    QTime *time = new QTime(info.hour, info.minute, info.second, info.us / 1000);
 
    n->deref(xsink);
-   return Marshalling::createQoreObjectFromNonQObject(QC_QTIME, SCI_QTIME, time);
+   n = Marshalling::createQoreObjectFromNonQObject(QC_QTIME, SCI_QTIME, time);
+   return true;
 }
