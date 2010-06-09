@@ -116,6 +116,10 @@ class QVariantTypeHelper : public AbstractQoreClassTypeInfoHelper {
 protected:
    DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
 
+private:
+   DLLLOCAL template<class T>
+   QVariant * acceptQtObject(qore_classid_t classID, const QoreObject *obj, ExceptionSink *xsink) const;
+
 public:
    DLLLOCAL QVariantTypeHelper() : AbstractQoreClassTypeInfoHelper("QVariant", QDOM_GUI) {
       setInputFilter();

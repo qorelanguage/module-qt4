@@ -207,17 +207,13 @@ void ClassMap::addQoreMethods() {
    // add QGlobalColor type info to QColor accept list
    typeHelperQColor.addAcceptsType(ti);
 
-   // add QLocale type info to QVariant accept list
-   qc = ClassNamesMap::Instance()->value("QLocale");
-   typeHelperQVariant.addAcceptsType(qc->getTypeInfo());
-
-   // add QIcon type info to QVariant accept list
-   qc = ClassNamesMap::Instance()->value("QIcon");
-   typeHelperQVariant.addAcceptsType(qc->getTypeInfo());
-
-   // add QByteArray type info to QVariant accept list
-   qc = ClassNamesMap::Instance()->value("QByteArray");
-   typeHelperQVariant.addAcceptsType(qc->getTypeInfo());
+   // QVariants - keep it synchronized with QVariantTypeHelper::acceptInputImpl
+   QList<QByteArray> qvarTypesList;
+   qvarTypesList << "QLocale" << "QIcon" << "QByteArray" << "QFont" << "QBrush";
+   foreach (QByteArray b, qvarTypesList) {
+       qc = ClassNamesMap::Instance()->value(b);
+       typeHelperQVariant.addAcceptsType(qc->getTypeInfo());
+   }
 
    // add QKeySequence::StandardKey type info to QKeySequence accept list
    ti = ClassMap::Instance()->getEnumType("QKeySequence::StandardKey");

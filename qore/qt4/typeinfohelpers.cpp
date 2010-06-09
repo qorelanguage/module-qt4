@@ -140,42 +140,23 @@ bool QVariantTypeHelper::acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xs
       }
       case NT_OBJECT: {
 	 const QoreObject *obj = reinterpret_cast<const QoreObject *>(n);
-	 ReferenceHolder<QoreSmokePrivateData> p(xsink);
-	    
-	 // check for QLocale
-	 p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QLOCALE->getID(), xsink));
-	 if (*xsink) {
-	    return false;
-	 }
-	 if (p) {
-	    // only call this once because it's a virtual call (slow)
-	    void *o = p->object();
-	    q = o ? new QVariant(*(reinterpret_cast<QLocale *>(o))) : 0;
-	    // end of QLocale
-	 } else {
-	    // check for QIcon
-	    p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QICON->getID(), xsink));
-	    if (*xsink) {
-	       return false;
-	    }
-	    if (p) {
-	       // only call this once because it's a virtual call (slow)
-	       void *o = p->object();
-	       q = o ? new QVariant(*(reinterpret_cast<QIcon *>(o))) : 0;
-	    } // end of QIcon check
-	    else {
-	       // QByteArray
-	       p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(QC_QBYTEARRAY->getID(), xsink));
-	       if (*xsink) {
-		  return false;
-	       }
-	       if (p) {
-		  // only call this once because it's a virtual call (slow)
-		  void *o = p->object();
-		  q = o ? new QVariant(*(reinterpret_cast<QByteArray *>(o))) : 0;
-	       } // end of QByteArray check
-	    }
-	 }
+
+         // keep it synchronized with ClassMap::addQoreMethods()
+         q = acceptQtObject<QLocale>(QC_QLOCALE->getID(), obj, xsink);
+         if (q) break;
+
+         q = acceptQtObject<QIcon>(QC_QICON->getID(), obj, xsink);
+         if (q) break;
+
+         q = acceptQtObject<QByteArray>(QC_QBYTEARRAY->getID(), obj, xsink);
+         if (q) break;
+
+         q = acceptQtObject<QFont>(QC_QFONT->getID(), obj, xsink);
+         if (q) break;
+         
+         q = acceptQtObject<QBrush>(QC_QBRUSH->getID(), obj, xsink);
+         if (q) break;
+
 	 break;
       }
    } // switch
@@ -188,6 +169,22 @@ bool QVariantTypeHelper::acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xs
    n = Marshalling::createQoreObjectFromNonQObject(QC_QVARIANT, SCI_QVARIANT, q);
    return true;
 }
+
+template<class T>
+QVariant * QVariantTypeHelper::acceptQtObject(qore_classid_t classID, const QoreObject *obj, ExceptionSink *xsink) const {
+   ReferenceHolder<QoreSmokePrivateData> p(xsink);
+   p = reinterpret_cast<QoreSmokePrivateData*>(obj->getReferencedPrivateData(classID, xsink));
+   if (*xsink) {
+      return 0;
+   }
+   if (p) {
+      // only call this once because it's a virtual call (slow)
+      void *o = p->object();
+      return o ? new QVariant(*(reinterpret_cast<T *>(o))) : 0;
+   }
+   return 0; 
+}
+
 
 bool QKeySequenceTypeHelper::acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
    if (!n)

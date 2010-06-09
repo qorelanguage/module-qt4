@@ -34,3 +34,13 @@ $s.setValue("strval", "foo bar!");
 $s.setValue("boolval", True);
 $s.setValue("nothing", NOTHING);
 
+# objects
+my QByteArray $ba("foobar");
+my QVariant $vba = $ba;
+printf("%N -> %N -> %N\n", $ba, $vba, $vba.toString());
+
+my QFont $f();
+my QVariant $vf = $f;
+printf("%N -> %N\n", $f, $vf); 
+
+
