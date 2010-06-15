@@ -474,7 +474,9 @@ static int arg_handler_QPixmapCache_find(Smoke::Stack &stack, const ClassMap::Ty
     const AbstractQoreNode *n = get_param(args, 0);
     cqm.qoreToStack(types[0], n, 1);
 
+    const ReferenceNode *r = HARD_QORE_REF(args, 1);
     temp_store_s *rs = cqm.getRefEntry(1);
+    rs->ref = r;
     assert(rs);
     if (rs->type != temp_store_s::r_qpixmap) {
        rs->del();

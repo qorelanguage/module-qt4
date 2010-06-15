@@ -1,7 +1,8 @@
 #!/usr/bin/env qore
+
 %requires qt4
 
-my QApplication $a = new QApplication();
+my QApplication $a();
 
 sub getPM(string $name) {
     my $pm;

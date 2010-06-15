@@ -151,7 +151,7 @@ CommonQoreMethod::~CommonQoreMethod() {
     if (temp_store) {
         for (RefMap::iterator i = temp_store->begin(), e = temp_store->end(); i != e; ++i) {
             temp_store_s &rf = i.value();
-//             printd(0, "CommonQoreMethod::~CommonQoreMethod() temp_store[%d].ref=%p\n", i.key(), rf.ref);
+            //printd(5, "CommonQoreMethod::~CommonQoreMethod() temp_store[%d].ref=%p\n", i.key(), rf.ref);
             // dereference all saved reference values
             if (rf.ref_value)
                 rf.ref_value->deref(m_xsink);
