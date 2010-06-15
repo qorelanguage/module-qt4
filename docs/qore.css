@@ -41,3 +41,18 @@ p.title {
 .term {
   font-weight: bold;
 }
+
+.note, .warning {
+  border: 2px solid #9ccb3b;
+  padding: 1em;
+}
+
+.note h3 {
+   background-color: white;
+   color: #9ccb3b;
+}
+
+.warning h3 {
+  background-color: white;
+  color: #900;
+}

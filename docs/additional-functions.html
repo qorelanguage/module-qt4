@@ -7,7 +7,7 @@
               function except that, in GUI applications, it is a QApplication instance. Only one
               application object can be created.</p></dd><dt><span class="term">qDebug(arg1, arg2, …, argN)</span></dt><dd><p>It's used for writing custom debug output. output of given arguments
               to stderr. It's a wrapper around extended qDebug() class from C++. Calls like:</p>
-          <div class="example"><a id="id3415086"></a><p class="title"><b>Example 2.5. qDebug differences between C++ and Qore</b></p><div class="example-contents">
+          <div class="example"><a id="id1173498"></a><p class="title"><b>Example 2.6. qDebug differences between C++ and Qore</b></p><div class="example-contents">
             
             <pre xml:lang="c++" class="programlisting" lang="c++"> C++: qDebug() &lt;&lt; “string” &lt;&lt; myObj;</pre>
             <pre xml:lang="qore" class="programlisting" lang="qore">Qore: qDebug(“string”, $myObj);</pre>
@@ -26,7 +26,7 @@
               unsupported variable types (strings, etc).</p>
           </dd><dt><span class="term">qsrand(number)</span></dt><dd>
             <p>It initializes random number generator qrand() with seed as argument.</p>
-            <div class="example"><a id="id3415197"></a><p class="title"><b>Example 2.6. Typical qsrand usage</b></p><div class="example-contents">
+            <div class="example"><a id="id1173603"></a><p class="title"><b>Example 2.7. Typical qsrand usage</b></p><div class="example-contents">
               
               <pre xml:lang="qore" class="programlisting" lang="qore">qsrand( now_ms() );</pre>
             </div></div><br class="example-break" />
@@ -34,7 +34,7 @@
             <p>It returns a random number. See qsrand().</p>
           </dd><dt><span class="term">qSwap(ref1, ref2)</span></dt><dd>
             <p>It takes two references and swap their values.</p>
-            <div class="example"><a id="id3415245"></a><p class="title"><b>Example 2.7. qSwap usage</b></p><div class="example-contents">
+            <div class="example"><a id="id1173651"></a><p class="title"><b>Example 2.8. qSwap usage</b></p><div class="example-contents">
               
               <pre xml:lang="qore" class="programlisting" lang="qore">
 my $ref1 = 10;

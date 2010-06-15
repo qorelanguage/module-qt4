@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Chapter 2. Differences from Qt4 C++ API</title><link rel="stylesheet" href="qore.css" type="text/css" /><meta name="generator" content="DocBook XSL-NS Stylesheets V1.75.1" /><meta name="keywords" content="Qore, Qt4, module, development" /><link rel="home" href="index.html" title="Qore Qt4 Module Documentation" /><link rel="up" href="index.html" title="Qore Qt4 Module Documentation" /><link rel="prev" href="introduction.html" title="Chapter 1. Qore Qt4 Module" /><link rel="next" href="qapplication.html" title="QApplication" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 2. Differences from Qt4 C++ API</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="introduction.html">Prev</a> </td><th width="60%" align="center"> </th><td width="20%" align="right"> <a accesskey="n" href="qapplication.html">Next</a></td></tr></table><hr /></div><div class="chapter" title="Chapter 2. Differences from Qt4 C++ API"><div class="titlepage"><div><div><h2 class="title"><a id="differences"></a>Chapter 2. Differences from Qt4 C++ API</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="differences.html#enums">C++ Enum Types</a></span></dt><dd><dl><dt><span class="sect2"><a href="differences.html#id3414526">Comparations (switch/case)</a></span></dt></dl></dd><dt><span class="sect1"><a href="qapplication.html">QApplication</a></span></dt><dt><span class="sect1"><a href="qcoreapplication.html">QCoreApplication</a></span></dt><dt><span class="sect1"><a href="qevent.html">QEvent</a></span></dt><dt><span class="sect1"><a href="qhash.html">QHash</a></span></dt><dt><span class="sect1"><a href="qlist.html">QList</a></span></dt><dt><span class="sect1"><a href="qmap.html">QMap</a></span></dt><dt><span class="sect1"><a href="qmultimap.html">QMultiMap</a></span></dt><dt><span class="sect1"><a href="qstring.html">QString</a></span></dt><dt><span class="sect1"><a href="qvariant.html">QVariant</a></span></dt><dt><span class="sect1"><a href="non-members.html">Related Non-Members - QGlobalSpace</a></span></dt><dt><span class="sect1"><a href="operators.html">Operators</a></span></dt><dt><span class="sect1"><a href="constants.html">Constants</a></span></dt><dt><span class="sect1"><a href="additional-functions.html">Additional Functions</a></span></dt></dl></div>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Chapter 2. Differences from Qt4 C++ API</title><link rel="stylesheet" href="qore.css" type="text/css" /><meta name="generator" content="DocBook XSL-NS Stylesheets V1.75.1" /><meta name="keywords" content="Qore, Qt4, module, development" /><link rel="home" href="index.html" title="Qore Qt4 Module Documentation" /><link rel="up" href="index.html" title="Qore Qt4 Module Documentation" /><link rel="prev" href="introduction.html" title="Chapter 1. Qore Qt4 Module" /><link rel="next" href="pure_virtual_methods.html" title="Arguments in Pure Virtual Methods" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 2. Differences from Qt4 C++ API</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="introduction.html">Prev</a> </td><th width="60%" align="center"> </th><td width="20%" align="right"> <a accesskey="n" href="pure_virtual_methods.html">Next</a></td></tr></table><hr /></div><div class="chapter" title="Chapter 2. Differences from Qt4 C++ API"><div class="titlepage"><div><div><h2 class="title"><a id="differences"></a>Chapter 2. Differences from Qt4 C++ API</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="differences.html#enums">C++ Enum Types</a></span></dt><dd><dl><dt><span class="sect2"><a href="differences.html#id1172943">Comparations (switch/case)</a></span></dt></dl></dd><dt><span class="sect1"><a href="pure_virtual_methods.html">Arguments in Pure Virtual Methods</a></span></dt><dt><span class="sect1"><a href="qapplication.html">QApplication</a></span></dt><dt><span class="sect1"><a href="qcoreapplication.html">QCoreApplication</a></span></dt><dt><span class="sect1"><a href="qevent.html">QEvent</a></span></dt><dt><span class="sect1"><a href="qhash.html">QHash</a></span></dt><dt><span class="sect1"><a href="qlist.html">QList</a></span></dt><dt><span class="sect1"><a href="qmap.html">QMap</a></span></dt><dt><span class="sect1"><a href="qmultimap.html">QMultiMap</a></span></dt><dt><span class="sect1"><a href="qstring.html">QString</a></span></dt><dt><span class="sect1"><a href="qvariant.html">QVariant</a></span></dt><dt><span class="sect1"><a href="non-members.html">Related Non-Members - QGlobalSpace</a></span></dt><dt><span class="sect1"><a href="operators.html">Operators</a></span></dt><dt><span class="sect1"><a href="constants.html">Constants</a></span></dt><dt><span class="sect1"><a href="additional-functions.html">Additional Functions</a></span></dt></dl></div>
 
     
 
@@ -10,10 +10,10 @@
       When there is any feature missing it's in most cases Smoke design concept – QStrings,
       QMaps, etc. are missing by design. It's not a bug.</p>
 
-    <p>Qore is weakly typed language so there are no strict rules for variable types
-      as in C++. For example the following code is correct and will work in the Qore Qt4 scripts:</p>
+    <p>Qore can be used as a weakly typed language so it can allow to define variables with no strict types
+      as it's in C++. For example the following code is correct and will work in the Qore Qt4 scripts:</p>
 
-    <div class="example"><a id="id3414494"></a><p class="title"><b>Example 2.1. Weakly typed auto-conversions</b></p><div class="example-contents">
+    <div class="example"><a id="id1172897"></a><p class="title"><b>Example 2.1. Weakly typed auto-conversions</b></p><div class="example-contents">
       
       <pre class="programlisting">
 my $var = 10;
@@ -22,15 +22,21 @@ $lineEdit.setText( $var );
       </pre>
     </div></div><br class="example-break" />
 
-    <p>Method's (function's) input arguments are converted as much as it's possible.</p>
+    <p>Method's (function's) input arguments are converted as much as it's possible in this case.</p>
+    
+    <div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>Since Qore 0.8.0 there can be used strong typed code -- consult Qore Language Reference.
+    Using this feature is strongly recomended for bigger software projects as it can help you
+    to avoid errors.</p></div>
 
     <div class="sect1" title="C++ Enum Types"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="enums"></a>C++ Enum Types</h2></div></div></div>
       
 
-      <p>C++ enums are handled by special Qore QtEnum type. There are
+      <p>C++ enums are handled by special Qore QtEnum type in its internal implementation. There are
           no special requirements how to deal with enums except some special cases.</p>
+          
+      <p>You should use type Integer if you are using strong typed variables: <code class="code">my int $e = QDialog::Accepted;</code></p>
 
-      <div class="sect2" title="Comparations (switch/case)"><div class="titlepage"><div><div><h3 class="title"><a id="id3414526"></a>Comparations (switch/case)</h3></div></div></div>
+      <div class="sect2" title="Comparations (switch/case)"><div class="titlepage"><div><div><h3 class="title"><a id="id1172943"></a>Comparations (switch/case)</h3></div></div></div>
         
 
         <p>Qore uses <span class="emphasis"><em>hard comparation</em></span> method for <code class="code">switch case</code>
@@ -39,7 +45,7 @@ $lineEdit.setText( $var );
         <p>Read Qore documentation, chapter <span class="emphasis"><em>switch Statements</em></span> for
             more information.</p>
 
-        <div class="example"><a id="id3414554"></a><p class="title"><b>Example 2.2. QtEnum and Type::Int handling</b></p><div class="example-contents">
+        <div class="example"><a id="id1172971"></a><p class="title"><b>Example 2.2. QtEnum and Type::Int handling</b></p><div class="example-contents">
             
             <pre class="programlisting">
 # reimplementation of QAbstractItemModel::data(QModelIndex, int)
@@ -64,7 +70,7 @@ MyModel::data ( $index, $role )
         </div></div><br class="example-break" />
       </div>
     </div>
-
+    
     
 
     
@@ -91,4 +97,6 @@ MyModel::data ( $index, $role )
 
     
 
-  </div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="introduction.html">Prev</a> </td><td width="20%" align="center"> </td><td width="40%" align="right"> <a accesskey="n" href="qapplication.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 1. Qore Qt4 Module </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> QApplication</td></tr></table></div></body></html>
+    
+
+  </div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="introduction.html">Prev</a> </td><td width="20%" align="center"> </td><td width="40%" align="right"> <a accesskey="n" href="pure_virtual_methods.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 1. Qore Qt4 Module </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Arguments in Pure Virtual Methods</td></tr></table></div></body></html>
