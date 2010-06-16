@@ -789,11 +789,13 @@ AbstractQoreNode *return_qvariant(const QoreMethod &method,
     case QVariant::TextFormat:
     case QVariant::Matrix:
     case QVariant::Transform:
+#if QT_VERSION >= 0x040600
     case QVariant::Matrix4x4:
     case QVariant::Vector2D:
     case QVariant::Vector3D:
     case QVariant::Vector4D:
     case QVariant::Quaternion:
+#endif
     //case QVariant::LastGuiType:
     case QVariant::UserType:
     case QVariant::LastType:

@@ -109,10 +109,9 @@ ENDIF(CMAKE_CXX_FLAGS MATCHES "-fvisibility")
 
 add_definitions(-DBASE_SMOKE_BUILDING)
 
-# kde4_add_library(smokeqt SHARED ${smokeqt_LIB_SRCS})
-add_library(smokeqt SHARED ${smokeqt_LIB_SRCS})
+add_library(qoresmokeqt SHARED ${smokeqt_LIB_SRCS})
 
-target_link_libraries(smokeqt ${QT_QTCORE_LIBRARY}
+target_link_libraries(qoresmokeqt ${QT_QTCORE_LIBRARY}
                               ${QT_QTGUI_LIBRARY}
                               ${QT_QTNETWORK_LIBRARY}
                               ${QT_QTOPENGL_LIBRARY}
@@ -121,9 +120,9 @@ target_link_libraries(smokeqt ${QT_QTCORE_LIBRARY}
                               ${QT_QTSVG_LIBRARY}
                               ${QT_QTXML_LIBRARY} )
 
-set_target_properties(smokeqt PROPERTIES VERSION 3.0.0 SOVERSION 3 )
+set_target_properties(qoresmokeqt PROPERTIES VERSION 3.0.0 SOVERSION 3 )
 
 # Don't use the KDE ${LIB_INSTALL_DIR} macro here as this file is
 # for Qt only installs
-install(TARGETS smokeqt DESTINATION ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX} )
-install(FILES ${CMAKE_SOURCE_DIR}/smoke/qt_smoke.h DESTINATION include/smoke)
+install(TARGETS qoresmokeqt DESTINATION ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX} )
+# install(FILES ${CMAKE_SOURCE_DIR}/smoke/qt_smoke.h DESTINATION include/smoke)

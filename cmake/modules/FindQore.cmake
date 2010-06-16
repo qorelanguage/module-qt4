@@ -14,6 +14,8 @@ SET(QORE_FOUND FALSE)
 FIND_PATH (QORE_INCLUDE_DIR qore/Qore.h
     /usr/include
     /usr/include/qore
+    /usr/local/include
+    /usr/local/include/qore
     /opt/qore/include/qore
     /opt/qore/include
     ${QORE_INCLUDE_PATH}
@@ -21,8 +23,9 @@ FIND_PATH (QORE_INCLUDE_DIR qore/Qore.h
 
 FIND_LIBRARY (QORE_LIBRARY
     NAMES libqore libqore.so libqore.dylib
-    PATHS /usr/local/lib
-	  /usr/lib
+    PATHS 
+      /usr/lib
+      /usr/local/lib
 	  /opt/qore/lib
 	  ${QORE_LIBRARY_PATH}
     )

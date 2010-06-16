@@ -32,6 +32,6 @@ add_executable(smokegen ${generator_SRC})
 target_link_libraries(smokegen ${QT_QTCORE_LIBRARY} ${QT_QTXML_LIBRARY} cppparser)
 set_target_properties(smokegen PROPERTIES COMPILE_DEFINITIONS __GENERATOR_BUILDING ENABLE_EXPORTS TRUE)
 
-install(TARGETS smokegen DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+# install(TARGETS smokegen DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 add_subdirectory(generators)
