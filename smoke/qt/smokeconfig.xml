@@ -49,6 +49,7 @@
         <signature>.*QMenu::macMenu.*</signature>
         <signature>.*QCoreXmlStreamReader*.</signature>
         <signature>.*QCoreXmlStreamWriter*.</signature>
+        <signature>.*\(QCoreXmlStreamReader.*</signature>
         <!-- temporary removal of QtWebkit -->
         <signature>.*QWeb.*</signature>
         <signature>.*ExtensionOption.*</signature>
