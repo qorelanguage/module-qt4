@@ -165,7 +165,7 @@ class MainWindow inherits QMainWindow
         $.connect($.fontCombo, SIGNAL("currentFontChanged(const QFont &)"), SLOT("findStyles(const QFont &)"));
         $.connect($.fontCombo, SIGNAL("currentFontChanged(const QFont &)"), SLOT("findSizes(const QFont &)"));
         $.characterWidget.connect($.fontCombo, SIGNAL("currentFontChanged(const QFont &)"), SLOT("updateFont(const QFont &)"));
-        $.characterWidget.connect($.sizeCombo, SIGNAL("currentIndexChanged(const QString &)"), SLOT("updateSize(const QString &)"));
+        $.characterWidget.connect($.sizeCombo, SIGNAL("currentIndexChanged(int)"), SLOT("updateSize(int)"));
         $.characterWidget.connect($.styleCombo, SIGNAL("currentIndexChanged(const QString &)"), SLOT("updateStyle(const QString &)"));
         $.connect($.characterWidget, SIGNAL("characterSelected(const QString &)"), SLOT("insertCharacter(const QString &)"));
         $.connect($clipboardButton, SIGNAL("clicked()"), SLOT("updateClipboard()"));
