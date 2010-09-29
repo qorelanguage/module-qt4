@@ -77,6 +77,22 @@ Preprocessor::Preprocessor(const QList<QDir>& includeDirs, const QStringList& de
     exportMacro->variadics = false;
     m_topBlock->setMacro(exportMacro);
 
+#if defined(Q_OS_DARWIN64)
+    exportMacro = new rpp::pp_macro;
+    exportMacro->name = IndexedString("__LP64__");
+    exportMacro->function_like = false;
+    exportMacro->variadics = false;
+    m_topBlock->setMacro(exportMacro);
+#endif
+
+#if (defined(QT_ARCH_ARM) || defined (QT_ARCH_ARMV6)) && !defined(QT_NO_ARM_EABI)
+    exportMacro = new rpp::pp_macro;
+    exportMacro->name = IndexedString("__ARM_EABI__");
+    exportMacro->function_like = false;
+    exportMacro->variadics = false;
+    m_topBlock->setMacro(exportMacro);
+#endif
+
     // ansidecl.h will define macros for keywords if we don't define __STDC__
     exportMacro = new rpp::pp_macro;
     exportMacro->name = IndexedString("__STDC__");
@@ -159,18 +175,12 @@ PreprocessedContents Preprocessor::preprocess()
 
 rpp::Stream* Preprocessor::sourceNeeded(QString& fileName, rpp::Preprocessor::IncludeType type, int sourceLine, bool skipCurrentPath)
 {
-    // skip limits.h - rpp::pp gets stuck in a endless loop, probably because of
-    // #include_next <limits.h> in the file and no proper header guard.
-    if (fileName == "limits.h" && type == rpp::Preprocessor::IncludeGlobal)
-        return 0;
-
     if (m_fileStack.top().fileName() == fileName && type == rpp::Preprocessor::IncludeGlobal) {
 #ifdef DEBUG
         qDebug("prevented possible endless loop because of #include<%s>", qPrintable(fileName));
 #endif
         return 0;
     }
-
     
     // are the contents already cached?
     if (type == rpp::Preprocessor::IncludeGlobal && m_cache.contains(fileName)) { 
@@ -185,13 +195,15 @@ rpp::Stream* Preprocessor::sourceNeeded(QString& fileName, rpp::Preprocessor::In
     if (info.isAbsolute()) {
         path = fileName;
     } else if (type == rpp::Preprocessor::IncludeLocal) {
-        if (m_fileStack.last().absoluteDir().exists(fileName))
-            path = m_fileStack.last().absoluteDir().filePath(fileName);
+        info.setFile(m_fileStack.last().dir(), fileName);
+        if (info.isFile())
+            path = info.absoluteFilePath();
     }
     if (path.isEmpty()) {
         foreach (QDir dir, m_includeDirs) {
-            if (dir.exists(fileName)) {
-                path = dir.absoluteFilePath(fileName);
+            info.setFile(dir, fileName);
+            if (info.isFile()) {
+                path = info.absoluteFilePath();
                 break;
             }
         }

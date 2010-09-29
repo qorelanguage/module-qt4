@@ -115,7 +115,7 @@ QString SmokeDataFile::getTypeFlags(const Type *t, int *classIdx)
         flags += "|Smoke::t_voidp";
     } else if (t->getClass()) {
         if (t->getClass()->isTemplate()) {
-            if (Options::qtMode && t->getClass()->name() == "QFlags") {
+            if (Options::qtMode && t->getClass()->name() == "QFlags" && !t->isRef() && t->pointerDepth() == 0) {
                 flags += "|Smoke::t_uint";
             } else {
                 flags += "|Smoke::t_voidp";
@@ -508,6 +508,8 @@ void SmokeDataFile::write()
                 flags += "|Smoke::mf_static";
             if (meth.isConstructor())
                 flags += "|Smoke::mf_ctor";
+            if (meth.flags() & Method::Explicit)
+                flags += "|Smoke::mf_explicit";
             if (meth.access() == Access_protected)
                 flags += "|Smoke::mf_protected";
             if (meth.isConstructor() &&
@@ -695,6 +697,7 @@ void SmokeDataFile::write()
         out << "Smoke::ClassMap Smoke::classMap;\n\n";
         out << "Smoke::ModuleIndex Smoke::NullModuleIndex;\n\n";
     }
+
 
     out << "extern \"C\" {\n\n";
 
