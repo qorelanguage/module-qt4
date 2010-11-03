@@ -26,20 +26,21 @@
 template<class QLISTT>
 class QoreListClassHelper {
 public:
-   DLLLOCAL static AbstractQoreNode *isEmpty(const QoreMethod &method, QoreObject *self, QoreSmokePrivateData *apd, const QoreListNode *args, ExceptionSink *xsink) {
-      return get_bool_node(apd->getObject<QLISTT>()->isEmpty());
-   }
+     DLLLOCAL static AbstractQoreNode *isEmpty(const QoreMethod &method, QoreObject *self, QoreSmokePrivateData *apd, const QoreListNode *args, ExceptionSink *xsink) {
+          return get_bool_node(apd->getObject<QLISTT>()->isEmpty());
+     }
 
-   DLLLOCAL static AbstractQoreNode *count(const QoreMethod &method, QoreObject *self, QoreSmokePrivateData *apd, const QoreListNode *args, ExceptionSink *xsink) {
-      return new QoreBigIntNode(apd->getObject<QLISTT>()->count());
-   }
+     DLLLOCAL static AbstractQoreNode *count(const QoreMethod &method, QoreObject *self, QoreSmokePrivateData *apd, const QoreListNode *args, ExceptionSink *xsink) {
+          return new QoreBigIntNode(apd->getObject<QLISTT>()->count());
+     }
 };
 
 template<class QLISTT>
-DLLLOCAL void addListMethods(QoreClass *qc) {   
-   qc->addMethodExtended2("isEmpty", (q_method2_t)QoreListClassHelper<QLISTT>::isEmpty, false, QC_NO_FLAGS, QDOM_DEFAULT, boolTypeInfo);
-   qc->addMethodExtended2("count", (q_method2_t)QoreListClassHelper<QLISTT>::count, false, QC_NO_FLAGS, QDOM_DEFAULT, bigIntTypeInfo);
-   qc->addMethodExtended2("size", (q_method2_t)QoreListClassHelper<QLISTT>::count, false, QC_NO_FLAGS, QDOM_DEFAULT, bigIntTypeInfo);
+DLLLOCAL void addListMethods(QoreClass *qc)
+{
+     qc->addMethodExtended2("isEmpty", (q_method2_t)QoreListClassHelper<QLISTT>::isEmpty, false, QC_NO_FLAGS, QDOM_DEFAULT, boolTypeInfo);
+     qc->addMethodExtended2("count", (q_method2_t)QoreListClassHelper<QLISTT>::count, false, QC_NO_FLAGS, QDOM_DEFAULT, bigIntTypeInfo);
+     qc->addMethodExtended2("size", (q_method2_t)QoreListClassHelper<QLISTT>::count, false, QC_NO_FLAGS, QDOM_DEFAULT, bigIntTypeInfo);
 }
 
 #endif

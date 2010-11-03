@@ -27,27 +27,27 @@
 class QoreSmokeBinding : public SmokeBinding {
 
 public:
-    void deleted(Smoke::Index classId, void *obj);
-    bool callMethod(Smoke::Index method, void *obj, Smoke::Stack args, bool isAbstract = false);
-    char* className(Smoke::Index classId);
+     void deleted(Smoke::Index classId, void *obj);
+     bool callMethod(Smoke::Index method, void *obj, Smoke::Stack args, bool isAbstract = false);
+     char* className(Smoke::Index classId);
 
-    static QoreSmokeBinding* Instance(Smoke * s) {
-        if (!m_instance) {
-            m_instance = new QoreSmokeBinding(s);
-        }
-        return m_instance;
-    }
+     static QoreSmokeBinding* Instance(Smoke * s) {
+          if (!m_instance) {
+               m_instance = new QoreSmokeBinding(s);
+          }
+          return m_instance;
+     }
 
 private:
-    static QoreSmokeBinding * m_instance;
+     static QoreSmokeBinding * m_instance;
 
-    QoreSmokeBinding(Smoke * s) : SmokeBinding(s) { };
-    QoreSmokeBinding(const QoreSmokeBinding &);
-    //QoreSmokeBinding& operator=(const QoreSmokeBinding&) {};
+     QoreSmokeBinding(Smoke * s) : SmokeBinding(s) { };
+     QoreSmokeBinding(const QoreSmokeBinding &);
+     //QoreSmokeBinding& operator=(const QoreSmokeBinding&) {};
 
-    ~QoreSmokeBinding() {
-        delete m_instance;
-    }
+     ~QoreSmokeBinding() {
+          delete m_instance;
+     }
 };
 
 

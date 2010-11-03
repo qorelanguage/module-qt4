@@ -30,12 +30,12 @@
 // Class to handle qore to c++ conversions
 class CommonArgument {
 public:
-    CommonArgument(Smoke::Type type, const AbstractQoreNode * node);
+     CommonArgument(Smoke::Type type, const AbstractQoreNode * node);
 
 private:
-    Smoke::Type m_type;
-    const AbstractQoreNode * m_node;
-    ReferenceNode * m_ref;
+     Smoke::Type m_type;
+     const AbstractQoreNode * m_node;
+     ReferenceNode * m_ref;
 };
 #endif
 

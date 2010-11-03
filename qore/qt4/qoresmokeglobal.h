@@ -40,15 +40,15 @@
 #define QORESMOKEPROPERTY "qoreptr"
 
 DLLLOCAL extern const QoreClass *QC_QOBJECT, *QC_QWIDGET, *QC_QABSTRACTITEMMODEL, *QC_QVARIANT,
-   *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME, *QC_QICON,
-   *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QBYTEARRAY, *QC_QRECT, *QC_QREGION, *QC_QCHAR,
-   *QC_QKEYSEQUENCE, *QC_QLAYOUTITEM, *QC_QDESKTOPWIDGET, *QC_QFONT;
+         *QC_QLOCALE, *QC_QBRUSH, *QC_QCOLOR, *QC_QDATE, *QC_QDATETIME, *QC_QTIME, *QC_QICON,
+         *QC_QPIXMAP, *QC_QAPPLICATION, *QC_QBYTEARRAY, *QC_QRECT, *QC_QREGION, *QC_QCHAR,
+         *QC_QKEYSEQUENCE, *QC_QLAYOUTITEM, *QC_QDESKTOPWIDGET, *QC_QFONT;
 
 DLLLOCAL extern const QoreTypeInfo *qtIntTypeInfo, *qtStringTypeInfo;
 
 DLLLOCAL extern Smoke::Index SCI_QVARIANT, SCI_QLOCALE, SCI_QICON, SCI_QRECT, SCI_QREGION,
-   SCI_QCOLOR, SCI_QPIXMAP, SCI_QBRUSH, SCI_QDATE, SCI_QDATETIME, SCI_QTIME,
-   SCI_QKEYSEQUENCE, SCI_QLAYOUTITEM, SCI_QDESKTOPWIDGET;
+         SCI_QCOLOR, SCI_QPIXMAP, SCI_QBRUSH, SCI_QDATE, SCI_QDATETIME, SCI_QTIME,
+         SCI_QKEYSEQUENCE, SCI_QLAYOUTITEM, SCI_QDESKTOPWIDGET;
 
 DLLLOCAL QoreObject *getQoreQObject(const QObject *obj);
 DLLLOCAL QoreObject *getQoreObject(Smoke::Index classId, void *obj, QoreClass *&qc);
@@ -60,27 +60,30 @@ DLLLOCAL extern QoreThreadLocalStorage<void> qore_qt_virtual_flag;
 
 DLLLOCAL extern QoreNamespace qt_ns;
 
-static inline void qore_smoke_set_virtual() {
-    assert(!qore_qt_virtual_flag.get());
-    qore_qt_virtual_flag.set((void *)1);
+static inline void qore_smoke_set_virtual()
+{
+     assert(!qore_qt_virtual_flag.get());
+     qore_qt_virtual_flag.set((void *)1);
 }
 
-static inline void qore_smoke_clear_virtual() {
-    qore_qt_virtual_flag.set(0);
+static inline void qore_smoke_clear_virtual()
+{
+     qore_qt_virtual_flag.set(0);
 }
 
-static inline bool qore_smoke_is_virtual() {
-    return qore_qt_virtual_flag.get();
+static inline bool qore_smoke_is_virtual()
+{
+     return qore_qt_virtual_flag.get();
 }
 
 class QoreQtVirtualFlagHelper {
 public:
-    DLLLOCAL QoreQtVirtualFlagHelper() {
-        qore_smoke_set_virtual();
-    }
-    DLLLOCAL ~QoreQtVirtualFlagHelper() {
-        qore_smoke_clear_virtual();
-    }
+     DLLLOCAL QoreQtVirtualFlagHelper() {
+          qore_smoke_set_virtual();
+     }
+     DLLLOCAL ~QoreQtVirtualFlagHelper() {
+          qore_smoke_clear_virtual();
+     }
 };
 
 // map from non-qobject Qt objects to QoreObjects
@@ -88,23 +91,23 @@ typedef QHash<void *, QoreObject *> qt_qore_map_t;
 
 class QtQoreMap : protected qt_qore_map_t, protected QoreRWLock {
 public:
-   DLLLOCAL ~QtQoreMap() {
-      //assert(empty());
-   }
-   DLLLOCAL void add(void *qto, QoreObject *qo) {
-      QoreAutoRWWriteLocker l(this);
-      assert(!contains(qto));
-      insert(qto, qo);
-   }
-   DLLLOCAL QoreObject *get(void *qto) {
-      QoreAutoRWReadLocker l(this);
-      return value(qto, 0);
-   }
-   DLLLOCAL void del(void *qto) {
-      QoreAutoRWWriteLocker l(this);
-      assert(contains(qto));
-      remove(qto);
-   }
+     DLLLOCAL ~QtQoreMap() {
+          //assert(empty());
+     }
+     DLLLOCAL void add(void *qto, QoreObject *qo) {
+          QoreAutoRWWriteLocker l(this);
+          assert(!contains(qto));
+          insert(qto, qo);
+     }
+     DLLLOCAL QoreObject *get(void *qto) {
+          QoreAutoRWReadLocker l(this);
+          return value(qto, 0);
+     }
+     DLLLOCAL void del(void *qto) {
+          QoreAutoRWWriteLocker l(this);
+          assert(contains(qto));
+          remove(qto);
+     }
 };
 
 DLLLOCAL extern QtQoreMap qt_qore_map;
@@ -113,45 +116,47 @@ DLLLOCAL extern QtQoreMap qt_qore_map;
 // before QApplication, otherwise a crash will result
 class QoreWidgetManager {
 private:
-   typedef std::set<QWidget *> widget_set_t;
-   DLLLOCAL widget_set_t widget_set;
-   DLLLOCAL QoreThreadLock l;   
-   bool done;
+     typedef std::set<QWidget *> widget_set_t;
+     DLLLOCAL widget_set_t widget_set;
+     DLLLOCAL QoreThreadLock l;
+     bool done;
 
 public:
-   DLLLOCAL QoreWidgetManager() : done(false) {}
-   DLLLOCAL ~QoreWidgetManager() {}
-   DLLLOCAL void add(QWidget *w) {
-      assert(!done);
-      AutoLocker al(l);
-      if (widget_set.find(w) == widget_set.end())
-	 widget_set.insert(w);
-   }
-   DLLLOCAL void remove(QWidget *w) {
-      if (done)
-	 return;
-      AutoLocker al(l);
-      widget_set.erase(w);
-   }
-   DLLLOCAL void deleteAll() {
-      assert(!done);
-      done = true;
-      for (widget_set_t::iterator i = widget_set.begin(), e = widget_set.end(); i != e; ++i) {
-	 if (!(*i)->parent())
-	    delete *i;
-      }
+     DLLLOCAL QoreWidgetManager() : done(false) {}
+     DLLLOCAL ~QoreWidgetManager() {}
+     DLLLOCAL void add(QWidget *w) {
+          assert(!done);
+          AutoLocker al(l);
+          if (widget_set.find(w) == widget_set.end())
+               widget_set.insert(w);
+     }
+     DLLLOCAL void remove(QWidget *w) {
+          if (done)
+               return;
+          AutoLocker al(l);
+          widget_set.erase(w);
+     }
+     DLLLOCAL void deleteAll() {
+          assert(!done);
+          done = true;
+          for (widget_set_t::iterator i = widget_set.begin(), e = widget_set.end(); i != e; ++i) {
+               if (!(*i)->parent())
+                    delete *i;
+          }
 
-   }
+     }
 };
 
 DLLLOCAL extern QoreWidgetManager QWM;
 
-static inline QoreObject *getQoreMappedObject(void *p) {
-    return qt_qore_map.get(p);
+static inline QoreObject *getQoreMappedObject(void *p)
+{
+     return qt_qore_map.get(p);
 }
 
-static inline QoreObject *getQoreMappedObject(Smoke::Index classId, void *p) {
-    return qt_Smoke->classes[classId].flags & Smoke::cf_virtual ? qt_qore_map.get(p) : 0;
+static inline QoreObject *getQoreMappedObject(Smoke * smoke, Smoke::Index classId, void *p)
+{
+     return smoke->classes[classId].flags & Smoke::cf_virtual ? qt_qore_map.get(p) : 0;
 }
 
 DLLLOCAL const QoreMethod *findUserMethod(const QoreClass *qc, const char *name);

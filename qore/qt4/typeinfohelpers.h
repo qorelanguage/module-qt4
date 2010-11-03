@@ -26,175 +26,175 @@
 
 class QoreQtIntCompatibleTypeInfoHelper : public QoreTypeInfoHelper {
 public:
-   DLLLOCAL QoreQtIntCompatibleTypeInfoHelper() : QoreTypeInfoHelper(NT_INT, "int") {
-      setInt();
-      addAcceptsType(floatTypeInfo);
-      qtIntTypeInfo = getTypeInfo();
-      setInputFilter();
-   }
-   DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
-      qore_type_t t = get_node_type(n);
+     DLLLOCAL QoreQtIntCompatibleTypeInfoHelper() : QoreTypeInfoHelper(NT_INT, "int") {
+          setInt();
+          addAcceptsType(floatTypeInfo);
+          qtIntTypeInfo = getTypeInfo();
+          setInputFilter();
+     }
+     DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+          qore_type_t t = get_node_type(n);
 
-      if (t == NT_INT || (t >= QORE_NUM_TYPES && dynamic_cast<const QoreBigIntNode *>(n)))
-         return true;
+          if (t == NT_INT || (t >= QORE_NUM_TYPES && dynamic_cast<const QoreBigIntNode *>(n)))
+               return true;
 
-      if (t != NT_FLOAT)
-         return false;
+          if (t != NT_FLOAT)
+               return false;
 
-      int64 rv = n->getAsBigInt();
-      n->deref(xsink);
-      n = new QoreBigIntNode(rv);
-      return true;
-   }
+          int64 rv = n->getAsBigInt();
+          n->deref(xsink);
+          n = new QoreBigIntNode(rv);
+          return true;
+     }
 };
 
 class QoreQtStringCompatibleTypeInfoHelper : public QoreTypeInfoHelper {
 protected:
 public:
-   DLLLOCAL QoreQtStringCompatibleTypeInfoHelper() : QoreTypeInfoHelper(NT_STRING, "string") {
-      qtStringTypeInfo = getTypeInfo();
-      setInputFilter();
-   }
+     DLLLOCAL QoreQtStringCompatibleTypeInfoHelper() : QoreTypeInfoHelper(NT_STRING, "string") {
+          qtStringTypeInfo = getTypeInfo();
+          setInputFilter();
+     }
 
-   DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
-      qore_type_t t = get_node_type(n);
+     DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const {
+          qore_type_t t = get_node_type(n);
 
-      if (t == NT_STRING)
-         return true;
+          if (t == NT_STRING)
+               return true;
 
-      if (t != NT_OBJECT)
-         return false;
+          if (t != NT_OBJECT)
+               return false;
 
-      QoreObject *o = reinterpret_cast<QoreObject *>(n);
-      // see if we can get a QChar
-      if (!o->getClass(QC_QCHAR->getID()))
-         return false;
+          QoreObject *o = reinterpret_cast<QoreObject *>(n);
+          // see if we can get a QChar
+          if (!o->getClass(QC_QCHAR->getID()))
+               return false;
 
-      return true;
-   }
+          return true;
+     }
 };
 
 DLLLOCAL extern QoreQtStringCompatibleTypeInfoHelper qtStringTypeInfoHelper;
 
 class QRegionTypeHelper : public AbstractQoreClassTypeInfoHelper {
 public:
-   DLLLOCAL QRegionTypeHelper() : AbstractQoreClassTypeInfoHelper("QRegion", QDOM_GUI) {
-      setInputFilter();
-   }
+     DLLLOCAL QRegionTypeHelper() : AbstractQoreClassTypeInfoHelper("QRegion", QDOM_GUI) {
+          setInputFilter();
+     }
 
-   DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
+     DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
 };
 
 class QBrushTypeHelper : public AbstractQoreClassTypeInfoHelper {
 public:
-   DLLLOCAL QBrushTypeHelper() : AbstractQoreClassTypeInfoHelper("QBrush", QDOM_GUI) {
-      setInputFilter();
-   }
+     DLLLOCAL QBrushTypeHelper() : AbstractQoreClassTypeInfoHelper("QBrush", QDOM_GUI) {
+          setInputFilter();
+     }
 
-   DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
+     DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
 };
 
 class QWidgetTypeHelper : public AbstractQoreClassTypeInfoHelper {
 public:
-   DLLLOCAL QWidgetTypeHelper() : AbstractQoreClassTypeInfoHelper("QWidget", QDOM_GUI) {
-      addAcceptsType(nothingTypeInfo);
-   }
+     DLLLOCAL QWidgetTypeHelper() : AbstractQoreClassTypeInfoHelper("QWidget", QDOM_GUI) {
+          addAcceptsType(nothingTypeInfo);
+     }
 };
 
 class QColorTypeHelper : public AbstractQoreClassTypeInfoHelper {
 protected:
-   DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
+     DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
 
 public:
-   DLLLOCAL QColorTypeHelper() : AbstractQoreClassTypeInfoHelper("QColor", QDOM_GUI) {
-      addAcceptsType(bigIntTypeInfo);
-      setInputFilter();
-   }
+     DLLLOCAL QColorTypeHelper() : AbstractQoreClassTypeInfoHelper("QColor", QDOM_GUI) {
+          addAcceptsType(bigIntTypeInfo);
+          setInputFilter();
+     }
 };
 
 class QVariantTypeHelper : public AbstractQoreClassTypeInfoHelper {
 protected:
-   DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
+     DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
 
 private:
-   DLLLOCAL template<class T>
-   QVariant * acceptQtObject(qore_classid_t classID, const QoreObject *obj, ExceptionSink *xsink) const;
+     DLLLOCAL template<class T>
+     QVariant * acceptQtObject(qore_classid_t classID, const QoreObject *obj, ExceptionSink *xsink) const;
 
 public:
-   DLLLOCAL QVariantTypeHelper() : AbstractQoreClassTypeInfoHelper("QVariant", QDOM_GUI) {
-      setInputFilter();
-      setIntMatch();
-      addAcceptsType(bigIntTypeInfo);
-      addAcceptsType(nothingTypeInfo);
-      addAcceptsType(floatTypeInfo);
-      addAcceptsType(stringTypeInfo);
-      addAcceptsType(boolTypeInfo);
-      addAcceptsType(binaryTypeInfo);
-   }
+     DLLLOCAL QVariantTypeHelper() : AbstractQoreClassTypeInfoHelper("QVariant", QDOM_GUI) {
+          setInputFilter();
+          setIntMatch();
+          addAcceptsType(bigIntTypeInfo);
+          addAcceptsType(nothingTypeInfo);
+          addAcceptsType(floatTypeInfo);
+          addAcceptsType(stringTypeInfo);
+          addAcceptsType(boolTypeInfo);
+          addAcceptsType(binaryTypeInfo);
+     }
 };
 
 class QKeySequenceTypeHelper : public AbstractQoreClassTypeInfoHelper {
 protected:
-   DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
+     DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
 
 public:
-   DLLLOCAL QKeySequenceTypeHelper() : AbstractQoreClassTypeInfoHelper("QKeySequence", QDOM_GUI) {
-      setInputFilter();
-      addAcceptsType(bigIntTypeInfo);
-      addAcceptsType(stringTypeInfo);
-   }
+     DLLLOCAL QKeySequenceTypeHelper() : AbstractQoreClassTypeInfoHelper("QKeySequence", QDOM_GUI) {
+          setInputFilter();
+          addAcceptsType(bigIntTypeInfo);
+          addAcceptsType(stringTypeInfo);
+     }
 };
 
 // don't really need to tag this class with QDOM_GUI...
 class QDateTypeHelper : public AbstractQoreClassTypeInfoHelper {
 protected:
-   // only for subclasses
-   DLLLOCAL QDateTypeHelper(const char *name) : AbstractQoreClassTypeInfoHelper(name, QDOM_GUI) {
-      setInputFilter();
-      addAcceptsType(dateTypeInfo);
-   }
+     // only for subclasses
+     DLLLOCAL QDateTypeHelper(const char *name) : AbstractQoreClassTypeInfoHelper(name, QDOM_GUI) {
+          setInputFilter();
+          addAcceptsType(dateTypeInfo);
+     }
 
-   DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
+     DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
 
 public:
-   DLLLOCAL QDateTypeHelper() : AbstractQoreClassTypeInfoHelper("QDate", QDOM_GUI) {
-   }
+     DLLLOCAL QDateTypeHelper() : AbstractQoreClassTypeInfoHelper("QDate", QDOM_GUI) {
+     }
 };
 
 class QDateTimeTypeHelper : public QDateTypeHelper {
 protected:
-   DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
+     DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
 
 public:
-   DLLLOCAL QDateTimeTypeHelper() : QDateTypeHelper("QDateTime") {
-   }
+     DLLLOCAL QDateTimeTypeHelper() : QDateTypeHelper("QDateTime") {
+     }
 };
 
 class QTimeTypeHelper : public QDateTypeHelper {
 protected:
-   DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
+     DLLLOCAL virtual bool acceptInputImpl(AbstractQoreNode *&n, ExceptionSink *xsink) const;
 
 public:
-   DLLLOCAL QTimeTypeHelper() : QDateTypeHelper("QTime") {
-   }
+     DLLLOCAL QTimeTypeHelper() : QDateTypeHelper("QTime") {
+     }
 };
 
 // for classes that should also be equivalent to a null ptr
 class NullPtrClassTypeHelper : public AbstractQoreClassTypeInfoHelper {
 public:
-   DLLLOCAL NullPtrClassTypeHelper(const char *name) : AbstractQoreClassTypeInfoHelper(name, QDOM_GUI) {
-      addAcceptsType(nothingTypeInfo);
-   }
+     DLLLOCAL NullPtrClassTypeHelper(const char *name) : AbstractQoreClassTypeInfoHelper(name, QDOM_GUI) {
+          addAcceptsType(nothingTypeInfo);
+     }
 };
 
 class QValidatorTypeHelper : public NullPtrClassTypeHelper {
 public:
-   DLLLOCAL QValidatorTypeHelper() : NullPtrClassTypeHelper("QValidator") {}
+     DLLLOCAL QValidatorTypeHelper() : NullPtrClassTypeHelper("QValidator") {}
 };
 
 class QCompleterTypeHelper : public NullPtrClassTypeHelper {
 public:
-   DLLLOCAL QCompleterTypeHelper() : NullPtrClassTypeHelper("QCompleter") {}
+     DLLLOCAL QCompleterTypeHelper() : NullPtrClassTypeHelper("QCompleter") {}
 };
 
 #endif

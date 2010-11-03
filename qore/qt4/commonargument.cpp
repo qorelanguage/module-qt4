@@ -22,7 +22,8 @@
 
 #if 0
 CommonArgument::CommonArgument(Smoke::Type type, const AbstractQoreNode * node)
-        : m_type(type),
-        m_node(node) {
+     : m_type(type),
+       m_node(node)
+{
 }
 #endif

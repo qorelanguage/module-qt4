@@ -27,72 +27,72 @@
 
 class QoreQtEnumNode : public QoreBigIntNode {
 private:
-   Smoke::Type m_type;
+     Smoke::Type m_type;
 
-   DLLLOCAL virtual bool getAsBoolImpl() const;
-   DLLLOCAL virtual int getAsIntImpl() const;
-   DLLLOCAL virtual int64 getAsBigIntImpl() const;
-   DLLLOCAL virtual double getAsFloatImpl() const;
+     DLLLOCAL virtual bool getAsBoolImpl() const;
+     DLLLOCAL virtual int getAsIntImpl() const;
+     DLLLOCAL virtual int64 getAsBigIntImpl() const;
+     DLLLOCAL virtual double getAsFloatImpl() const;
 
 public:
-   DLLLOCAL QoreQtEnumNode(qore_type_t qoreType, int64 v, Smoke::Type t) : QoreBigIntNode(qoreType, v), m_type(t) {
-   }
+     DLLLOCAL QoreQtEnumNode(qore_type_t qoreType, int64 v, Smoke::Type t) : QoreBigIntNode(qoreType, v), m_type(t) {
+     }
 
-   DLLLOCAL ~QoreQtEnumNode() {
-   }
+     DLLLOCAL ~QoreQtEnumNode() {
+     }
 
-   DLLLOCAL Smoke::Type smokeType() const {
-      return m_type;
-   }
+     DLLLOCAL Smoke::Type smokeType() const {
+          return m_type;
+     }
 
-   DLLLOCAL bool isEnum(const Smoke::Type &t) const {
-      return !strcmp(t.name, m_type.name) && t.flags == m_type.flags;
-   }
+     DLLLOCAL bool isEnum(const Smoke::Type &t) const {
+          return !strcmp(t.name, m_type.name) && t.flags == m_type.flags;
+     }
 
-   DLLLOCAL bool isEnum(const char *n) const {
-      return !strcmp(n, m_type.name);
-   }
+     DLLLOCAL bool isEnum(const char *n) const {
+          return !strcmp(n, m_type.name);
+     }
 
-   DLLLOCAL int64 value() const {
-      return val;
-   }
+     DLLLOCAL int64 value() const {
+          return val;
+     }
 
-   DLLLOCAL virtual QoreString *getStringRepresentation(bool &del) const;
+     DLLLOCAL virtual QoreString *getStringRepresentation(bool &del) const;
 
-   DLLLOCAL virtual void getStringRepresentation(QoreString &str) const;
+     DLLLOCAL virtual void getStringRepresentation(QoreString &str) const;
 
-   DLLLOCAL virtual QoreString *getAsString(bool &del, int foff, ExceptionSink *xsink) const;
+     DLLLOCAL virtual QoreString *getAsString(bool &del, int foff, ExceptionSink *xsink) const;
 
-   DLLLOCAL virtual int getAsString(QoreString &str, int foff, ExceptionSink *xsink) const;
+     DLLLOCAL virtual int getAsString(QoreString &str, int foff, ExceptionSink *xsink) const;
 
-   DLLLOCAL virtual class AbstractQoreNode *realCopy() const;
+     DLLLOCAL virtual class AbstractQoreNode *realCopy() const;
 
-   DLLLOCAL virtual bool is_equal_soft(const AbstractQoreNode *v, ExceptionSink *xsink) const;
+     DLLLOCAL virtual bool is_equal_soft(const AbstractQoreNode *v, ExceptionSink *xsink) const;
 
-   DLLLOCAL virtual bool is_equal_hard(const AbstractQoreNode *v, ExceptionSink *xsink) const;
+     DLLLOCAL virtual bool is_equal_hard(const AbstractQoreNode *v, ExceptionSink *xsink) const;
 
-   DLLLOCAL virtual const char *getTypeName() const;
+     DLLLOCAL virtual const char *getTypeName() const;
 
-   DLLLOCAL static const char *getStaticTypeName();
+     DLLLOCAL static const char *getStaticTypeName();
 };
 
 class QoreEnumTypeInfoHelper : public QoreTypeInfoHelper {
 protected:
-   Smoke::Type enumType;
-   qore_type_t qoreType;
+     Smoke::Type enumType;
+     qore_type_t qoreType;
 
 public:
-   DLLLOCAL QoreEnumTypeInfoHelper(const Smoke::Type &t) : QoreTypeInfoHelper(t.name), enumType(t), qoreType(get_next_type_id()) {
-      assign(qoreType);
-      setInt();
-      //printd(0, "QoreEnumTypeInfoHelper::QoreEnumTypeInfoHelper() creating %p (%s type %d)\n", this, t.name, qoreType);
-   }
-   DLLLOCAL virtual ~QoreEnumTypeInfoHelper() {
-      //printd(0, "QoreEnumTypeInfoHelper::~QoreEnumTypeInfoHelper() deleting %p\n", this);
-   }
-   DLLLOCAL QoreQtEnumNode *newValue(int64 val) const {
-      return new QoreQtEnumNode(qoreType, val, enumType);
-   }
+     DLLLOCAL QoreEnumTypeInfoHelper(const Smoke::Type &t) : QoreTypeInfoHelper(t.name), enumType(t), qoreType(get_next_type_id()) {
+          assign(qoreType);
+          setInt();
+          //printd(0, "QoreEnumTypeInfoHelper::QoreEnumTypeInfoHelper() creating %p (%s type %d)\n", this, t.name, qoreType);
+     }
+     DLLLOCAL virtual ~QoreEnumTypeInfoHelper() {
+          //printd(0, "QoreEnumTypeInfoHelper::~QoreEnumTypeInfoHelper() deleting %p\n", this);
+     }
+     DLLLOCAL QoreQtEnumNode *newValue(int64 val) const {
+          return new QoreQtEnumNode(qoreType, val, enumType);
+     }
 };
 
 #endif
