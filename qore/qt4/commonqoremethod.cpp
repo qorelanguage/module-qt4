@@ -52,8 +52,9 @@ bool isptrtype(const char *var, const char *type)
 }
 
 CommonQoreMethod::CommonQoreMethod(Smoke * smoke, const char *cname, const char *mname)
-     : m_smoke(smoke),
+     :
        Stack(0),
+       m_smoke(smoke),
        m_className(cname),
        m_methodName(mname),
        m_xsink(0),
@@ -100,8 +101,9 @@ CommonQoreMethod::CommonQoreMethod(ClassMap::TypeHandler *th,
                                    const char* methodName,
                                    const QoreListNode* params,
                                    ExceptionSink *xsink)
-     : m_smoke(th->smoke),
+     :
        Stack(0),
+       m_smoke(th->smoke),
        m_className(className),
        m_methodName(methodName),
        m_xsink(xsink),
