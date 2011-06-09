@@ -177,15 +177,29 @@ void TypeCompiler::visitElaboratedTypeSpecifier(ElaboratedTypeSpecifierAST *node
     setRealType();
 }
 
+#include <QtDebug>
 void TypeCompiler::visitParameterDeclaration(ParameterDeclarationAST* node)
 {
     TypeCompiler tc(m_session, m_visitor);
     tc.run(node->type_specifier, node->declarator);
     NameCompiler name_cc(m_session, m_visitor);
     if (tc.type().isFunctionPointer())
+    {
+        // TODO/FIXME: generator needs to be synced with upstream and modularized too.
+        qDebug() << "node" << node;
+        qDebug() << "node->declarator" << node->declarator << node->declarator->kind;
+        if (!node->declarator->sub_declarator)
+        {
+            qDebug() << "node does not contains sub_declarator. Skipping";
+            return;
+        }
+        qDebug() << "node->declarator->sub_declarator" << node->declarator->sub_declarator;
+        qDebug() << "node->declarator->sub_declarator->id" << node->declarator->sub_declarator->id;
         name_cc.run(node->declarator->sub_declarator->id);
+    }
     else if (node->declarator)
         name_cc.run(node->declarator->id);
+
     m_realType.appendParameter(Parameter(name_cc.name(), Type::registerType(tc.type())));
 }
 

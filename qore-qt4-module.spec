@@ -34,7 +34,7 @@
 
 Summary: Qt4 module for Qore
 Name: qore-qt4-module
-Version: 0.1.0
+Version: 0.1.1
 Release: 1%{dist}
 License: LGPL
 Group: Development/Languages
