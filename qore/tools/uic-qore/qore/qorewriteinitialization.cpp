@@ -741,7 +741,7 @@ void WriteInitialization::acceptWidget(DomWidget *node)
             continue;
         }
 
-        m_output << m_option.indent << name << ".raise();\n";
+        m_output << m_option.indent << "$." << name << ".raise();\n";
     }
 }
 
