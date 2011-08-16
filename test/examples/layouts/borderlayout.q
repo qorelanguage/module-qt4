@@ -57,11 +57,11 @@ class BorderLayout inherits QLayout {
         return Qt::Horizontal | Qt::Vertical;
     }
 
-    hasHeightForWidth() returns bool {
+    bool hasHeightForWidth() {
         return False;
     }
 
-    count() returns int {
+    int count() {
         return elements $.list;
     }
 
@@ -71,7 +71,7 @@ class BorderLayout inherits QLayout {
             return $wrapper.item;
     }
 
-    minimumSize() returns QSize {
+    QSize minimumSize() {
         return $.calculateSize(MinimumSize);
     }
 
@@ -143,11 +143,11 @@ class BorderLayout inherits QLayout {
         }
     }
 
-    sizeHint() returns QSize {
+    QSize sizeHint() {
         return $.calculateSize(SizeHint);
     }
 
-    takeAt(int $index = -1) returns QLayoutItem {
+    *QLayoutItem takeAt(int $index = -1) {
         if ($index >= 0 && $index < elements $.list) {
             my ItemWrapper $layoutStruct = $.list[$index];
             splice $.list, $index, 1;
@@ -159,7 +159,7 @@ class BorderLayout inherits QLayout {
         $.list += new ItemWrapper($item, $position);
     }
 
-    calculateSize($sizeType) returns QSize {
+    QSize calculateSize($sizeType) {
         my (int $height, int $width);
 
         for (my $i = 0; $i < elements $.list; ++$i) {
