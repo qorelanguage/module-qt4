@@ -818,6 +818,9 @@ AbstractQoreNode *return_qvariant(const QoreMethod &method,
      case QVariant::Vector4D:
      case QVariant::Quaternion:
 #endif
+#if QT_VERSION >= 0x040700
+     case QVariant::EasingCurve:
+#endif
           //case QVariant::LastGuiType:
      case QVariant::UserType:
      case QVariant::LastType:
