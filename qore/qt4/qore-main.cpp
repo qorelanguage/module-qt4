@@ -663,6 +663,7 @@ static QoreStringNode *qt_module_init()
      cm.addArgHandler("QBoxLayout", "addWidget", setExternallyOwned_handler);
      cm.addArgHandler("QGridLayout", "addWidget", setExternallyOwned_handler);
      cm.addArgHandler("QStackedLayout", "addWidget", setExternallyOwned_handler);
+     cm.addArgHandler("QSplitter", "addWidget", setExternallyOwned_handler);
      cm.addArgHandler("QWidgetItem", "QWidgetItem", setExternallyOwned_handler);
      cm.addArgHandler("QTreeWidget", "addTopLevelItem", setExternallyOwned_handler);
      cm.addArgHandler("QTreeWidget", "insertTopLevelItem", setExternallyOwned_handler);
